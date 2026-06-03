@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>reTerminal E-Series Firmware Hub</title>
+  <meta name="description" content="Flash ESP32-S3 firmware to your reTerminal E-Series device directly from the browser. No IDE setup required.">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="#">
+        <span class="brand-logo">rT</span>
+        reTerminal E-Series
+      </a>
+      <div class="topbar-links">
+        <a href="https://wiki.seeedstudio.com" target="_blank" rel="noopener">Wiki</a>
+        <a href="https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D" target="_blank" rel="noopener">GitHub</a>
+        <span class="tool-chip">ESP32-S3</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <!-- Hero -->
+    <section class="hero">
+      <div>
+        <h1>reTerminal E-Series Firmware Hub</h1>
+        <p>Select firmware, connect your reTerminal with a USB data cable, then flash directly from Chrome or Edge. No IDE or development environment needed.</p>
+      </div>
+    </section>
+
+    <!-- Browser Warning -->
+    <div class="alert alert-warning" id="browserWarning">
+      <strong>Web Serial unavailable.</strong>
+      <span>Open this page over HTTPS or localhost in desktop Chrome or Edge.</span>
+    </div>
+
+    <!-- Step 1: Select device & firmware -->
+    <section class="tool-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Step 1</p>
+          <h2>Select firmware</h2>
+        </div>
+        <div id="deviceChips" class="device-chips"></div>
+      </div>
+      <div class="catalog" id="catalog"></div>
+    </section>
+
+    <!-- Step 2 & 3: Flash workspace -->
+    <section class="workspace">
+
+      <!-- Flash Panel -->
+      <article class="panel flash-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Step 2</p>
+            <h2>Flash to device</h2>
+          </div>
+          <span class="mode-chip">Web Serial</span>
+        </div>
+
+        <div class="selected-release" id="selectedRelease"></div>
+
+        <div class="alert alert-warning" id="errorAlert" role="alert">
+          <strong>Installation stopped</strong>
+          <span id="errorMessage"></span>
+        </div>
+
+        <div class="progress-list">
+          <div class="progress-row">
+            <div class="progress-label">
+              <span>Flash device</span>
+              <b id="flashValue">0%</b>
+            </div>
+            <div class="progress-track"><div class="progress-bar" id="flashBar"></div></div>
+            <small id="flashStatus">Select firmware and click Flash to begin</small>
+          </div>
+        </div>
+
+        <div class="flash-actions">
+          <esp-web-install-button id="espFlashButton" manifest="firmware/RTC_PCF8563/manifest.json">
+            <button slot="activate" class="button">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="margin-right:4px">
+                <path d="M7 1v8M7 9L4.5 6.5M7 9l2.5-2.5M2 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Connect and flash
+            </button>
+            <span slot="unsupported">Web Serial unavailable. Use Chrome or Edge on desktop.</span>
+            <span slot="not-allowed">HTTPS required for Web Serial.</span>
+          </esp-web-install-button>
+        </div>
+      </article>
+
+      <!-- Console Panel -->
+      <article class="panel console-panel">
+        <div class="console-heading">
+          <div>
+            <p class="eyebrow">Step 3</p>
+            <h2>Device log</h2>
+          </div>
+          <span class="serial-status" id="serialStatus"><i></i><b>Disconnected</b></span>
+        </div>
+        <div class="console-actions">
+          <button class="button button-secondary button-small" id="clearLogButton" type="button">Clear output</button>
+        </div>
+        <pre id="log" aria-label="Serial output">[system] Serial monitor ready.
+[system] Select a firmware, then click "Connect and flash" to begin.</pre>
+      </article>
+
+    </section>
+
+  </main>
+
+  <footer class="shell">
+    Keep the USB cable connected until flashing completes. &nbsp;&middot;&nbsp;
+    <a href="https://www.seeedstudio.com" target="_blank" rel="noopener">Seeed Studio</a> &nbsp;&middot;&nbsp;
+    <a href="https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D" target="_blank" rel="noopener">Source Code</a> &nbsp;&middot;&nbsp;
+    ESP Web Tools by ESPHome &nbsp;&middot;&nbsp; Requires Chrome or Edge + HTTPS
+  </footer>
+
+  <script src="js/firmwares.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
