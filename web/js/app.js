@@ -255,8 +255,15 @@ function renderConfigArea() {
   const container = document.getElementById("configArea");
   if (!container || !selectedPlatform) return;
 
+  const notes = selectedFirmwareOption?.notes || [];
+  const notesHtml = notes.map((n) => `
+    <div class="alert alert-${n.type === "warning" ? "warning" : "info"} is-visible">
+      <span>${n.text}</span>
+    </div>
+  `).join("");
+
   if (!selectedPlatform.configFields.length) {
-    container.innerHTML = `
+    container.innerHTML = notesHtml || `
       <div class="config-empty">
         <strong>No setup fields required</strong>
         <span>This platform can continue without pre-configuring network or API settings.</span>
@@ -265,7 +272,7 @@ function renderConfigArea() {
     return;
   }
 
-  container.innerHTML = selectedPlatform.configFields.map((field) => `
+  container.innerHTML = notesHtml + selectedPlatform.configFields.map((field) => `
     <label class="field-block" for="${field.id}">
       <span>${field.label}</span>
       <input id="${field.id}" type="${field.type}" placeholder="${field.placeholder || ""}">
@@ -430,6 +437,7 @@ function bindFlowEvents() {
       selectedFirmwareOption =
         options.find((item) => item.id === firmwareSelect.value) || options[0] || null;
       renderSelectedRelease();
+      renderConfigArea();
       updateFlashState();
       resetProgress();
       appendLog(`[system] Selected demo: ${selectedFirmwareOption?.name || "None"}`);

@@ -84,6 +84,10 @@ const PLATFORM_CARDS = [
         category: "Peripheral",
         compatible: ["E1001", "E1002", "E1003", "E1004"],
         manifest: "firmware/RTC_PCF8563/manifest.json",
+        notes: [
+          { type: "warning", text: "Install a CR1220 coin cell battery in the RTC slot before flashing — without it, the clock resets every time the board loses power." },
+          { type: "info", text: "First flash: the firmware automatically writes the build timestamp to the RTC. Subsequent reboots: the stored time is preserved (battery must be installed). The clock prints every second on Serial1 (GPIO43 TX, 115200 baud)." },
+        ],
       },
       {
         id: "LowPower_DeepSleep",

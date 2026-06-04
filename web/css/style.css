@@ -710,6 +710,7 @@ pre#log {
 }
 .alert.is-visible { display: flex; flex-wrap: wrap; }
 .alert-warning { border: 1px solid #f3b36d; background: var(--orange-soft); color: #8a4b12; }
+.alert-info { border: 1px solid #7ec8e3; background: #eef7fb; color: #1a5276; }
 .selection-panel .alert.is-visible { margin-bottom: 14px; }
 .flash-panel .alert.is-visible { margin: 12px 0 0; }
 .flash-panel .erase-note.is-visible { margin: 0 0 12px; }
