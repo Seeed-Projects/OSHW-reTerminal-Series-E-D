@@ -1,24 +1,22 @@
 // reTerminal E Series - LED Control Example
 // Supports E1001/E1002, E1003, and E1004
+//
+// DEVICE_MODEL selects the correct pin mapping for your board.
+// When compiling locally in Arduino IDE, change the default below.
+// When built by CI / Firmware Hub, the value is injected via build flags.
 
-// ============================================================
-// Device Selection
-// Uncomment ONE line below for your device:
-// ============================================================
-#define DEVICE_E1001_E1002
-// #define DEVICE_E1003
-// #define DEVICE_E1004
+#ifndef DEVICE_MODEL
+#define DEVICE_MODEL 1001
+#endif
 
-// LED pin assignment per device
-// LED pin differs across models
-#ifdef DEVICE_E1001_E1002
+#if DEVICE_MODEL == 1001 || DEVICE_MODEL == 1002
   #define LED_PIN 6   // GPIO6 - Onboard LED (inverted logic)
-#elif defined(DEVICE_E1003)
+#elif DEVICE_MODEL == 1003
   #define LED_PIN 16  // GPIO16 - Onboard LED (inverted logic)
-#elif defined(DEVICE_E1004)
+#elif DEVICE_MODEL == 1004
   #define LED_PIN 48  // GPIO48 - Onboard LED (inverted logic)
 #else
-  #error "Please uncomment one DEVICE_ line above to select your model."
+  #error "Unknown DEVICE_MODEL — expected 1001, 1002, 1003, or 1004."
 #endif
 
 #define SERIAL_RX 44

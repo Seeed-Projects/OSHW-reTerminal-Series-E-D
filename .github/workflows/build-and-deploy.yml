@@ -69,10 +69,21 @@ jobs:
             needs_gfx: true
             needs_gxepd2: false
           # ── Simple peripherals (no external libs) ──
-          - name: LED_Control
+          - name: LED_Control_E1001
             path: examples/LED_Control
             needs_gfx: false
             needs_gxepd2: false
+            build_flags: "-DDEVICE_MODEL=1001"
+          - name: LED_Control_E1003
+            path: examples/LED_Control
+            needs_gfx: false
+            needs_gxepd2: false
+            build_flags: "-DDEVICE_MODEL=1003"
+          - name: LED_Control_E1004
+            path: examples/LED_Control
+            needs_gfx: false
+            needs_gxepd2: false
+            build_flags: "-DDEVICE_MODEL=1004"
           - name: Buzzer_Control
             path: examples/Buzzer_Control
             needs_gfx: false
@@ -162,8 +173,10 @@ jobs:
       - name: Compile ${{ matrix.sketch.name }}
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
+          BUILD_FLAGS="${{ matrix.sketch.build_flags }}"
           arduino-cli compile \
             --fqbn "esp32:esp32:XIAO_ESP32S3:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=opi" \
+            ${BUILD_FLAGS:+--build-property "build.extra_flags=$BUILD_FLAGS"} \
             --output-dir ./build/${{ matrix.sketch.name }} \
             ./${{ matrix.sketch.path }}
           cp ~/.arduino15/packages/esp32/hardware/esp32/*/tools/partitions/boot_app0.bin \
@@ -228,7 +241,7 @@ jobs:
             echo "| LowPower_DeepSleep | E1001 – E1004 |"
             echo "| MicRecordToSD | E1001 – E1003 |"
             echo "| E1003_TouchDraw | E1003 |"
-            echo "| LED_Control | E1001 – E1004 |"
+            echo "| LED_Control | E1001/E1002, E1003, E1004 (per-device build) |"
             echo "| Buzzer_Control | E1001 – E1004 |"
             echo "| Buzzer_Music | E1001 – E1004 |"
             echo "| UserButtons | E1001 – E1004 |"
