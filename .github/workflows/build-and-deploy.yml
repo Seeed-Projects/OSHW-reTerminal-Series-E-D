@@ -138,7 +138,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ./build/${{ matrix.sketch.name }}/
-          key: firmware-${{ matrix.sketch.name }}-${{ hashFiles(format('{0}/**', matrix.sketch.path)) }}
+          key: firmware-v2-${{ matrix.sketch.name }}-${{ hashFiles(format('{0}/**', matrix.sketch.path)) }}
 
       - name: Install arduino-cli
         if: steps.cache.outputs.cache-hit != 'true'

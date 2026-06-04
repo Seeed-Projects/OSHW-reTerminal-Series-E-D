@@ -500,14 +500,12 @@ function bindWorkspaceEvents() {
   const espBtn = document.getElementById("espFlashButton");
   if (espBtn) {
     espBtn.addEventListener("initializing", () => {
-      setSerialState("connecting", "Connecting");
-      appendLog("[system] Connecting to device...");
+      appendLog("[flash] Connecting to device...");
       setProgress("flash", 5, "Initializing connection");
     });
 
     espBtn.addEventListener("preparing", () => {
-      setSerialState("connecting", "Preparing");
-      appendLog("[system] Preparing firmware...");
+      appendLog("[flash] Preparing firmware...");
       setProgress("flash", 15, "Preparing firmware");
     });
 
@@ -522,13 +520,11 @@ function bindWorkspaceEvents() {
     });
 
     espBtn.addEventListener("finished", () => {
-      setSerialState("success", "Flash complete");
-      appendLog("[system] Firmware installed successfully!");
+      appendLog("[flash] Firmware installed successfully!");
       setProgress("flash", 100, "Firmware installed successfully");
     });
 
     espBtn.addEventListener("error", (e) => {
-      setSerialState("error", "Error");
       appendLog(`[error] ${e.detail?.message || "Flash failed"}`);
       setProgress("flash", 0, "Flash failed");
       const alert = document.getElementById("errorAlert");
