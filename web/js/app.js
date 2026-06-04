@@ -332,6 +332,18 @@ async function flashDevice() {
 
     const esploader = new ESPLoader({ transport, baudrate: 115200, terminal });
 
+    // Force a hardware reset before sync to clear any wedged stub left by a
+    // prior attempt (CH340 auto-reset does not always power-cycle the chip).
+    try {
+      await transport.setDTR(false);
+      await transport.setRTS(true);
+      await new Promise((r) => setTimeout(r, 120));
+      await transport.setRTS(false);
+      await new Promise((r) => setTimeout(r, 250));
+    } catch (_) {
+      // Transport reset API unavailable — fall through to main()'s own reset.
+    }
+
     appendLog("[flash] Connecting to device...");
     setProgress("flash", 8, "Connecting to device");
     const chip = await esploader.main();
