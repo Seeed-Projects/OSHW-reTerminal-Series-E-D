@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -15,6 +15,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+
+  # ── Job 1: Detect whether firmware source changed ──
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      firmware_changed: ${{ steps.check.outputs.firmware_changed }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for firmware changes
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "firmware_changed=true" >> "$GITHUB_OUTPUT"
+            echo "Manual trigger — treating all firmware as changed"
+          else
+            changed=$(git diff --name-only HEAD~1 HEAD -- examples/ || true)
+            if [ -n "$changed" ]; then
+              echo "firmware_changed=true" >> "$GITHUB_OUTPUT"
+              echo "Firmware source changed:"
+              echo "$changed"
+            else
+              echo "firmware_changed=false" >> "$GITHUB_OUTPUT"
+              echo "No firmware changes detected"
+            fi
+          fi
+
+  # ── Job 2: Build firmware (with per-sketch caching) ──
   build-firmware:
     runs-on: ubuntu-latest
     strategy:
@@ -36,13 +67,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache compiled firmware
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ./build/${{ matrix.sketch.name }}/
+          key: firmware-${{ matrix.sketch.name }}-${{ hashFiles(format('{0}/**', matrix.sketch.path)) }}
+
       - name: Install arduino-cli
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p "$HOME/.local/bin"
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=$HOME/.local/bin sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install ESP32 board package
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           arduino-cli config init
           arduino-cli config add board_manager.additional_urls \
@@ -51,12 +91,13 @@ jobs:
           arduino-cli core install esp32:esp32
 
       - name: Install Seeed_GFX library
-        if: matrix.sketch.needs_gfx
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_gfx
         run: |
           arduino-cli config set library.enable_unsafe_install true
           arduino-cli lib install --git-url https://github.com/Seeed-Studio/Seeed_GFX.git
 
       - name: Compile ${{ matrix.sketch.name }}
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           arduino-cli compile \
             --fqbn "esp32:esp32:XIAO_ESP32S3:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=opi" \
@@ -70,6 +111,91 @@ jobs:
           path: build/${{ matrix.sketch.name }}/
           retention-days: 30
 
+  # ── Job 3: Create GitHub Release (only when firmware changed) ──
+  create-release:
+    needs: [detect-changes, build-firmware]
+    if: needs.detect-changes.outputs.firmware_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate version tag
+        id: version
+        run: |
+          today=$(date -u +%Y.%m.%d)
+          existing=$(git tag -l "v${today}*" | sort -V | tail -1)
+          if [ -z "$existing" ]; then
+            tag="v${today}"
+          elif [ "$existing" = "v${today}" ]; then
+            tag="v${today}.1"
+          else
+            suffix=$(echo "$existing" | sed "s/v${today}\.//")
+            tag="v${today}.$((suffix + 1))"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Generated version tag: $tag"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$last_tag" ]; then
+            range="${last_tag}..HEAD"
+          else
+            range="HEAD"
+          fi
+
+          {
+            echo "body<<CHANGELOG_EOF"
+            echo "## What's Changed"
+            echo ""
+            git log "$range" --pretty=format:"- %s (%h)" --no-merges | head -50
+            echo ""
+            echo ""
+            echo "### Firmware Included"
+            echo ""
+            echo "| Firmware | Compatible Devices |"
+            echo "|:---------|:-------------------|"
+            echo "| RTC_PCF8563 | E1001 – E1004 |"
+            echo "| LowPower_DeepSleep | E1001 – E1004 |"
+            echo "| MicRecordToSD | E1001 – E1003 |"
+            echo "| E1003_TouchDraw | E1003 |"
+            echo ""
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${last_tag:-$(git rev-list --max-parents=0 HEAD | head -1)}...${{ steps.version.outputs.tag }}"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download all firmware artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: firmware-artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          for sketch_dir in firmware-artifacts/firmware-*/; do
+            sketch_name=$(basename "$sketch_dir" | sed 's/^firmware-//')
+            for bin in "$sketch_dir"/*.bin; do
+              [ -f "$bin" ] || continue
+              cp "$bin" "release-assets/${sketch_name}_$(basename "$bin")"
+            done
+          done
+          echo "=== Release assets ==="
+          ls -lh release-assets/
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --notes "${{ steps.changelog.outputs.body }}" \
+            release-assets/*
+
+  # ── Job 4: Deploy to GitHub Pages (always) ──
   deploy-pages:
     needs: build-firmware
     runs-on: ubuntu-latest
@@ -89,27 +215,22 @@ jobs:
         run: |
           mkdir -p _site/firmware
 
-          # Copy web source files
           cp web/index.html _site/
           cp -r web/css _site/
           cp -r web/js _site/
           [ -d web/assets ] && cp -r web/assets _site/ || true
 
-          # Organize firmware binaries and generate manifests
           for sketch_dir in firmware-artifacts/firmware-*/; do
             sketch_name=$(basename "$sketch_dir" | sed 's/^firmware-//')
             dest="_site/firmware/$sketch_name"
             mkdir -p "$dest"
 
-            # Copy all .bin files
             cp "$sketch_dir"/*.bin "$dest/" 2>/dev/null || true
 
-            # Find the firmware .bin (the one without bootloader/partitions in the name)
             fw_bin=$(ls "$dest/"*.ino.bin 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
             bl_bin=$(ls "$dest/"*.ino.bootloader.bin 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
             pt_bin=$(ls "$dest/"*.ino.partitions.bin 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
 
-            # Generate manifest.json
             cat > "$dest/manifest.json" << MANIFEST
           {
             "name": "$sketch_name",
