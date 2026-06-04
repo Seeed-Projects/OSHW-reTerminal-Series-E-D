@@ -8,6 +8,7 @@ const DEVICES = [
     specs: [
       '7.5" display',
       "Monochrome",
+      "4-level grayscale",
     ],
   },
   {
@@ -43,6 +44,7 @@ const DEVICES = [
     specs: [
       '13.3" display',
       "Full color",
+      "E Ink Spectra 6",
     ],
   },
 ];
