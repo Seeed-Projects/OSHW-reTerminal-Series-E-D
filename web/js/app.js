@@ -375,7 +375,7 @@ async function flashDevice() {
       flashFreq: "keep",
       flashSize: "8MB",
       eraseAll: false,
-      compress: true,
+      compress: false,
       reportProgress: (fileIndex, written, total) => {
         const partProgress = total > 0 ? written / total : 0;
         const overall = 30 + ((fileIndex + partProgress) / fileArray.length) * 65;
