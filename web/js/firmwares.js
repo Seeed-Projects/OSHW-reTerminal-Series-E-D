@@ -118,7 +118,7 @@ const PLATFORM_CARDS = [
     description:
       "ESPHome turns microcontroller boards into local smart-home devices using simple YAML configuration, web tools, and Home Assistant workflows.",
     logo: "assets/platforms/esphome-logo.svg",
-    preview: "assets/platforms/esphome-preview.png",
+    preview: "assets/platforms/esphome-preview-enhanced.png",
     previewAlt: "ESPHome dashboard preview",
     accent: "#004966",
     highlight: "#8FC31F",
@@ -187,7 +187,7 @@ const PLATFORM_CARDS = [
     description:
       "OpenDisplay provides firmware and browser tools for low-power ePaper display projects, including BLE control, configuration, and image upload flows.",
     logo: "assets/platforms/opendisplay-logo.svg",
-    preview: "assets/platforms/opendisplay-screen.png",
+    preview: "assets/platforms/opendisplay-screen-enhanced.png",
     previewAlt: "OpenDisplay browser upload flow",
     accent: "#004966",
     highlight: "#8FC31F",
