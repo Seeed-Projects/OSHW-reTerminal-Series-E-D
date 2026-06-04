@@ -447,6 +447,24 @@ function bindFlowEvents() {
       appendLog(`[system] Selected version: ${selectedVersion?.version || "None"}`);
     });
   }
+
+  const modeStandard = document.getElementById("modeStandard");
+  const modeErase = document.getElementById("modeErase");
+  const espBtn = document.getElementById("espFlashButton");
+  if (modeStandard && modeErase && espBtn) {
+    modeStandard.addEventListener("click", () => {
+      modeStandard.classList.add("is-active");
+      modeErase.classList.remove("is-active");
+      espBtn.removeAttribute("erase-first");
+      appendLog("[system] Flash mode: standard");
+    });
+    modeErase.addEventListener("click", () => {
+      modeErase.classList.add("is-active");
+      modeStandard.classList.remove("is-active");
+      espBtn.setAttribute("erase-first", "");
+      appendLog("[system] Flash mode: erase + flash");
+    });
+  }
 }
 
 function bindWorkspaceEvents() {

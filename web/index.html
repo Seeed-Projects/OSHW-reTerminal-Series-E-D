@@ -102,18 +102,13 @@
         </div>
 
         <div class="install-mode">
-          <button class="mode-button is-active" type="button">Standard flash</button>
-          <button class="mode-button" type="button" disabled>Erase flash + flash</button>
+          <button class="mode-button is-active" type="button" id="modeStandard">Standard flash</button>
+          <button class="mode-button" type="button" id="modeErase">Erase flash + flash</button>
         </div>
 
         <div class="alert alert-warning install-note" id="installNote">
           <strong>Firmware not published yet.</strong>
           <span>This platform card is ready, but its web flashing package has not been added.</span>
-        </div>
-
-        <div class="alert alert-warning erase-note is-visible">
-          <strong>Erase mode reserved.</strong>
-          <span>This option needs ESP Web Tools validation before it is enabled.</span>
         </div>
 
         <div class="alert alert-warning" id="errorAlert" role="alert">
