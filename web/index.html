@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>reTerminal E-Series Firmware Hub</title>
   <meta name="description" content="Flash ESP32-S3 firmware to your reTerminal E-Series device directly from the browser. No IDE setup required.">
-  <link rel="stylesheet" href="css/style.css?v=20260604-image43">
+  <link rel="stylesheet" href="css/style.css?v=20260604-topbar">
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 </head>
 <body>
@@ -14,17 +14,28 @@
   <header class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="#">
-        <span class="brand-logo">rT</span>
+        <span class="brand-logo">
+          <img src="assets/brand/reterminal-epaper-icon.svg" alt="reTerminal ePaper icon">
+        </span>
         <span class="brand-text">
           <b>reTerminal E-Series</b>
           <small>Firmware Hub</small>
         </span>
       </a>
       <div class="topbar-links">
-        <span class="tool-chip">ESP32-S3</span>
-        <span class="tool-chip tool-chip-soft">Web Serial</span>
-        <a href="https://wiki.seeedstudio.com" target="_blank" rel="noopener">Wiki</a>
-        <a href="https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D" target="_blank" rel="noopener">GitHub</a>
+        <a class="topbar-link" href="https://wiki.seeedstudio.com/reterminal_e10xx_main_page/" target="_blank" rel="noopener">
+          <svg class="nav-icon" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M4.5 3.5h8.2c1.55 0 2.8 1.25 2.8 2.8v10.2H6.1a2.6 2.6 0 0 1-2.6-2.6V4.5c0-.55.45-1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6.8 7.2h5.8M6.8 10h6.4M6.8 12.8h4.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          Wiki
+        </a>
+        <a class="topbar-link" href="https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D" target="_blank" rel="noopener">
+          <svg class="nav-icon" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M10 2.5a7.5 7.5 0 0 0-2.37 14.62c.37.07.5-.16.5-.35v-1.25c-2.04.44-2.47-.87-2.47-.87-.33-.84-.81-1.06-.81-1.06-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.11 1.7.79 2.12.6.06-.47.25-.79.46-.97-1.63-.19-3.34-.82-3.34-3.62 0-.8.29-1.45.75-1.96-.08-.18-.33-.93.07-1.94 0 0 .62-.2 2.03.75A7 7 0 0 1 10 7.2c.63 0 1.26.08 1.86.25 1.4-.95 2.02-.75 2.02-.75.4 1.01.15 1.76.08 1.94.47.51.75 1.16.75 1.96 0 2.81-1.72 3.43-3.35 3.61.26.23.5.68.5 1.37v2.03c0 .2.13.42.51.35A7.5 7.5 0 0 0 10 2.5Z" fill="currentColor"/>
+          </svg>
+          GitHub
+        </a>
       </div>
     </div>
   </header>
@@ -164,7 +175,7 @@
   </main>
 
   <script src="js/firmwares.js?v=20260604-platform-art2"></script>
-  <script src="js/app.js?v=20260604-devices"></script>
+  <script src="js/app.js?v=20260604-topbar"></script>
 
 </body>
 </html>

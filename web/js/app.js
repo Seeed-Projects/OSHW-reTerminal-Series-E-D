@@ -1,4 +1,4 @@
-let expandedPlatformId = PLATFORM_CARDS[0]?.id || null;
+let expandedPlatformId = null;
 let selectedPlatform = null;
 let selectedDevice = null;
 let selectedFirmwareOption = null;
@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderFlowState();
   bindFlowEvents();
   bindWorkspaceEvents();
+  bindBlankAreaCollapse();
 });
 
 function checkBrowser() {
@@ -120,6 +121,22 @@ function renderPlatformCards() {
     btn.addEventListener("click", () => {
       selectPlatformDevice(btn.dataset.platform, btn.dataset.device);
     });
+  });
+}
+
+function collapsePlatformCards() {
+  if (!expandedPlatformId) return;
+  expandedPlatformId = null;
+  renderPlatformCards();
+}
+
+function bindBlankAreaCollapse() {
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest(".platform-card")) return;
+    if (target.closest("button, a, input, select, textarea, esp-web-install-button")) return;
+    collapsePlatformCards();
   });
 }
 
