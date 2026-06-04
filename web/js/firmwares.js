@@ -25,6 +25,51 @@ const DEVICES = [
   },
 ];
 
+const PLATFORMS = [
+  {
+    id: "all",
+    name: "All Platforms",
+  },
+  {
+    id: "reterminal",
+    name: "reTerminal",
+    description: "Official reTerminal E-Series firmware",
+  },
+  {
+    id: "esphome",
+    name: "ESPHome",
+    description: "Reserved for ESPHome builds",
+  },
+  {
+    id: "arduino",
+    name: "Arduino Examples",
+    description: "Reserved for Arduino example builds",
+  },
+];
+
+const FUNCTION_GROUPS = [
+  {
+    id: "all",
+    name: "All Functions",
+  },
+  {
+    id: "Peripheral",
+    name: "Peripheral",
+  },
+  {
+    id: "Power",
+    name: "Power",
+  },
+  {
+    id: "Audio",
+    name: "Audio",
+  },
+  {
+    id: "Display",
+    name: "Display",
+  },
+];
+
 const CATEGORY_COLORS = {
   Peripheral: "tag-peripheral",
   Power: "tag-power",
@@ -39,8 +84,16 @@ const FIRMWARES = [
     tagline:
       "Read and write the onboard PCF8563 real-time clock. Prints date and time every second via Serial1.",
     category: "Peripheral",
+    platform: "reterminal",
     compatible: ["E1001", "E1002", "E1003", "E1004"],
-    manifest: "firmware/RTC_PCF8563/manifest.json",
+    versions: [
+      {
+        version: "1.0.0",
+        label: "Stable",
+        manifest: "firmware/RTC_PCF8563/manifest.json",
+      },
+    ],
+    configFields: [],
     icon: "clock",
     sourceUrl:
       "https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D/tree/main/examples/RTC_PCF8563",
@@ -51,8 +104,16 @@ const FIRMWARES = [
     tagline:
       "Enter ESP32-S3 deep sleep (~14 uA) and wake on button press. Ultra-low-power standby mode.",
     category: "Power",
+    platform: "reterminal",
     compatible: ["E1001", "E1002", "E1003", "E1004"],
-    manifest: "firmware/LowPower_DeepSleep/manifest.json",
+    versions: [
+      {
+        version: "1.0.0",
+        label: "Stable",
+        manifest: "firmware/LowPower_DeepSleep/manifest.json",
+      },
+    ],
+    configFields: [],
     icon: "sleep",
     sourceUrl:
       "https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D/tree/main/examples/LowPower_DeepSleep",
@@ -63,8 +124,16 @@ const FIRMWARES = [
     tagline:
       "Record audio from the onboard PDM microphone and save WAV files to MicroSD card.",
     category: "Audio",
+    platform: "reterminal",
     compatible: ["E1001", "E1002", "E1003"],
-    manifest: "firmware/MicRecordToSD/manifest.json",
+    versions: [
+      {
+        version: "1.0.0",
+        label: "Stable",
+        manifest: "firmware/MicRecordToSD/manifest.json",
+      },
+    ],
+    configFields: [],
     icon: "mic",
     sourceUrl:
       "https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D/tree/main/examples/MicRecordToSD",
@@ -75,8 +144,16 @@ const FIRMWARES = [
     tagline:
       "Tap the 10.3\" capacitive touch panel to draw dots on the ePaper screen in real time.",
     category: "Display",
+    platform: "reterminal",
     compatible: ["E1003"],
-    manifest: "firmware/E1003_TouchDraw/manifest.json",
+    versions: [
+      {
+        version: "1.0.0",
+        label: "Stable",
+        manifest: "firmware/E1003_TouchDraw/manifest.json",
+      },
+    ],
+    configFields: [],
     icon: "touch",
     sourceUrl:
       "https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D/tree/main/examples/E1003_TouchDraw",

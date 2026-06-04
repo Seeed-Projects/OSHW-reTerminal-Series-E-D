@@ -1,11 +1,15 @@
+let activePlatform = "all";
+let activeFunction = "all";
 let activeDevice = "all";
-let selectedFirmware = FIRMWARES[0];
+let selectedFirmware = null;
+let selectedVersion = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
-  renderDeviceChips();
+  renderAllFilters();
   renderCatalog();
-  renderSelectedRelease();
+  renderFlowState();
+  bindFlowEvents();
   bindWorkspaceEvents();
 });
 
@@ -16,36 +20,123 @@ function checkBrowser() {
   }
 }
 
-// Count firmware items compatible with each device
-// 统计每个设备可用的固件数量
-function countForDevice(deviceId) {
-  if (deviceId === "all") return FIRMWARES.length;
-  return FIRMWARES.filter((fw) => fw.compatible.includes(deviceId)).length;
+function getPlatformName(platformId) {
+  return PLATFORMS.find((platform) => platform.id === platformId)?.name || platformId;
 }
 
-function renderDeviceChips() {
-  const container = document.getElementById("deviceChips");
+function getDefaultVersion(firmware) {
+  return firmware?.versions?.[0] || null;
+}
+
+function firmwareMatchesFilters(firmware) {
+  const platformMatches =
+    activePlatform === "all" || firmware.platform === activePlatform;
+  const functionMatches =
+    activeFunction === "all" || firmware.category === activeFunction;
+  const deviceMatches =
+    activeDevice === "all" || firmware.compatible.includes(activeDevice);
+
+  return platformMatches && functionMatches && deviceMatches;
+}
+
+function countForPlatform(platformId) {
+  return FIRMWARES.filter((firmware) => {
+    const platformMatches = platformId === "all" || firmware.platform === platformId;
+    const functionMatches =
+      activeFunction === "all" || firmware.category === activeFunction;
+    const deviceMatches =
+      activeDevice === "all" || firmware.compatible.includes(activeDevice);
+    return platformMatches && functionMatches && deviceMatches;
+  }).length;
+}
+
+function countForFunction(functionId) {
+  return FIRMWARES.filter((firmware) => {
+    const platformMatches =
+      activePlatform === "all" || firmware.platform === activePlatform;
+    const functionMatches = functionId === "all" || firmware.category === functionId;
+    const deviceMatches =
+      activeDevice === "all" || firmware.compatible.includes(activeDevice);
+    return platformMatches && functionMatches && deviceMatches;
+  }).length;
+}
+
+// Count firmware items compatible with each device.
+// 统计每个设备可用的固件数量。
+function countForDevice(deviceId) {
+  return FIRMWARES.filter((firmware) => {
+    const platformMatches =
+      activePlatform === "all" || firmware.platform === activePlatform;
+    const functionMatches =
+      activeFunction === "all" || firmware.category === activeFunction;
+    const deviceMatches = deviceId === "all" || firmware.compatible.includes(deviceId);
+    return platformMatches && functionMatches && deviceMatches;
+  }).length;
+}
+
+function renderFilterChips(containerId, items, activeId, countFn, onSelect) {
+  const container = document.getElementById(containerId);
   if (!container) return;
 
-  container.innerHTML = DEVICES.map(
-    (d) => `
-    <button
-      class="device-chip ${d.id === activeDevice ? "is-active" : ""}"
-      data-device="${d.id}"
-    >
-      ${d.name}
-      <span class="device-count">${countForDevice(d.id)}</span>
-    </button>
-  `
-  ).join("");
+  container.innerHTML = items.map((item) => {
+    const count = countFn(item.id);
+    const activeClass = item.id === activeId ? "is-active" : "";
+    const disabledAttr = count === 0 && item.id !== activeId ? "disabled" : "";
 
-  container.querySelectorAll(".device-chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      activeDevice = chip.dataset.device;
-      renderDeviceChips();
-      renderCatalog();
-    });
+    return `
+      <button
+        class="filter-chip ${activeClass}"
+        data-filter="${item.id}"
+        type="button"
+        ${disabledAttr}
+      >
+        ${item.name}
+        <span class="filter-count">${count}</span>
+      </button>
+    `;
+  }).join("");
+
+  container.querySelectorAll(".filter-chip").forEach((chip) => {
+    chip.addEventListener("click", () => onSelect(chip.dataset.filter));
   });
+}
+
+function renderAllFilters() {
+  renderFilterChips(
+    "platformChips",
+    PLATFORMS,
+    activePlatform,
+    countForPlatform,
+    (id) => {
+      activePlatform = id;
+      renderAllFilters();
+      renderCatalog();
+    }
+  );
+
+  renderFilterChips(
+    "functionChips",
+    FUNCTION_GROUPS,
+    activeFunction,
+    countForFunction,
+    (id) => {
+      activeFunction = id;
+      renderAllFilters();
+      renderCatalog();
+    }
+  );
+
+  renderFilterChips(
+    "deviceChips",
+    DEVICES,
+    activeDevice,
+    countForDevice,
+    (id) => {
+      activeDevice = id;
+      renderAllFilters();
+      renderCatalog();
+    }
+  );
 }
 
 function getCardIcon(icon) {
@@ -80,14 +171,20 @@ function renderCatalog() {
   const container = document.getElementById("catalog");
   if (!container) return;
 
-  const visible =
-    activeDevice === "all"
-      ? FIRMWARES
-      : FIRMWARES.filter((fw) => fw.compatible.includes(activeDevice));
+  const visible = FIRMWARES.filter(firmwareMatchesFilters);
 
-  container.innerHTML = visible.map((fw) => {
-    const isSelected = fw.id === selectedFirmware?.id;
-    const compatBadges = fw.compatible
+  if (visible.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <h3>No firmware yet</h3>
+        <p>This category is reserved for future firmware packages.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = visible.map((firmware) => {
+    const compatBadges = firmware.compatible
       .map(
         (id) =>
           `<span class="compat-badge ${id === activeDevice ? "active" : ""}">${id}</span>`
@@ -95,21 +192,22 @@ function renderCatalog() {
       .join("");
 
     return `
-      <article class="firmware-card ${isSelected ? "is-selected" : ""}">
+      <article class="firmware-card">
         <div class="card-preview">
-          <div class="card-preview-placeholder">${getCardIcon(fw.icon)}</div>
+          <div class="card-preview-placeholder">${getCardIcon(firmware.icon)}</div>
         </div>
         <div class="card-content">
           <div class="card-top">
-            <span class="tag ${getTagClass(fw.category)}">${fw.category}</span>
+            <span class="tag tag-platform">${getPlatformName(firmware.platform)}</span>
+            <span class="tag ${getTagClass(firmware.category)}">${firmware.category}</span>
           </div>
-          <h3>${fw.name}</h3>
-          <p>${fw.tagline}</p>
+          <h3>${firmware.name}</h3>
+          <p>${firmware.tagline}</p>
           <div class="card-foot">
             <div class="compat-list">${compatBadges}</div>
-            <a href="${fw.sourceUrl}" target="_blank" rel="noreferrer">Source ↗</a>
-            <button class="button button-small ${isSelected ? "button-selected" : ""}" data-firmware="${fw.id}" type="button">
-              ${isSelected ? "Selected" : "Select"}
+            <a href="${firmware.sourceUrl}" target="_blank" rel="noreferrer">Source</a>
+            <button class="button button-small" data-firmware="${firmware.id}" type="button">
+              Select
             </button>
           </div>
         </div>
@@ -118,31 +216,109 @@ function renderCatalog() {
   }).join("");
 
   container.querySelectorAll("[data-firmware]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      selectedFirmware = FIRMWARES.find((fw) => fw.id === btn.dataset.firmware);
-      renderCatalog();
-      renderSelectedRelease();
-      resetProgress();
-      const workspace = document.querySelector(".workspace");
-      if (workspace) workspace.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    btn.addEventListener("click", () => selectFirmware(btn.dataset.firmware));
   });
+}
+
+function selectFirmware(firmwareId) {
+  selectedFirmware = FIRMWARES.find((firmware) => firmware.id === firmwareId) || null;
+  selectedVersion = getDefaultVersion(selectedFirmware);
+  renderSelectedRelease();
+  renderVersionPanel();
+  renderConfigArea();
+  updateFlashManifest();
+  renderFlowState();
+  resetProgress();
+  appendLog(`[system] Selected firmware: ${selectedFirmware?.name || "None"}`);
+}
+
+function clearFirmwareSelection() {
+  selectedFirmware = null;
+  selectedVersion = null;
+  renderFlowState();
+  resetProgress();
+}
+
+function renderFlowState() {
+  const hasSelection = Boolean(selectedFirmware);
+  const selectionPanel = document.getElementById("selectionPanel");
+  const selectedPanel = document.getElementById("selectedPanel");
+  const versionPanel = document.getElementById("versionPanel");
+  const flashPanel = document.getElementById("flashPanel");
+
+  document.body.classList.toggle("has-selection", hasSelection);
+  if (selectionPanel) selectionPanel.classList.toggle("is-collapsed", hasSelection);
+  toggleStepPanel(selectedPanel, hasSelection, 0);
+  toggleStepPanel(versionPanel, hasSelection, 90);
+  toggleStepPanel(flashPanel, hasSelection, 180);
+}
+
+function toggleStepPanel(panel, visible, delayMs) {
+  if (!panel) return;
+  panel.classList.toggle("is-hidden", !visible);
+  panel.classList.toggle("is-visible", visible);
+  panel.style.setProperty("--step-delay", `${delayMs}ms`);
 }
 
 function renderSelectedRelease() {
   const container = document.getElementById("selectedRelease");
   if (!container || !selectedFirmware) return;
 
+  const compatBadges = selectedFirmware.compatible
+    .map((id) => `<span class="compat-badge">${id}</span>`)
+    .join("");
+
   container.innerHTML = `
-    <div>
-      <span class="tag ${getTagClass(selectedFirmware.category)}">${selectedFirmware.category}</span>
+    <div class="selected-icon">${getCardIcon(selectedFirmware.icon)}</div>
+    <div class="selected-copy">
+      <div class="selected-tags">
+        <span class="tag tag-platform">${getPlatformName(selectedFirmware.platform)}</span>
+        <span class="tag ${getTagClass(selectedFirmware.category)}">${selectedFirmware.category}</span>
+      </div>
       <h3>${selectedFirmware.name}</h3>
       <p>${selectedFirmware.tagline}</p>
+      <div class="compat-list">${compatBadges}</div>
     </div>
   `;
+}
 
+function renderVersionPanel() {
+  const versionSelect = document.getElementById("versionSelect");
+  if (!versionSelect || !selectedFirmware) return;
+
+  versionSelect.innerHTML = selectedFirmware.versions.map((item) => {
+    const label = `${item.version} - ${item.label}`;
+    const selectedAttr = item.version === selectedVersion?.version ? "selected" : "";
+    return `<option value="${item.version}" ${selectedAttr}>${label}</option>`;
+  }).join("");
+}
+
+function renderConfigArea() {
+  const container = document.getElementById("configArea");
+  if (!container || !selectedFirmware) return;
+
+  if (!selectedFirmware.configFields.length) {
+    container.innerHTML = `
+      <div class="config-empty">
+        <strong>No setup fields required</strong>
+        <span>This firmware can be flashed without pre-configuring network or API settings.</span>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = selectedFirmware.configFields.map((field) => `
+    <label class="field-block" for="${field.id}">
+      <span>${field.label}</span>
+      <input id="${field.id}" type="${field.type}" placeholder="${field.placeholder || ""}">
+    </label>
+  `).join("");
+}
+
+function updateFlashManifest() {
   const espBtn = document.getElementById("espFlashButton");
-  if (espBtn) espBtn.setAttribute("manifest", selectedFirmware.manifest);
+  if (!espBtn || !selectedVersion) return;
+  espBtn.setAttribute("manifest", selectedVersion.manifest);
 }
 
 function resetProgress() {
@@ -178,6 +354,25 @@ function setSerialState(state, label) {
   el.innerHTML = `<i></i><b>${label}</b>`;
 }
 
+function bindFlowEvents() {
+  const changeBtn = document.getElementById("changeFirmwareButton");
+  if (changeBtn) {
+    changeBtn.addEventListener("click", clearFirmwareSelection);
+  }
+
+  const versionSelect = document.getElementById("versionSelect");
+  if (versionSelect) {
+    versionSelect.addEventListener("change", () => {
+      selectedVersion =
+        selectedFirmware?.versions.find((item) => item.version === versionSelect.value) ||
+        getDefaultVersion(selectedFirmware);
+      updateFlashManifest();
+      resetProgress();
+      appendLog(`[system] Selected version: ${selectedVersion?.version || "None"}`);
+    });
+  }
+}
+
 function bindWorkspaceEvents() {
   const clearBtn = document.getElementById("clearLogButton");
   if (clearBtn) {
@@ -187,8 +382,8 @@ function bindWorkspaceEvents() {
     });
   }
 
-  // Listen for ESP Web Tools events
-  // 监听 ESP Web Tools 烧录事件
+  // Listen for ESP Web Tools events.
+  // 监听 ESP Web Tools 烧录事件。
   const espBtn = document.getElementById("espFlashButton");
   if (espBtn) {
     espBtn.addEventListener("initializing", () => {

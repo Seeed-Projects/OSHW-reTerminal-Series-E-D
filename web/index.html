@@ -29,47 +29,89 @@
     </div>
   </header>
 
-  <!-- Full-screen app body: catalog (left) + workspace (right) -->
+  <!-- Full-screen app body: focused setup flow + persistent monitor -->
   <main class="app">
 
-    <!-- ============ LEFT: Firmware catalog ============ -->
-    <section class="catalog-col">
-      <div class="col-head">
-        <div class="col-head-titles">
-          <p class="eyebrow">Step 1</p>
-          <h2>Select firmware</h2>
-          <p class="col-sub">Choose a demo to flash onto your reTerminal E-Series device.</p>
+    <!-- ============ LEFT: Firmware setup flow ============ -->
+    <section class="flow-col">
+      <article class="panel selection-panel" id="selectionPanel">
+        <div class="col-head">
+          <div class="col-head-titles">
+            <p class="eyebrow">Step 1</p>
+            <h2>Select firmware package</h2>
+            <p class="col-sub">Choose one firmware package first. The next steps will focus on that package.</p>
+          </div>
         </div>
-        <div class="filter-group">
-          <span class="filter-label">Filter by device</span>
-          <div id="deviceChips" class="device-chips"></div>
+
+        <div class="filter-row">
+          <div class="filter-group">
+            <span class="filter-label">Platform</span>
+            <div id="platformChips" class="filter-chips"></div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Function</span>
+            <div id="functionChips" class="filter-chips"></div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Device</span>
+            <div id="deviceChips" class="filter-chips"></div>
+          </div>
         </div>
-      </div>
 
-      <div class="alert alert-warning" id="browserWarning">
-        <strong>Web Serial unavailable.</strong>
-        <span>Open this page over HTTPS or localhost in desktop Chrome or Edge.</span>
-      </div>
+        <div class="alert alert-warning" id="browserWarning">
+          <strong>Web Serial unavailable.</strong>
+          <span>Open this page over HTTPS or localhost in desktop Chrome or Edge.</span>
+        </div>
 
-      <div class="catalog-scroll">
-        <div class="catalog" id="catalog"></div>
-      </div>
-    </section>
+        <div class="catalog-scroll">
+          <div class="catalog" id="catalog"></div>
+        </div>
+      </article>
 
-    <!-- ============ RIGHT: Flash + Console workspace ============ -->
-    <aside class="workspace">
+      <article class="panel selected-panel step-panel is-hidden" id="selectedPanel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Selected firmware</p>
+            <h2>Package overview</h2>
+          </div>
+          <button class="button button-secondary button-small" id="changeFirmwareButton" type="button">Change firmware</button>
+        </div>
+        <div class="selected-release" id="selectedRelease"></div>
+      </article>
 
-      <!-- Flash Panel -->
-      <article class="panel flash-panel">
+      <article class="panel step-panel is-hidden" id="versionPanel">
         <div class="panel-heading">
           <div>
             <p class="eyebrow">Step 2</p>
+            <h2>Version and setup</h2>
+          </div>
+        </div>
+        <div class="setup-grid">
+          <label class="field-block" for="versionSelect">
+            <span>Firmware version</span>
+            <select id="versionSelect"></select>
+          </label>
+          <div class="config-area" id="configArea"></div>
+        </div>
+      </article>
+
+      <article class="panel flash-panel step-panel is-hidden" id="flashPanel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Step 3</p>
             <h2>Flash to device</h2>
           </div>
-          <span class="serial-status" id="serialStatus"><i></i><b>Disconnected</b></span>
         </div>
 
-        <div class="selected-release" id="selectedRelease"></div>
+        <div class="install-mode">
+          <button class="mode-button is-active" type="button">Standard flash</button>
+          <button class="mode-button" type="button" disabled>Erase flash + flash</button>
+        </div>
+
+        <div class="alert alert-warning erase-note is-visible">
+          <strong>Erase mode reserved.</strong>
+          <span>This option needs ESP Web Tools validation before it is enabled.</span>
+        </div>
 
         <div class="alert alert-warning" id="errorAlert" role="alert">
           <strong>Installation stopped</strong>
@@ -99,26 +141,31 @@
           <span class="flash-hint">Connect your reTerminal with a USB data cable first.</span>
         </div>
       </article>
+    </section>
 
-      <!-- Console Panel -->
+    <!-- ============ RIGHT: Persistent monitor ============ -->
+    <aside class="monitor-col">
       <article class="panel console-panel">
         <div class="console-heading">
           <div>
-            <p class="eyebrow">Step 3</p>
+            <p class="eyebrow">Monitor</p>
             <h2>Device log</h2>
           </div>
+          <span class="serial-status" id="serialStatus"><i></i><b>Disconnected</b></span>
+        </div>
+        <div class="monitor-actions">
+          <span class="monitor-hint">Available throughout setup and flashing.</span>
           <button class="button button-secondary button-small" id="clearLogButton" type="button">Clear output</button>
         </div>
         <pre id="log" aria-label="Serial output">[system] Serial monitor ready.
 [system] Select a firmware, then click "Connect and flash" to begin.</pre>
       </article>
-
     </aside>
 
   </main>
 
-  <script src="js/firmwares.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/firmwares.js?v=20260604"></script>
+  <script src="js/app.js?v=20260604"></script>
 
 </body>
 </html>
