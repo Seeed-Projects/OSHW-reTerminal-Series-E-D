@@ -1,23 +1,51 @@
 const DEVICES = [
   {
     id: "E1001",
-    name: "E1001",
-    description: '5.5" ePaper',
+    name: "reTerminal E1001",
+    description: '7.5" monochrome ePaper display',
+    image: "assets/devices/reterminal-e1001.jpg",
+    imageAlt: "reTerminal E1001 product photo",
+    specs: [
+      '7.5" display',
+      "Monochrome",
+      "Up to 3 months",
+    ],
   },
   {
     id: "E1002",
-    name: "E1002",
-    description: '7.5" ePaper',
+    name: "reTerminal E1002",
+    description: '7.3" full-color ePaper display',
+    image: "assets/devices/reterminal-e1002.jpg",
+    imageAlt: "reTerminal E1002 product photo",
+    specs: [
+      '7.3" display',
+      "Full color",
+      "E Ink Spectra 6",
+    ],
   },
   {
     id: "E1003",
-    name: "E1003",
-    description: '10.3" ePaper + Touch',
+    name: "reTerminal E1003",
+    description: '10.3" touch ePaper dashboard display',
+    image: "assets/devices/reterminal-e1003.jpg",
+    imageAlt: "reTerminal E1003 product photo",
+    specs: [
+      '10.3" display',
+      "16-level grayscale",
+      "Touch",
+    ],
   },
   {
     id: "E1004",
-    name: "E1004",
-    description: "No Display",
+    name: "reTerminal E1004",
+    description: '13.3" full-color ePaper display',
+    image: "assets/devices/reterminal-e1004.jpg",
+    imageAlt: "reTerminal E1004 product photo",
+    specs: [
+      '13.3" display',
+      "Full color",
+      "Up to 6 months",
+    ],
   },
 ];
 

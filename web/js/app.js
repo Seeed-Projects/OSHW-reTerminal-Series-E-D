@@ -3,6 +3,10 @@ let selectedPlatform = null;
 let selectedDevice = null;
 let selectedFirmwareOption = null;
 let selectedVersion = null;
+let monitorPort = null;
+let monitorReader = null;
+let monitorKeepReading = false;
+const monitorDecoder = new TextDecoder();
 
 document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
@@ -39,6 +43,12 @@ function getInstallManifest() {
   return selectedFirmwareOption?.manifest || selectedVersion?.manifest || "";
 }
 
+function renderDeviceSpecs(device, className = "") {
+  if (!device?.specs?.length) return "";
+  const classAttr = className ? ` class="${className}"` : "";
+  return device.specs.map((spec) => `<span${classAttr}>${spec}</span>`).join("");
+}
+
 function renderPlatformCards() {
   const container = document.getElementById("platformGrid");
   if (!container) return;
@@ -51,8 +61,14 @@ function renderPlatformCards() {
         if (!device) return "";
         return `
           <button class="device-option" data-platform="${platform.id}" data-device="${device.id}" type="button">
-            <strong>${device.name}</strong>
-            <span>${device.description}</span>
+            <span class="device-image">
+              <img src="${device.image}" alt="${device.imageAlt}">
+            </span>
+            <span class="device-copy">
+              <strong>${device.name}</strong>
+              <span>${device.description}</span>
+              <span class="device-specs">${renderDeviceSpecs(device)}</span>
+            </span>
           </button>
         `;
       })
@@ -177,7 +193,7 @@ function renderSelectedRelease() {
       <h3>${firmwareName}</h3>
       <p>${selectedPlatform.description}</p>
       <div class="compat-list">
-        <span class="compat-badge active">${selectedDevice.description}</span>
+        ${renderDeviceSpecs(selectedDevice, "compat-badge active")}
       </div>
     </div>
   `;
@@ -281,11 +297,107 @@ function appendLog(message) {
   log.scrollTop = log.scrollHeight;
 }
 
+function appendSerialChunk(message) {
+  const log = document.getElementById("log");
+  if (!log) return;
+  log.textContent += message;
+  log.scrollTop = log.scrollHeight;
+}
+
 function setSerialState(state, label) {
   const el = document.getElementById("serialStatus");
   if (!el) return;
   el.className = `serial-status state-${state}`;
   el.innerHTML = `<i></i><b>${label}</b>`;
+}
+
+function setMonitorControls(connected) {
+  const connectBtn = document.getElementById("connectMonitorButton");
+  const disconnectBtn = document.getElementById("disconnectMonitorButton");
+  if (connectBtn) connectBtn.classList.toggle("is-hidden", connected);
+  if (disconnectBtn) disconnectBtn.classList.toggle("is-hidden", !connected);
+}
+
+async function connectMonitor() {
+  if (!("serial" in navigator)) {
+    setSerialState("error", "Unavailable");
+    appendLog("[monitor] Web Serial is unavailable in this browser.");
+    return;
+  }
+
+  try {
+    monitorPort = await navigator.serial.requestPort();
+    await monitorPort.open({ baudRate: 115200 });
+    monitorKeepReading = true;
+    setMonitorControls(true);
+    setSerialState("connected", "Monitor connected");
+    appendLog("[monitor] Connected at 115200 baud.");
+    void readMonitorLoop();
+  } catch (error) {
+    monitorPort = null;
+    monitorKeepReading = false;
+    setMonitorControls(false);
+    setSerialState("error", "Monitor error");
+    appendLog(`[monitor] ${error.message || "Connection failed"}`);
+  }
+}
+
+// Reads Web Serial data until the user disconnects the monitor.
+// 读取 Web Serial 数据，直到用户断开监视器。
+async function readMonitorLoop() {
+  while (monitorPort?.readable && monitorKeepReading) {
+    const reader = monitorPort.readable.getReader();
+    monitorReader = reader;
+    try {
+      while (monitorKeepReading) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (value) {
+          appendSerialChunk(monitorDecoder.decode(value, { stream: true }));
+        }
+      }
+    } catch (error) {
+      if (monitorKeepReading) {
+        setSerialState("error", "Read error");
+        appendLog(`[monitor] ${error.message || "Read failed"}`);
+      }
+    } finally {
+      reader.releaseLock();
+      if (monitorReader === reader) monitorReader = null;
+    }
+  }
+}
+
+async function waitForMonitorReaderRelease() {
+  for (let attempt = 0; monitorReader && attempt < 20; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+}
+
+async function disconnectMonitor() {
+  monitorKeepReading = false;
+
+  if (monitorReader) {
+    try {
+      await monitorReader.cancel();
+      await waitForMonitorReaderRelease();
+    } catch (error) {
+      appendLog(`[monitor] ${error.message || "Reader cancel failed"}`);
+    }
+  }
+
+  if (monitorPort) {
+    try {
+      await monitorPort.close();
+      appendLog("[monitor] Disconnected.");
+    } catch (error) {
+      appendLog(`[monitor] ${error.message || "Disconnect failed"}`);
+    }
+  }
+
+  monitorPort = null;
+  setMonitorControls(false);
+  setSerialState("disconnected", "Disconnected");
 }
 
 function bindFlowEvents() {
@@ -321,6 +433,17 @@ function bindFlowEvents() {
 }
 
 function bindWorkspaceEvents() {
+  const connectBtn = document.getElementById("connectMonitorButton");
+  if (connectBtn) {
+    connectBtn.addEventListener("click", connectMonitor);
+    connectBtn.disabled = !("serial" in navigator);
+  }
+
+  const disconnectBtn = document.getElementById("disconnectMonitorButton");
+  if (disconnectBtn) {
+    disconnectBtn.addEventListener("click", disconnectMonitor);
+  }
+
   const clearBtn = document.getElementById("clearLogButton");
   if (clearBtn) {
     clearBtn.addEventListener("click", () => {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>reTerminal E-Series Firmware Hub</title>
   <meta name="description" content="Flash ESP32-S3 firmware to your reTerminal E-Series device directly from the browser. No IDE setup required.">
-  <link rel="stylesheet" href="css/style.css?v=20260604-platforms">
+  <link rel="stylesheet" href="css/style.css?v=20260604-devices">
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 </head>
 <body>
@@ -150,17 +150,21 @@
         </div>
         <div class="monitor-actions">
           <span class="monitor-hint">Available throughout setup and flashing.</span>
-          <button class="button button-secondary button-small" id="clearLogButton" type="button">Clear output</button>
+          <div class="monitor-buttons">
+            <button class="button button-small" id="connectMonitorButton" type="button">Connect monitor</button>
+            <button class="button button-secondary button-small is-hidden" id="disconnectMonitorButton" type="button">Disconnect</button>
+            <button class="button button-secondary button-small" id="clearLogButton" type="button">Clear output</button>
+          </div>
         </div>
         <pre id="log" aria-label="Serial output">[system] Serial monitor ready.
-[system] Select a firmware, then click "Connect and flash" to begin.</pre>
+[system] Use "Connect monitor" for debug logs or "Connect and flash" to install firmware.</pre>
       </article>
     </aside>
 
   </main>
 
-  <script src="js/firmwares.js?v=20260604-platforms"></script>
-  <script src="js/app.js?v=20260604-platforms"></script>
+  <script src="js/firmwares.js?v=20260604-devices"></script>
+  <script src="js/app.js?v=20260604-devices"></script>
 
 </body>
 </html>
