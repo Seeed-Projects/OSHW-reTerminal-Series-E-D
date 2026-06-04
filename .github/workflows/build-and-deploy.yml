@@ -1,0 +1,142 @@
+name: Build Firmware & Deploy Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-firmware:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sketch:
+          - name: RTC_PCF8563
+            path: examples/RTC_PCF8563
+            needs_gfx: false
+          - name: LowPower_DeepSleep
+            path: examples/LowPower_DeepSleep
+            needs_gfx: false
+          - name: MicRecordToSD
+            path: examples/MicRecordToSD
+            needs_gfx: false
+          - name: E1003_TouchDraw
+            path: examples/E1003_TouchDraw
+            needs_gfx: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install arduino-cli
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=$HOME/.local/bin sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install ESP32 board package
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls \
+            https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32
+
+      - name: Install Seeed_GFX library
+        if: matrix.sketch.needs_gfx
+        run: |
+          arduino-cli config set library.enable_unsafe_install true
+          arduino-cli lib install --git-url https://github.com/Seeed-Studio/Seeed_GFX.git
+
+      - name: Compile ${{ matrix.sketch.name }}
+        run: |
+          arduino-cli compile \
+            --fqbn "esp32:esp32:XIAO_ESP32S3:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=opi" \
+            --output-dir ./build/${{ matrix.sketch.name }} \
+            ./${{ matrix.sketch.path }}
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.sketch.name }}
+          path: build/${{ matrix.sketch.name }}/
+          retention-days: 30
+
+  deploy-pages:
+    needs: build-firmware
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all firmware artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: firmware-artifacts
+
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p _site/firmware
+
+          # Copy web source files
+          cp web/index.html _site/
+          cp -r web/css _site/
+          cp -r web/js _site/
+          [ -d web/assets ] && cp -r web/assets _site/ || true
+
+          # Organize firmware binaries and generate manifests
+          for sketch_dir in firmware-artifacts/firmware-*/; do
+            sketch_name=$(basename "$sketch_dir" | sed 's/^firmware-//')
+            dest="_site/firmware/$sketch_name"
+            mkdir -p "$dest"
+
+            # Copy all .bin files
+            cp "$sketch_dir"/*.bin "$dest/" 2>/dev/null || true
+
+            # Find the firmware .bin (the one without bootloader/partitions in the name)
+            fw_bin=$(ls "$dest/"*.ino.bin 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
+            bl_bin=$(ls "$dest/"*.ino.bootloader.bin 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
+            pt_bin=$(ls "$dest/"*.ino.partitions.bin 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
+
+            # Generate manifest.json
+            cat > "$dest/manifest.json" << MANIFEST
+          {
+            "name": "$sketch_name",
+            "new_install_prompt_erase": true,
+            "builds": [
+              {
+                "chipFamily": "ESP32-S3",
+                "parts": [
+                  { "path": "$bl_bin", "offset": 0 },
+                  { "path": "$pt_bin", "offset": 32768 },
+                  { "path": "boot_app0.bin", "offset": 57344 },
+                  { "path": "$fw_bin", "offset": 65536 }
+                ]
+              }
+            ]
+          }
+          MANIFEST
+          done
+
+          echo "=== Deployment directory structure ==="
+          find _site -type f | head -50
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
