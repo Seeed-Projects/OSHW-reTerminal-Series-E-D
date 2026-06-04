@@ -1,14 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" role="img" aria-label="Base firmware preview">
-  <rect width="900" height="460" rx="32" fill="#eef3f2"/>
-  <rect x="70" y="68" width="760" height="324" rx="20" fill="#fdfefe" stroke="#d8e1df" stroke-width="3"/>
-  <rect x="112" y="112" width="206" height="112" rx="16" fill="#f5f8f7" stroke="#d8e1df"/>
-  <rect x="346" y="112" width="206" height="112" rx="16" fill="#f5f8f7" stroke="#d8e1df"/>
-  <rect x="580" y="112" width="206" height="112" rx="16" fill="#f5f8f7" stroke="#d8e1df"/>
-  <rect x="112" y="252" width="674" height="86" rx="16" fill="#004966"/>
-  <circle cx="158" cy="168" r="26" fill="#8FC31F"/>
-  <path d="M151 168h14M158 161v14" stroke="#004966" stroke-width="5" stroke-linecap="round"/>
-  <path d="M382 150h134M382 174h92M382 198h112" stroke="#004966" stroke-width="9" stroke-linecap="round"/>
-  <path d="M622 154h122M622 180h84M622 206h108" stroke="#004966" stroke-width="9" stroke-linecap="round"/>
-  <path d="M156 296h172M370 296h134M548 296h184" stroke="#fdfefe" stroke-width="10" stroke-linecap="round"/>
-  <text x="112" y="58" fill="#004966" font-family="Arial, sans-serif" font-size="24" font-weight="700">Base Demo Experience</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 675" role="img" aria-label="Base firmware preview">
+  <rect width="900" height="675" rx="32" fill="#eef3f2"/>
+  <rect x="70" y="158" width="760" height="360" rx="20" fill="#fdfefe" stroke="#d8e1df" stroke-width="3"/>
+  <rect x="112" y="218" width="206" height="112" rx="16" fill="#f5f8f7" stroke="#d8e1df"/>
+  <rect x="346" y="218" width="206" height="112" rx="16" fill="#f5f8f7" stroke="#d8e1df"/>
+  <rect x="580" y="218" width="206" height="112" rx="16" fill="#f5f8f7" stroke="#d8e1df"/>
+  <rect x="112" y="365" width="674" height="86" rx="16" fill="#004966"/>
+  <circle cx="158" cy="274" r="26" fill="#8FC31F"/>
+  <path d="M151 274h14M158 267v14" stroke="#004966" stroke-width="5" stroke-linecap="round"/>
+  <path d="M382 256h134M382 280h92M382 304h112" stroke="#004966" stroke-width="9" stroke-linecap="round"/>
+  <path d="M622 260h122M622 286h84M622 312h108" stroke="#004966" stroke-width="9" stroke-linecap="round"/>
+  <path d="M156 409h172M370 409h134M548 409h184" stroke="#fdfefe" stroke-width="10" stroke-linecap="round"/>
+  <text x="112" y="130" fill="#004966" font-family="Arial, sans-serif" font-size="24" font-weight="700">Base Demo Experience</text>
 </svg>

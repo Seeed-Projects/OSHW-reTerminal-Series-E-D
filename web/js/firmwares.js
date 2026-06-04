@@ -57,7 +57,7 @@ const PLATFORM_CARDS = [
     description:
       "Use Base firmware when you want to verify core hardware quickly: RTC, low-power mode, microphone recording, touch, and display behavior.",
     logo: "assets/platforms/base-logo.svg",
-    preview: "assets/platforms/base-preview.svg",
+    preview: "assets/platforms/base-preview.svg?v=20260604-platform-art",
     previewAlt: "Basic firmware setup preview",
     accent: "#004966",
     highlight: "#8FC31F",
@@ -117,7 +117,7 @@ const PLATFORM_CARDS = [
     tagline: "Smart-home firmware with YAML setup and Home Assistant integration.",
     description:
       "ESPHome turns microcontroller boards into local smart-home devices using simple YAML configuration, web tools, and Home Assistant workflows.",
-    logo: "assets/platforms/esphome-logo.svg",
+    logo: "assets/platforms/esphome-logo-card.png",
     preview: "assets/platforms/esphome-preview-enhanced.png",
     previewAlt: "ESPHome dashboard preview",
     accent: "#004966",
@@ -159,7 +159,7 @@ const PLATFORM_CARDS = [
     description:
       "SquareLine Vision focuses on designing embedded interfaces visually, then preparing UI assets and implementation output for screen-based products.",
     logo: "assets/platforms/squareline-logo.png",
-    preview: "assets/platforms/squareline-preview.png",
+    preview: "assets/platforms/squareline-preview-43.png",
     previewAlt: "SquareLine Vision product preview",
     accent: "#004966",
     highlight: "#8FC31F",
@@ -186,7 +186,7 @@ const PLATFORM_CARDS = [
     tagline: "Open-source ePaper firmware and protocol for BLE display control.",
     description:
       "OpenDisplay provides firmware and browser tools for low-power ePaper display projects, including BLE control, configuration, and image upload flows.",
-    logo: "assets/platforms/opendisplay-logo.svg",
+    logo: "assets/platforms/opendisplay-logo-card-v2.png",
     preview: "assets/platforms/opendisplay-screen-enhanced.png",
     previewAlt: "OpenDisplay browser upload flow",
     accent: "#004966",
