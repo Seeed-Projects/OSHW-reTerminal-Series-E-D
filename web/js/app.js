@@ -371,9 +371,9 @@ async function flashDevice() {
 
     await esploader.writeFlash({
       fileArray,
-      flashMode: "dio",
-      flashFreq: "40m",
-      flashSize: "detect",
+      flashMode: "keep",
+      flashFreq: "keep",
+      flashSize: "8MB",
       eraseAll: false,
       compress: true,
       reportProgress: (fileIndex, written, total) => {
