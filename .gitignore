@@ -5,9 +5,27 @@
 
 # Arduino build artifacts
 build/
+build-*/
+.trash/
 *.elf
 *.bin
+*.hex
 *.map
+*.uf2
+*.log
+compile_commands.json
+
+# PlatformIO
+.pio/
 
 # IDE
 .vscode/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx

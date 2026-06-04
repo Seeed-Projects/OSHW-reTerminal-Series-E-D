@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>reTerminal E-Series Firmware Hub</title>
+  <meta name="description" content="Flash ESP32-S3 firmware to your reTerminal E-Series device directly from the browser. No IDE setup required.">
+  <link rel="stylesheet" href="css/style.css?v=20260604-topbar">
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#">
+        <span class="brand-logo">
+          <img src="assets/brand/reterminal-epaper-icon.svg" alt="reTerminal ePaper icon">
+        </span>
+        <span class="brand-text">
+          <b>reTerminal E-Series</b>
+          <small>Firmware Hub</small>
+        </span>
+      </a>
+      <div class="topbar-links">
+        <a class="topbar-link" href="https://wiki.seeedstudio.com/reterminal_e10xx_main_page/" target="_blank" rel="noopener">
+          <svg class="nav-icon" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M4.5 3.5h8.2c1.55 0 2.8 1.25 2.8 2.8v10.2H6.1a2.6 2.6 0 0 1-2.6-2.6V4.5c0-.55.45-1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6.8 7.2h5.8M6.8 10h6.4M6.8 12.8h4.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          Wiki
+        </a>
+        <a class="topbar-link" href="https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D" target="_blank" rel="noopener">
+          <svg class="nav-icon" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M10 2.5a7.5 7.5 0 0 0-2.37 14.62c.37.07.5-.16.5-.35v-1.25c-2.04.44-2.47-.87-2.47-.87-.33-.84-.81-1.06-.81-1.06-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.11 1.7.79 2.12.6.06-.47.25-.79.46-.97-1.63-.19-3.34-.82-3.34-3.62 0-.8.29-1.45.75-1.96-.08-.18-.33-.93.07-1.94 0 0 .62-.2 2.03.75A7 7 0 0 1 10 7.2c.63 0 1.26.08 1.86.25 1.4-.95 2.02-.75 2.02-.75.4 1.01.15 1.76.08 1.94.47.51.75 1.16.75 1.96 0 2.81-1.72 3.43-3.35 3.61.26.23.5.68.5 1.37v2.03c0 .2.13.42.51.35A7.5 7.5 0 0 0 10 2.5Z" fill="currentColor"/>
+          </svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Full-screen app body: focused setup flow + persistent monitor -->
+  <main class="app">
+
+    <!-- ============ LEFT: Firmware setup flow ============ -->
+    <section class="flow-col">
+      <article class="panel selection-panel" id="selectionPanel">
+        <div class="col-head">
+          <div class="col-head-titles">
+            <p class="eyebrow">Step 1</p>
+            <h2>Select platform</h2>
+            <p class="col-sub">Choose the product experience you want to start with. Device and firmware options appear inside each platform.</p>
+          </div>
+        </div>
+
+        <div class="alert alert-warning" id="browserWarning">
+          <strong>Web Serial unavailable.</strong>
+          <span>Open this page over HTTPS or localhost in desktop Chrome or Edge.</span>
+        </div>
+
+        <div class="platform-grid" id="platformGrid"></div>
+      </article>
+
+      <article class="panel selected-panel step-panel is-hidden" id="selectedPanel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Selected platform</p>
+            <h2>Platform overview</h2>
+          </div>
+          <button class="button button-secondary button-small" id="changePlatformButton" type="button">Change platform</button>
+        </div>
+        <div class="selected-release" id="selectedRelease"></div>
+      </article>
+
+      <article class="panel step-panel is-hidden" id="versionPanel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Step 2</p>
+            <h2>Version and setup</h2>
+          </div>
+        </div>
+        <div class="setup-grid">
+          <label class="field-block is-hidden" id="firmwareField" for="firmwareSelect">
+            <span>Base demo</span>
+            <select id="firmwareSelect"></select>
+          </label>
+          <label class="field-block" for="versionSelect">
+            <span>Firmware version</span>
+            <select id="versionSelect"></select>
+          </label>
+          <div class="config-area" id="configArea"></div>
+        </div>
+      </article>
+
+      <article class="panel flash-panel step-panel is-hidden" id="flashPanel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Step 3</p>
+            <h2>Flash to device</h2>
+          </div>
+        </div>
+
+        <div class="install-mode">
+          <button class="mode-button is-active" type="button">Standard flash</button>
+          <button class="mode-button" type="button" disabled>Erase flash + flash</button>
+        </div>
+
+        <div class="alert alert-warning install-note" id="installNote">
+          <strong>Firmware not published yet.</strong>
+          <span>This platform card is ready, but its web flashing package has not been added.</span>
+        </div>
+
+        <div class="alert alert-warning erase-note is-visible">
+          <strong>Erase mode reserved.</strong>
+          <span>This option needs ESP Web Tools validation before it is enabled.</span>
+        </div>
+
+        <div class="alert alert-warning" id="errorAlert" role="alert">
+          <strong>Installation stopped</strong>
+          <span id="errorMessage"></span>
+        </div>
+
+        <div class="progress-row">
+          <div class="progress-label">
+            <span>Flash device</span>
+            <b id="flashValue">0%</b>
+          </div>
+          <div class="progress-track"><div class="progress-bar" id="flashBar"></div></div>
+          <small id="flashStatus">Select firmware and click Flash to begin</small>
+        </div>
+
+        <div class="flash-actions">
+          <esp-web-install-button id="espFlashButton" manifest="firmware/RTC_PCF8563/manifest.json">
+            <button slot="activate" class="button button-flash">
+              <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+                <path d="M7 1v8M7 9L4.5 6.5M7 9l2.5-2.5M2 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Connect &amp; flash
+            </button>
+            <span slot="unsupported">Web Serial unavailable. Use Chrome or Edge on desktop.</span>
+            <span slot="not-allowed">HTTPS required for Web Serial.</span>
+          </esp-web-install-button>
+          <button class="button button-flash is-hidden" id="disabledFlashButton" type="button" disabled>
+            Connect &amp; flash
+          </button>
+          <span class="flash-hint">Connect your reTerminal with a USB data cable first.</span>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ RIGHT: Persistent monitor ============ -->
+    <aside class="monitor-col">
+      <article class="panel console-panel">
+        <div class="console-heading">
+          <div>
+            <p class="eyebrow">Monitor</p>
+            <h2>Device log</h2>
+          </div>
+          <span class="serial-status" id="serialStatus"><i></i><b>Disconnected</b></span>
+        </div>
+        <div class="monitor-actions">
+          <span class="monitor-hint">Available throughout setup and flashing.</span>
+          <div class="monitor-buttons">
+            <button class="button button-small" id="connectMonitorButton" type="button">Connect monitor</button>
+            <button class="button button-secondary button-small is-hidden" id="disconnectMonitorButton" type="button">Disconnect</button>
+            <button class="button button-secondary button-small" id="clearLogButton" type="button">Clear output</button>
+          </div>
+        </div>
+        <pre id="log" aria-label="Serial output">[system] Serial monitor ready.
+[system] Use "Connect monitor" for debug logs or "Connect and flash" to install firmware.</pre>
+      </article>
+    </aside>
+
+  </main>
+
+  <script src="js/firmwares.js?v=20260604-platform-art2"></script>
+  <script src="js/app.js?v=20260604-topbar"></script>
+
+</body>
+</html>

@@ -1,0 +1,211 @@
+const DEVICES = [
+  {
+    id: "E1001",
+    name: "reTerminal E1001",
+    description: '7.5" monochrome ePaper display',
+    image: "assets/devices/reterminal-e1001.jpg",
+    imageAlt: "reTerminal E1001 product photo",
+    specs: [
+      '7.5" display',
+      "Monochrome",
+      "4-level grayscale",
+    ],
+  },
+  {
+    id: "E1002",
+    name: "reTerminal E1002",
+    description: '7.3" full-color ePaper display',
+    image: "assets/devices/reterminal-e1002.jpg",
+    imageAlt: "reTerminal E1002 product photo",
+    specs: [
+      '7.3" display',
+      "Full color",
+      "E Ink Spectra 6",
+    ],
+  },
+  {
+    id: "E1003",
+    name: "reTerminal E1003",
+    description: '10.3" touch ePaper dashboard display',
+    image: "assets/devices/reterminal-e1003.jpg",
+    imageAlt: "reTerminal E1003 product photo",
+    specs: [
+      '10.3" display',
+      "16-level grayscale",
+      "Touch",
+    ],
+  },
+  {
+    id: "E1004",
+    name: "reTerminal E1004",
+    description: '13.3" full-color ePaper display',
+    image: "assets/devices/reterminal-e1004.jpg",
+    imageAlt: "reTerminal E1004 product photo",
+    specs: [
+      '13.3" display',
+      "Full color",
+      "E Ink Spectra 6",
+    ],
+  },
+];
+
+const PLATFORM_CARDS = [
+  {
+    id: "base",
+    name: "Base",
+    tagline: "Product bring-up demos for first-time hardware checks.",
+    description:
+      "Use Base firmware when you want to verify core hardware quickly: RTC, low-power mode, microphone recording, touch, and display behavior.",
+    logo: "assets/platforms/base-logo.svg",
+    preview: "assets/platforms/base-preview.svg?v=20260604-platform-art",
+    previewAlt: "Basic firmware setup preview",
+    accent: "#004966",
+    highlight: "#8FC31F",
+    supportedDevices: ["E1001", "E1002", "E1003", "E1004"],
+    installReady: true,
+    bullets: [
+      "Fast product smoke tests",
+      "No ecosystem account required",
+      "Good starting point before advanced integrations",
+    ],
+    versions: [
+      {
+        version: "1.0.0",
+        label: "Stable",
+        manifest: "firmware/RTC_PCF8563/manifest.json",
+      },
+    ],
+    configFields: [],
+    firmwareOptions: [
+      {
+        id: "RTC_PCF8563",
+        name: "RTC Clock Demo",
+        description: "Read and write the onboard PCF8563 real-time clock.",
+        category: "Peripheral",
+        compatible: ["E1001", "E1002", "E1003", "E1004"],
+        manifest: "firmware/RTC_PCF8563/manifest.json",
+      },
+      {
+        id: "LowPower_DeepSleep",
+        name: "Deep Sleep Demo",
+        description: "Enter ESP32-S3 deep sleep and wake on button press.",
+        category: "Power",
+        compatible: ["E1001", "E1002", "E1003", "E1004"],
+        manifest: "firmware/LowPower_DeepSleep/manifest.json",
+      },
+      {
+        id: "MicRecordToSD",
+        name: "Microphone Recording",
+        description: "Record audio from the onboard PDM microphone to MicroSD.",
+        category: "Audio",
+        compatible: ["E1001", "E1002", "E1003"],
+        manifest: "firmware/MicRecordToSD/manifest.json",
+      },
+      {
+        id: "E1003_TouchDraw",
+        name: "Touch Draw",
+        description: "Draw dots on the E1003 ePaper display from touch input.",
+        category: "Display",
+        compatible: ["E1003"],
+        manifest: "firmware/E1003_TouchDraw/manifest.json",
+      },
+    ],
+  },
+  {
+    id: "esphome",
+    name: "ESPHome",
+    tagline: "Smart-home firmware with YAML setup and Home Assistant integration.",
+    description:
+      "ESPHome turns microcontroller boards into local smart-home devices using simple YAML configuration, web tools, and Home Assistant workflows.",
+    logo: "assets/platforms/esphome-logo-card.png",
+    preview: "assets/platforms/esphome-preview-enhanced.png",
+    previewAlt: "ESPHome dashboard preview",
+    accent: "#004966",
+    highlight: "#8FC31F",
+    supportedDevices: ["E1001", "E1002", "E1003"],
+    installReady: false,
+    bullets: [
+      "Home Assistant friendly",
+      "Wi-Fi provisioning expected",
+      "Good for dashboards, sensors, and local automation",
+    ],
+    versions: [
+      {
+        version: "2026.5.2",
+        label: "Preview",
+        manifest: "firmware/ESPHome/manifest.json",
+      },
+    ],
+    configFields: [
+      {
+        id: "wifiSsid",
+        label: "Wi-Fi SSID",
+        type: "text",
+        placeholder: "Office Wi-Fi",
+      },
+      {
+        id: "wifiPassword",
+        label: "Wi-Fi password",
+        type: "password",
+        placeholder: "Stored locally before flashing",
+      },
+    ],
+    firmwareOptions: [],
+  },
+  {
+    id: "squareline",
+    name: "SquareLine Vision",
+    tagline: "Visual UI workflow for embedded screen experiences.",
+    description:
+      "SquareLine Vision focuses on designing embedded interfaces visually, then preparing UI assets and implementation output for screen-based products.",
+    logo: "assets/platforms/squareline-logo.png",
+    preview: "assets/platforms/squareline-preview-43.png",
+    previewAlt: "SquareLine Vision product preview",
+    accent: "#004966",
+    highlight: "#8FC31F",
+    supportedDevices: ["E1002", "E1003"],
+    installReady: false,
+    bullets: [
+      "Visual UI design workflow",
+      "Useful for screen-first product demos",
+      "Best with display-capable devices",
+    ],
+    versions: [
+      {
+        version: "1.3.0",
+        label: "Preview",
+        manifest: "firmware/SquareLine_Vision/manifest.json",
+      },
+    ],
+    configFields: [],
+    firmwareOptions: [],
+  },
+  {
+    id: "opendisplay",
+    name: "OpenDisplay",
+    tagline: "Open-source ePaper firmware and protocol for BLE display control.",
+    description:
+      "OpenDisplay provides firmware and browser tools for low-power ePaper display projects, including BLE control, configuration, and image upload flows.",
+    logo: "assets/platforms/opendisplay-logo-card-v2.png",
+    preview: "assets/platforms/opendisplay-screen-enhanced.png",
+    previewAlt: "OpenDisplay browser upload flow",
+    accent: "#004966",
+    highlight: "#8FC31F",
+    supportedDevices: ["E1001", "E1002", "E1003"],
+    installReady: false,
+    bullets: [
+      "BLE-oriented ePaper control",
+      "Browser-based configuration and image upload",
+      "Good for always-on information panels",
+    ],
+    versions: [
+      {
+        version: "0.1.0",
+        label: "Preview",
+        manifest: "firmware/OpenDisplay/manifest.json",
+      },
+    ],
+    configFields: [],
+    firmwareOptions: [],
+  },
+];
