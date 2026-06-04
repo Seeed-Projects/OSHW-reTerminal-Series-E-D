@@ -6,6 +6,7 @@
 # Arduino build artifacts
 build/
 build-*/
+.trash/
 *.elf
 *.bin
 *.hex

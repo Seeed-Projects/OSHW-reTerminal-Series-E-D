@@ -1,13 +1,12 @@
-let activePlatform = "all";
-let activeFunction = "all";
-let activeDevice = "all";
-let selectedFirmware = null;
+let expandedPlatformId = PLATFORM_CARDS[0]?.id || null;
+let selectedPlatform = null;
+let selectedDevice = null;
+let selectedFirmwareOption = null;
 let selectedVersion = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
-  renderAllFilters();
-  renderCatalog();
+  renderPlatformCards();
   renderFlowState();
   bindFlowEvents();
   bindWorkspaceEvents();
@@ -20,227 +19,127 @@ function checkBrowser() {
   }
 }
 
-function getPlatformName(platformId) {
-  return PLATFORMS.find((platform) => platform.id === platformId)?.name || platformId;
+function getDevice(deviceId) {
+  return DEVICES.find((device) => device.id === deviceId) || null;
 }
 
-function getDefaultVersion(firmware) {
-  return firmware?.versions?.[0] || null;
+function getDefaultVersion(platform) {
+  return platform?.versions?.[0] || null;
 }
 
-function firmwareMatchesFilters(firmware) {
-  const platformMatches =
-    activePlatform === "all" || firmware.platform === activePlatform;
-  const functionMatches =
-    activeFunction === "all" || firmware.category === activeFunction;
-  const deviceMatches =
-    activeDevice === "all" || firmware.compatible.includes(activeDevice);
-
-  return platformMatches && functionMatches && deviceMatches;
+function getAvailableFirmwareOptions(platform, deviceId) {
+  if (!platform?.firmwareOptions?.length || !deviceId) return [];
+  return platform.firmwareOptions.filter((firmware) =>
+    firmware.compatible.includes(deviceId)
+  );
 }
 
-function countForPlatform(platformId) {
-  return FIRMWARES.filter((firmware) => {
-    const platformMatches = platformId === "all" || firmware.platform === platformId;
-    const functionMatches =
-      activeFunction === "all" || firmware.category === activeFunction;
-    const deviceMatches =
-      activeDevice === "all" || firmware.compatible.includes(activeDevice);
-    return platformMatches && functionMatches && deviceMatches;
-  }).length;
+function getInstallManifest() {
+  if (!selectedPlatform?.installReady) return "";
+  return selectedFirmwareOption?.manifest || selectedVersion?.manifest || "";
 }
 
-function countForFunction(functionId) {
-  return FIRMWARES.filter((firmware) => {
-    const platformMatches =
-      activePlatform === "all" || firmware.platform === activePlatform;
-    const functionMatches = functionId === "all" || firmware.category === functionId;
-    const deviceMatches =
-      activeDevice === "all" || firmware.compatible.includes(activeDevice);
-    return platformMatches && functionMatches && deviceMatches;
-  }).length;
-}
-
-// Count firmware items compatible with each device.
-// 统计每个设备可用的固件数量。
-function countForDevice(deviceId) {
-  return FIRMWARES.filter((firmware) => {
-    const platformMatches =
-      activePlatform === "all" || firmware.platform === activePlatform;
-    const functionMatches =
-      activeFunction === "all" || firmware.category === activeFunction;
-    const deviceMatches = deviceId === "all" || firmware.compatible.includes(deviceId);
-    return platformMatches && functionMatches && deviceMatches;
-  }).length;
-}
-
-function renderFilterChips(containerId, items, activeId, countFn, onSelect) {
-  const container = document.getElementById(containerId);
+function renderPlatformCards() {
+  const container = document.getElementById("platformGrid");
   if (!container) return;
 
-  container.innerHTML = items.map((item) => {
-    const count = countFn(item.id);
-    const activeClass = item.id === activeId ? "is-active" : "";
-    const disabledAttr = count === 0 && item.id !== activeId ? "disabled" : "";
-
-    return `
-      <button
-        class="filter-chip ${activeClass}"
-        data-filter="${item.id}"
-        type="button"
-        ${disabledAttr}
-      >
-        ${item.name}
-        <span class="filter-count">${count}</span>
-      </button>
-    `;
-  }).join("");
-
-  container.querySelectorAll(".filter-chip").forEach((chip) => {
-    chip.addEventListener("click", () => onSelect(chip.dataset.filter));
-  });
-}
-
-function renderAllFilters() {
-  renderFilterChips(
-    "platformChips",
-    PLATFORMS,
-    activePlatform,
-    countForPlatform,
-    (id) => {
-      activePlatform = id;
-      renderAllFilters();
-      renderCatalog();
-    }
-  );
-
-  renderFilterChips(
-    "functionChips",
-    FUNCTION_GROUPS,
-    activeFunction,
-    countForFunction,
-    (id) => {
-      activeFunction = id;
-      renderAllFilters();
-      renderCatalog();
-    }
-  );
-
-  renderFilterChips(
-    "deviceChips",
-    DEVICES,
-    activeDevice,
-    countForDevice,
-    (id) => {
-      activeDevice = id;
-      renderAllFilters();
-      renderCatalog();
-    }
-  );
-}
-
-function getCardIcon(icon) {
-  const icons = {
-    clock: `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="13" stroke="#a1a1a6" stroke-width="1.5"/>
-      <path d="M18 10v8l5 3" stroke="#a1a1a6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>`,
-    sleep: `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <path d="M24 18a8 8 0 11-8-8c0 4.4 3.6 8 8 8z" stroke="#a1a1a6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M23 8h4l-4 4h4" stroke="#a1a1a6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>`,
-    mic: `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <rect x="14" y="7" width="8" height="14" rx="4" stroke="#a1a1a6" stroke-width="1.5"/>
-      <path d="M10 19a8 8 0 0016 0" stroke="#a1a1a6" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M18 27v3M15 30h6" stroke="#a1a1a6" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>`,
-    touch: `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <rect x="8" y="5" width="20" height="26" rx="2" stroke="#a1a1a6" stroke-width="1.5"/>
-      <circle cx="18" cy="18" r="3" stroke="#a1a1a6" stroke-width="1.5"/>
-      <circle cx="18" cy="18" r="1" fill="#a1a1a6"/>
-    </svg>`,
-  };
-  return icons[icon] || icons.clock;
-}
-
-function getTagClass(category) {
-  return CATEGORY_COLORS[category] || "";
-}
-
-function renderCatalog() {
-  const container = document.getElementById("catalog");
-  if (!container) return;
-
-  const visible = FIRMWARES.filter(firmwareMatchesFilters);
-
-  if (visible.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <h3>No firmware yet</h3>
-        <p>This category is reserved for future firmware packages.</p>
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = visible.map((firmware) => {
-    const compatBadges = firmware.compatible
-      .map(
-        (id) =>
-          `<span class="compat-badge ${id === activeDevice ? "active" : ""}">${id}</span>`
-      )
+  container.innerHTML = PLATFORM_CARDS.map((platform) => {
+    const isExpanded = platform.id === expandedPlatformId;
+    const devices = platform.supportedDevices
+      .map((deviceId) => {
+        const device = getDevice(deviceId);
+        if (!device) return "";
+        return `
+          <button class="device-option" data-platform="${platform.id}" data-device="${device.id}" type="button">
+            <strong>${device.name}</strong>
+            <span>${device.description}</span>
+          </button>
+        `;
+      })
+      .join("");
+    const bullets = platform.bullets
+      .map((item) => `<li>${item}</li>`)
       .join("");
 
     return `
-      <article class="firmware-card">
-        <div class="card-preview">
-          <div class="card-preview-placeholder">${getCardIcon(firmware.icon)}</div>
-        </div>
-        <div class="card-content">
-          <div class="card-top">
-            <span class="tag tag-platform">${getPlatformName(firmware.platform)}</span>
-            <span class="tag ${getTagClass(firmware.category)}">${firmware.category}</span>
+      <article class="platform-card ${isExpanded ? "is-expanded" : ""}" style="--platform-accent:${platform.accent};--platform-highlight:${platform.highlight};">
+        <button class="platform-card-main" data-expand-platform="${platform.id}" type="button">
+          <span class="platform-logo-wrap">
+            <img src="${platform.logo}" alt="${platform.name} logo">
+          </span>
+          <span class="platform-card-copy">
+            <strong>${platform.name}</strong>
+            <span>${platform.tagline}</span>
+          </span>
+          <span class="platform-card-action">${isExpanded ? "Expanded" : "View"}</span>
+        </button>
+        <div class="platform-detail">
+          <div class="platform-detail-copy">
+            <p>${platform.description}</p>
+            <ul>${bullets}</ul>
           </div>
-          <h3>${firmware.name}</h3>
-          <p>${firmware.tagline}</p>
-          <div class="card-foot">
-            <div class="compat-list">${compatBadges}</div>
-            <a href="${firmware.sourceUrl}" target="_blank" rel="noreferrer">Source</a>
-            <button class="button button-small" data-firmware="${firmware.id}" type="button">
-              Select
-            </button>
+          <figure class="platform-preview">
+            <img src="${platform.preview}" alt="${platform.previewAlt}">
+          </figure>
+          <div class="device-choice">
+            <div>
+              <p class="eyebrow">Supported devices</p>
+              <h3>Select device type</h3>
+            </div>
+            <div class="device-options">${devices}</div>
           </div>
         </div>
       </article>
     `;
   }).join("");
 
-  container.querySelectorAll("[data-firmware]").forEach((btn) => {
-    btn.addEventListener("click", () => selectFirmware(btn.dataset.firmware));
+  container.querySelectorAll("[data-expand-platform]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      expandedPlatformId = btn.dataset.expandPlatform;
+      renderPlatformCards();
+    });
+  });
+
+  container.querySelectorAll("[data-device]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectPlatformDevice(btn.dataset.platform, btn.dataset.device);
+    });
   });
 }
 
-function selectFirmware(firmwareId) {
-  selectedFirmware = FIRMWARES.find((firmware) => firmware.id === firmwareId) || null;
-  selectedVersion = getDefaultVersion(selectedFirmware);
+// Selects the platform-device pair that drives the remaining setup flow.
+// 选择平台和设备组合，用来驱动后续配置流程。
+function selectPlatformDevice(platformId, deviceId) {
+  selectedPlatform =
+    PLATFORM_CARDS.find((platform) => platform.id === platformId) || null;
+  selectedDevice = getDevice(deviceId);
+  const availableOptions = getAvailableFirmwareOptions(selectedPlatform, deviceId);
+  selectedFirmwareOption = availableOptions[0] || null;
+  selectedVersion = getDefaultVersion(selectedPlatform);
+
   renderSelectedRelease();
-  renderVersionPanel();
+  renderSetupPanel();
   renderConfigArea();
-  updateFlashManifest();
+  updateFlashState();
   renderFlowState();
   resetProgress();
-  appendLog(`[system] Selected firmware: ${selectedFirmware?.name || "None"}`);
+  appendLog(
+    `[system] Selected platform: ${selectedPlatform?.name || "None"} / ${selectedDevice?.name || "None"}`
+  );
 }
 
-function clearFirmwareSelection() {
-  selectedFirmware = null;
+function clearPlatformSelection() {
+  selectedPlatform = null;
+  selectedDevice = null;
+  selectedFirmwareOption = null;
   selectedVersion = null;
+  renderPlatformCards();
   renderFlowState();
   resetProgress();
 }
 
 function renderFlowState() {
-  const hasSelection = Boolean(selectedFirmware);
+  const hasSelection = Boolean(selectedPlatform && selectedDevice);
   const selectionPanel = document.getElementById("selectionPanel");
   const selectedPanel = document.getElementById("selectedPanel");
   const versionPanel = document.getElementById("versionPanel");
@@ -262,31 +161,57 @@ function toggleStepPanel(panel, visible, delayMs) {
 
 function renderSelectedRelease() {
   const container = document.getElementById("selectedRelease");
-  if (!container || !selectedFirmware) return;
+  if (!container || !selectedPlatform || !selectedDevice) return;
 
-  const compatBadges = selectedFirmware.compatible
-    .map((id) => `<span class="compat-badge">${id}</span>`)
-    .join("");
+  const firmwareName = selectedFirmwareOption?.name || selectedPlatform.name;
 
   container.innerHTML = `
-    <div class="selected-icon">${getCardIcon(selectedFirmware.icon)}</div>
+    <div class="selected-icon">
+      <img src="${selectedPlatform.logo}" alt="${selectedPlatform.name} logo">
+    </div>
     <div class="selected-copy">
       <div class="selected-tags">
-        <span class="tag tag-platform">${getPlatformName(selectedFirmware.platform)}</span>
-        <span class="tag ${getTagClass(selectedFirmware.category)}">${selectedFirmware.category}</span>
+        <span class="tag tag-platform">${selectedPlatform.name}</span>
+        <span class="tag tag-device">${selectedDevice.name}</span>
       </div>
-      <h3>${selectedFirmware.name}</h3>
-      <p>${selectedFirmware.tagline}</p>
-      <div class="compat-list">${compatBadges}</div>
+      <h3>${firmwareName}</h3>
+      <p>${selectedPlatform.description}</p>
+      <div class="compat-list">
+        <span class="compat-badge active">${selectedDevice.description}</span>
+      </div>
     </div>
   `;
 }
 
+function renderSetupPanel() {
+  renderFirmwareSelect();
+  renderVersionPanel();
+}
+
+function renderFirmwareSelect() {
+  const field = document.getElementById("firmwareField");
+  const select = document.getElementById("firmwareSelect");
+  if (!field || !select || !selectedPlatform || !selectedDevice) return;
+
+  const options = getAvailableFirmwareOptions(selectedPlatform, selectedDevice.id);
+  field.classList.toggle("is-hidden", options.length === 0);
+  if (!options.length) {
+    select.innerHTML = "";
+    return;
+  }
+
+  select.innerHTML = options.map((firmware) => {
+    const selectedAttr =
+      firmware.id === selectedFirmwareOption?.id ? "selected" : "";
+    return `<option value="${firmware.id}" ${selectedAttr}>${firmware.name}</option>`;
+  }).join("");
+}
+
 function renderVersionPanel() {
   const versionSelect = document.getElementById("versionSelect");
-  if (!versionSelect || !selectedFirmware) return;
+  if (!versionSelect || !selectedPlatform) return;
 
-  versionSelect.innerHTML = selectedFirmware.versions.map((item) => {
+  versionSelect.innerHTML = selectedPlatform.versions.map((item) => {
     const label = `${item.version} - ${item.label}`;
     const selectedAttr = item.version === selectedVersion?.version ? "selected" : "";
     return `<option value="${item.version}" ${selectedAttr}>${label}</option>`;
@@ -295,19 +220,19 @@ function renderVersionPanel() {
 
 function renderConfigArea() {
   const container = document.getElementById("configArea");
-  if (!container || !selectedFirmware) return;
+  if (!container || !selectedPlatform) return;
 
-  if (!selectedFirmware.configFields.length) {
+  if (!selectedPlatform.configFields.length) {
     container.innerHTML = `
       <div class="config-empty">
         <strong>No setup fields required</strong>
-        <span>This firmware can be flashed without pre-configuring network or API settings.</span>
+        <span>This platform can continue without pre-configuring network or API settings.</span>
       </div>
     `;
     return;
   }
 
-  container.innerHTML = selectedFirmware.configFields.map((field) => `
+  container.innerHTML = selectedPlatform.configFields.map((field) => `
     <label class="field-block" for="${field.id}">
       <span>${field.label}</span>
       <input id="${field.id}" type="${field.type}" placeholder="${field.placeholder || ""}">
@@ -315,14 +240,23 @@ function renderConfigArea() {
   `).join("");
 }
 
-function updateFlashManifest() {
+function updateFlashState() {
   const espBtn = document.getElementById("espFlashButton");
-  if (!espBtn || !selectedVersion) return;
-  espBtn.setAttribute("manifest", selectedVersion.manifest);
+  const disabledBtn = document.getElementById("disabledFlashButton");
+  const installNote = document.getElementById("installNote");
+  const manifest = getInstallManifest();
+  const ready = Boolean(selectedPlatform?.installReady && manifest);
+
+  if (espBtn) {
+    espBtn.classList.toggle("is-hidden", !ready);
+    if (manifest) espBtn.setAttribute("manifest", manifest);
+  }
+  if (disabledBtn) disabledBtn.classList.toggle("is-hidden", ready);
+  if (installNote) installNote.classList.toggle("is-visible", !ready);
 }
 
 function resetProgress() {
-  setProgress("flash", 0, "Select firmware and click Flash to begin");
+  setProgress("flash", 0, "Select platform, device, and firmware to begin");
   hideError();
 }
 
@@ -355,18 +289,31 @@ function setSerialState(state, label) {
 }
 
 function bindFlowEvents() {
-  const changeBtn = document.getElementById("changeFirmwareButton");
+  const changeBtn = document.getElementById("changePlatformButton");
   if (changeBtn) {
-    changeBtn.addEventListener("click", clearFirmwareSelection);
+    changeBtn.addEventListener("click", clearPlatformSelection);
+  }
+
+  const firmwareSelect = document.getElementById("firmwareSelect");
+  if (firmwareSelect) {
+    firmwareSelect.addEventListener("change", () => {
+      const options = getAvailableFirmwareOptions(selectedPlatform, selectedDevice?.id);
+      selectedFirmwareOption =
+        options.find((item) => item.id === firmwareSelect.value) || options[0] || null;
+      renderSelectedRelease();
+      updateFlashState();
+      resetProgress();
+      appendLog(`[system] Selected demo: ${selectedFirmwareOption?.name || "None"}`);
+    });
   }
 
   const versionSelect = document.getElementById("versionSelect");
   if (versionSelect) {
     versionSelect.addEventListener("change", () => {
       selectedVersion =
-        selectedFirmware?.versions.find((item) => item.version === versionSelect.value) ||
-        getDefaultVersion(selectedFirmware);
-      updateFlashManifest();
+        selectedPlatform?.versions.find((item) => item.version === versionSelect.value) ||
+        getDefaultVersion(selectedPlatform);
+      updateFlashState();
       resetProgress();
       appendLog(`[system] Selected version: ${selectedVersion?.version || "None"}`);
     });

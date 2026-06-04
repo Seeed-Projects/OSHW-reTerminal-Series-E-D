@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>reTerminal E-Series Firmware Hub</title>
   <meta name="description" content="Flash ESP32-S3 firmware to your reTerminal E-Series device directly from the browser. No IDE setup required.">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20260604-platforms">
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 </head>
 <body>
@@ -38,23 +38,8 @@
         <div class="col-head">
           <div class="col-head-titles">
             <p class="eyebrow">Step 1</p>
-            <h2>Select firmware package</h2>
-            <p class="col-sub">Choose one firmware package first. The next steps will focus on that package.</p>
-          </div>
-        </div>
-
-        <div class="filter-row">
-          <div class="filter-group">
-            <span class="filter-label">Platform</span>
-            <div id="platformChips" class="filter-chips"></div>
-          </div>
-          <div class="filter-group">
-            <span class="filter-label">Function</span>
-            <div id="functionChips" class="filter-chips"></div>
-          </div>
-          <div class="filter-group">
-            <span class="filter-label">Device</span>
-            <div id="deviceChips" class="filter-chips"></div>
+            <h2>Select platform</h2>
+            <p class="col-sub">Choose the product experience you want to start with. Device and firmware options appear inside each platform.</p>
           </div>
         </div>
 
@@ -63,18 +48,16 @@
           <span>Open this page over HTTPS or localhost in desktop Chrome or Edge.</span>
         </div>
 
-        <div class="catalog-scroll">
-          <div class="catalog" id="catalog"></div>
-        </div>
+        <div class="platform-grid" id="platformGrid"></div>
       </article>
 
       <article class="panel selected-panel step-panel is-hidden" id="selectedPanel">
         <div class="panel-heading">
           <div>
-            <p class="eyebrow">Selected firmware</p>
-            <h2>Package overview</h2>
+            <p class="eyebrow">Selected platform</p>
+            <h2>Platform overview</h2>
           </div>
-          <button class="button button-secondary button-small" id="changeFirmwareButton" type="button">Change firmware</button>
+          <button class="button button-secondary button-small" id="changePlatformButton" type="button">Change platform</button>
         </div>
         <div class="selected-release" id="selectedRelease"></div>
       </article>
@@ -87,6 +70,10 @@
           </div>
         </div>
         <div class="setup-grid">
+          <label class="field-block is-hidden" id="firmwareField" for="firmwareSelect">
+            <span>Base demo</span>
+            <select id="firmwareSelect"></select>
+          </label>
           <label class="field-block" for="versionSelect">
             <span>Firmware version</span>
             <select id="versionSelect"></select>
@@ -106,6 +93,11 @@
         <div class="install-mode">
           <button class="mode-button is-active" type="button">Standard flash</button>
           <button class="mode-button" type="button" disabled>Erase flash + flash</button>
+        </div>
+
+        <div class="alert alert-warning install-note" id="installNote">
+          <strong>Firmware not published yet.</strong>
+          <span>This platform card is ready, but its web flashing package has not been added.</span>
         </div>
 
         <div class="alert alert-warning erase-note is-visible">
@@ -138,6 +130,9 @@
             <span slot="unsupported">Web Serial unavailable. Use Chrome or Edge on desktop.</span>
             <span slot="not-allowed">HTTPS required for Web Serial.</span>
           </esp-web-install-button>
+          <button class="button button-flash is-hidden" id="disabledFlashButton" type="button" disabled>
+            Connect &amp; flash
+          </button>
           <span class="flash-hint">Connect your reTerminal with a USB data cable first.</span>
         </div>
       </article>
@@ -164,8 +159,8 @@
 
   </main>
 
-  <script src="js/firmwares.js?v=20260604"></script>
-  <script src="js/app.js?v=20260604"></script>
+  <script src="js/firmwares.js?v=20260604-platforms"></script>
+  <script src="js/app.js?v=20260604-platforms"></script>
 
 </body>
 </html>
