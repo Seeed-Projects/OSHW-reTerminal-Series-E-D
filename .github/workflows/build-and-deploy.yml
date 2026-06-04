@@ -51,18 +51,73 @@ jobs:
     strategy:
       matrix:
         sketch:
+          # ── Existing demos ──
           - name: RTC_PCF8563
             path: examples/RTC_PCF8563
             needs_gfx: false
+            needs_gxepd2: false
           - name: LowPower_DeepSleep
             path: examples/LowPower_DeepSleep
             needs_gfx: false
+            needs_gxepd2: false
           - name: MicRecordToSD
             path: examples/MicRecordToSD
             needs_gfx: false
+            needs_gxepd2: false
           - name: E1003_TouchDraw
             path: examples/E1003_TouchDraw
             needs_gfx: true
+            needs_gxepd2: false
+          # ── Simple peripherals (no external libs) ──
+          - name: LED_Control
+            path: examples/LED_Control
+            needs_gfx: false
+            needs_gxepd2: false
+          - name: Buzzer_Control
+            path: examples/Buzzer_Control
+            needs_gfx: false
+            needs_gxepd2: false
+          - name: Buzzer_Music
+            path: examples/Buzzer_Music
+            needs_gfx: false
+            needs_gxepd2: false
+          - name: UserButtons
+            path: examples/UserButtons
+            needs_gfx: false
+            needs_gxepd2: false
+          - name: Battery_Monitor
+            path: examples/Battery_Monitor
+            needs_gfx: false
+            needs_gxepd2: false
+          - name: MicroSD_ListFiles
+            path: examples/MicroSD_ListFiles
+            needs_gfx: false
+            needs_gxepd2: false
+          # ── GxEPD2 display demos ──
+          - name: GxEPD2_reTerminal_E1001
+            path: examples/GxEPD2_reTerminal_E1001
+            needs_gfx: false
+            needs_gxepd2: true
+          - name: GxEPD2_reTerminal_E1002
+            path: examples/GxEPD2_reTerminal_E1002
+            needs_gfx: false
+            needs_gxepd2: true
+          - name: GxEPD2_reTerminal_E1003
+            path: examples/GxEPD2_reTerminal_E1003
+            needs_gfx: false
+            needs_gxepd2: true
+          - name: GxEPD2_reTerminal_E1004
+            path: examples/GxEPD2_reTerminal_E1004
+            needs_gfx: false
+            needs_gxepd2: true
+          - name: GxEPD2_reTerminal_E1001_Gray4
+            path: examples/GxEPD2_reTerminal_E1001_Gray4
+            needs_gfx: false
+            needs_gxepd2: true
+          - name: GxEPD2_reTerminal_E1003_Gray16
+            path: examples/GxEPD2_reTerminal_E1003_Gray16
+            needs_gfx: false
+            needs_gxepd2: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -95,6 +150,14 @@ jobs:
         run: |
           arduino-cli config set library.enable_unsafe_install true
           arduino-cli lib install --git-url https://github.com/Seeed-Studio/Seeed_GFX.git
+
+      - name: Install Seeed_GxEPD2 and Adafruit_GFX
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_gxepd2
+        run: |
+          arduino-cli config set library.enable_unsafe_install true
+          arduino-cli lib install --git-url https://github.com/Seeed-Projects/Seeed_GxEPD2.git
+          arduino-cli lib install "Adafruit GFX Library"
+          arduino-cli lib install "Adafruit BusIO"
 
       - name: Compile ${{ matrix.sketch.name }}
         if: steps.cache.outputs.cache-hit != 'true'
@@ -163,6 +226,18 @@ jobs:
             echo "| LowPower_DeepSleep | E1001 – E1004 |"
             echo "| MicRecordToSD | E1001 – E1003 |"
             echo "| E1003_TouchDraw | E1003 |"
+            echo "| LED_Control | E1001 – E1004 |"
+            echo "| Buzzer_Control | E1001 – E1004 |"
+            echo "| Buzzer_Music | E1001 – E1004 |"
+            echo "| UserButtons | E1001 – E1004 |"
+            echo "| Battery_Monitor | E1001 – E1004 |"
+            echo "| MicroSD_ListFiles | E1001 – E1004 |"
+            echo "| GxEPD2_reTerminal_E1001 | E1001 |"
+            echo "| GxEPD2_reTerminal_E1002 | E1002 |"
+            echo "| GxEPD2_reTerminal_E1003 | E1003 |"
+            echo "| GxEPD2_reTerminal_E1004 | E1004 |"
+            echo "| GxEPD2_reTerminal_E1001_Gray4 | E1001 |"
+            echo "| GxEPD2_reTerminal_E1003_Gray16 | E1003 |"
             echo ""
             echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${last_tag:-$(git rev-list --max-parents=0 HEAD | head -1)}...${{ steps.version.outputs.tag }}"
             echo "CHANGELOG_EOF"
