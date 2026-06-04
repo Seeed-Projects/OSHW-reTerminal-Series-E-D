@@ -618,7 +618,7 @@ p { color: var(--muted); }
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 0;
+  min-height: clamp(420px, 52vh, 620px);
   max-height: inherit;
 }
 

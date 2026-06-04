@@ -8,7 +8,6 @@ const DEVICES = [
     specs: [
       '7.5" display',
       "Monochrome",
-      "Up to 3 months",
     ],
   },
   {
@@ -44,7 +43,6 @@ const DEVICES = [
     specs: [
       '13.3" display',
       "Full color",
-      "Up to 6 months",
     ],
   },
 ];
