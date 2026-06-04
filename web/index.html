@@ -6,7 +6,6 @@
   <title>reTerminal E-Series Firmware Hub</title>
   <meta name="description" content="Flash ESP32-S3 firmware to your reTerminal E-Series device directly from the browser. No IDE setup required.">
   <link rel="stylesheet" href="css/style.css?v=20260604-topbar">
-  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 </head>
 <body>
 
@@ -126,20 +125,16 @@
         </div>
 
         <div class="flash-actions">
-          <esp-web-install-button id="espFlashButton" manifest="firmware/RTC_PCF8563/manifest.json">
-            <button slot="activate" class="button button-flash">
-              <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-                <path d="M7 1v8M7 9L4.5 6.5M7 9l2.5-2.5M2 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              Connect &amp; flash
-            </button>
-            <span slot="unsupported">Web Serial unavailable. Use Chrome or Edge on desktop.</span>
-            <span slot="not-allowed">HTTPS required for Web Serial.</span>
-          </esp-web-install-button>
+          <button class="button button-flash" id="flashButton" type="button">
+            <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+              <path d="M7 1v8M7 9L4.5 6.5M7 9l2.5-2.5M2 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Connect &amp; flash
+          </button>
           <button class="button button-flash is-hidden" id="disabledFlashButton" type="button" disabled>
             Connect &amp; flash
           </button>
-          <span class="flash-hint">Connect your reTerminal with a USB data cable first.</span>
+          <span class="flash-hint" id="flashHint">Connect your reTerminal with a USB data cable first.</span>
         </div>
       </article>
     </section>

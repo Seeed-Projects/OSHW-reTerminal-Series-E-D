@@ -135,7 +135,7 @@ function bindBlankAreaCollapse() {
     const target = event.target;
     if (!(target instanceof Element)) return;
     if (target.closest(".platform-card")) return;
-    if (target.closest("button, a, input, select, textarea, esp-web-install-button")) return;
+    if (target.closest("button, a, input, select, textarea")) return;
     collapsePlatformCards();
   });
 }
@@ -280,19 +280,151 @@ function renderConfigArea() {
   `).join("");
 }
 
+let eraseBeforeFlash = false;
+let isFlashing = false;
+let lastFlashedPort = null;
+
 function updateFlashState() {
-  const espBtn = document.getElementById("espFlashButton");
+  const flashBtn = document.getElementById("flashButton");
   const disabledBtn = document.getElementById("disabledFlashButton");
   const installNote = document.getElementById("installNote");
   const manifest = getInstallManifest();
   const ready = Boolean(selectedPlatform?.installReady && manifest);
 
-  if (espBtn) {
-    espBtn.classList.toggle("is-hidden", !ready);
-    if (manifest) espBtn.setAttribute("manifest", manifest);
-  }
+  if (flashBtn) flashBtn.classList.toggle("is-hidden", !ready);
   if (disabledBtn) disabledBtn.classList.toggle("is-hidden", ready);
   if (installNote) installNote.classList.toggle("is-visible", !ready);
+}
+
+async function flashDevice() {
+  if (isFlashing) return;
+  const manifest = getInstallManifest();
+  if (!manifest) return;
+
+  isFlashing = true;
+  hideError();
+  const flashBtn = document.getElementById("flashButton");
+  if (flashBtn) flashBtn.disabled = true;
+
+  try {
+    appendLog("[flash] Requesting serial port...");
+    setProgress("flash", 2, "Waiting for port selection");
+    const port = await navigator.serial.requestPort({
+      filters: [
+        { usbVendorId: 0x303a },
+        { usbVendorId: 0x10c4 },
+        { usbVendorId: 0x1a86 },
+      ],
+    });
+
+    appendLog("[flash] Loading esptool-js...");
+    setProgress("flash", 5, "Loading flash tool");
+    const { ESPLoader, Transport } = await import(
+      "https://cdn.jsdelivr.net/npm/esptool-js@0.6.0/+esm"
+    );
+
+    const transport = new Transport(port, true);
+    const terminal = {
+      clean: () => {},
+      writeLine: (data) => appendLog(`[esptool] ${data}`),
+      write: (data) => appendSerialChunk(data),
+    };
+
+    const esploader = new ESPLoader({ transport, baudrate: 115200, terminal });
+
+    appendLog("[flash] Connecting to device...");
+    setProgress("flash", 8, "Connecting to device");
+    const chip = await esploader.main();
+    appendLog(`[flash] Connected: ${chip}`);
+
+    if (eraseBeforeFlash) {
+      appendLog("[flash] Erasing entire flash...");
+      setProgress("flash", 15, "Erasing flash memory");
+      await esploader.eraseFlash();
+      appendLog("[flash] Erase complete.");
+    }
+
+    appendLog("[flash] Downloading firmware...");
+    setProgress("flash", 20, "Downloading firmware binaries");
+    const manifestUrl = new URL(manifest, window.location.href).href;
+    const manifestRes = await fetch(manifestUrl);
+    if (!manifestRes.ok) throw new Error(`Manifest fetch failed: ${manifestRes.status}`);
+    const manifestData = await manifestRes.json();
+
+    const build = manifestData.builds?.find((b) => b.chipFamily === "ESP32-S3") || manifestData.builds?.[0];
+    if (!build?.parts?.length) throw new Error("No compatible build found in manifest");
+
+    const baseUrl = manifestUrl.substring(0, manifestUrl.lastIndexOf("/") + 1);
+    const fileArray = [];
+    for (const part of build.parts) {
+      if (!part.path) continue;
+      const binUrl = new URL(part.path, baseUrl).href;
+      appendLog(`[flash] Fetching ${part.path}...`);
+      const binRes = await fetch(binUrl);
+      if (!binRes.ok) throw new Error(`Failed to download ${part.path}: ${binRes.status}`);
+      const data = new Uint8Array(await binRes.arrayBuffer());
+      fileArray.push({ data, address: part.offset });
+    }
+
+    appendLog(`[flash] Writing ${fileArray.length} partitions...`);
+    setProgress("flash", 30, "Writing firmware to device");
+
+    await esploader.writeFlash({
+      fileArray,
+      flashMode: "dio",
+      flashFreq: "40m",
+      flashSize: "detect",
+      eraseAll: false,
+      compress: true,
+      reportProgress: (fileIndex, written, total) => {
+        const partProgress = total > 0 ? written / total : 0;
+        const overall = 30 + ((fileIndex + partProgress) / fileArray.length) * 65;
+        setProgress("flash", overall, `Writing partition ${fileIndex + 1}/${fileArray.length}`);
+      },
+    });
+
+    appendLog("[flash] Firmware installed successfully!");
+    setProgress("flash", 98, "Resetting device");
+
+    await esploader.after("hard_reset");
+    appendLog("[flash] Device reset. New firmware running.");
+    setProgress("flash", 100, "Firmware installed successfully");
+
+    await transport.disconnect();
+    lastFlashedPort = port;
+
+    appendLog("[system] Auto-connecting serial monitor...");
+    await autoConnectMonitor(port);
+
+  } catch (error) {
+    const msg = error?.message || "Flash failed";
+    appendLog(`[error] ${msg}`);
+    setProgress("flash", 0, "Flash failed");
+    const alert = document.getElementById("errorAlert");
+    const msgEl = document.getElementById("errorMessage");
+    if (alert && msgEl) {
+      msgEl.textContent = msg;
+      alert.classList.add("is-visible");
+    }
+  } finally {
+    isFlashing = false;
+    if (flashBtn) flashBtn.disabled = false;
+  }
+}
+
+async function autoConnectMonitor(port) {
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  try {
+    await port.open({ baudRate: 115200 });
+    monitorPort = port;
+    monitorKeepReading = true;
+    setMonitorControls(true);
+    setSerialState("connected", "Monitor connected");
+    appendLog("[monitor] Auto-connected at 115200 baud.");
+    void readMonitorLoop();
+  } catch (error) {
+    appendLog(`[monitor] Auto-connect failed: ${error.message || "Unknown error"}. Click "Connect monitor" manually.`);
+  }
 }
 
 function resetProgress() {
@@ -458,18 +590,17 @@ function bindFlowEvents() {
 
   const modeStandard = document.getElementById("modeStandard");
   const modeErase = document.getElementById("modeErase");
-  const espBtn = document.getElementById("espFlashButton");
-  if (modeStandard && modeErase && espBtn) {
+  if (modeStandard && modeErase) {
     modeStandard.addEventListener("click", () => {
       modeStandard.classList.add("is-active");
       modeErase.classList.remove("is-active");
-      espBtn.removeAttribute("erase-first");
+      eraseBeforeFlash = false;
       appendLog("[system] Flash mode: standard");
     });
     modeErase.addEventListener("click", () => {
       modeErase.classList.add("is-active");
       modeStandard.classList.remove("is-active");
-      espBtn.setAttribute("erase-first", "");
+      eraseBeforeFlash = true;
       appendLog("[system] Flash mode: erase + flash");
     });
   }
@@ -495,44 +626,9 @@ function bindWorkspaceEvents() {
     });
   }
 
-  // Listen for ESP Web Tools events.
-  // 监听 ESP Web Tools 烧录事件。
-  const espBtn = document.getElementById("espFlashButton");
-  if (espBtn) {
-    espBtn.addEventListener("initializing", () => {
-      appendLog("[flash] Connecting to device...");
-      setProgress("flash", 5, "Initializing connection");
-    });
-
-    espBtn.addEventListener("preparing", () => {
-      appendLog("[flash] Preparing firmware...");
-      setProgress("flash", 15, "Preparing firmware");
-    });
-
-    espBtn.addEventListener("erasing", () => {
-      appendLog("[flash] Erasing flash...");
-      setProgress("flash", 30, "Erasing flash memory");
-    });
-
-    espBtn.addEventListener("writing", () => {
-      appendLog("[flash] Writing firmware...");
-      setProgress("flash", 50, "Writing firmware to device");
-    });
-
-    espBtn.addEventListener("finished", () => {
-      appendLog("[flash] Firmware installed successfully!");
-      setProgress("flash", 100, "Firmware installed successfully");
-    });
-
-    espBtn.addEventListener("error", (e) => {
-      appendLog(`[error] ${e.detail?.message || "Flash failed"}`);
-      setProgress("flash", 0, "Flash failed");
-      const alert = document.getElementById("errorAlert");
-      const msg = document.getElementById("errorMessage");
-      if (alert && msg) {
-        msg.textContent = e.detail?.message || "An error occurred during flashing.";
-        alert.classList.add("is-visible");
-      }
-    });
+  const flashBtn = document.getElementById("flashButton");
+  if (flashBtn) {
+    flashBtn.addEventListener("click", flashDevice);
+    flashBtn.disabled = !("serial" in navigator);
   }
 }

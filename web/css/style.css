@@ -716,27 +716,8 @@ pre#log {
 .flash-panel .erase-note.is-visible { margin: 0 0 12px; }
 .flash-panel .install-note.is-visible { margin: 0 0 12px; }
 
-/* --- ESP Web Tools overrides ------------------------------------- */
-esp-web-install-button { display: contents; }
-esp-web-install-button button {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 38px;
-  border: 1px solid var(--brand);
-  border-radius: 8px;
-  padding: 9px 18px;
-  background: var(--brand);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background .16s ease, border-color .16s ease, transform .16s ease;
-}
-esp-web-install-button button:hover { border-color: var(--brand-hover); background: var(--brand-hover); }
-esp-web-install-button button:active { transform: scale(0.97); }
-esp-web-install-button [slot="unsupported"],
-esp-web-install-button [slot="not-allowed"] { font-size: 11px; color: var(--muted); }
+/* --- Flash button ------------------------------------------------- */
+#flashButton:disabled { opacity: 0.5; cursor: not-allowed; }
 
 @media (prefers-reduced-motion: reduce) {
   *,
