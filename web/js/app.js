@@ -296,6 +296,20 @@ function updateFlashState() {
   if (installNote) installNote.classList.toggle("is-visible", !ready);
 }
 
+// Fetch a binary file and return it as a "binary string" (one byte per char
+// code), the format esptool-js writeFlash expects for each fileArray entry.
+function fetchBinaryString(url) {
+  return fetch(url).then((resp) => {
+    if (!resp.ok) throw new Error(`Failed to download ${url}: ${resp.status}`);
+    return resp.blob();
+  }).then((blob) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsBinaryString(blob);
+  }));
+}
+
 async function flashDevice() {
   if (isFlashing) return;
   const manifest = getInstallManifest();
@@ -306,6 +320,7 @@ async function flashDevice() {
   const flashBtn = document.getElementById("flashButton");
   if (flashBtn) flashBtn.disabled = true;
 
+  let transport = null;
   try {
     appendLog("[flash] Requesting serial port...");
     setProgress("flash", 2, "Waiting for port selection");
@@ -320,33 +335,29 @@ async function flashDevice() {
     appendLog("[flash] Loading esptool-js...");
     setProgress("flash", 5, "Loading flash tool");
     const { ESPLoader, Transport } = await import(
-      "https://cdn.jsdelivr.net/npm/esptool-js@0.6.0/+esm"
+      "https://cdn.jsdelivr.net/npm/esptool-js@0.5.7/+esm"
     );
 
-    const transport = new Transport(port, true);
+    transport = new Transport(port);
     const terminal = {
       clean: () => {},
       writeLine: (data) => appendLog(`[esptool] ${data}`),
       write: (data) => appendSerialChunk(data),
     };
 
-    const esploader = new ESPLoader({ transport, baudrate: 115200, terminal });
-
-    // Force a hardware reset before sync to clear any wedged stub left by a
-    // prior attempt (CH340 auto-reset does not always power-cycle the chip).
-    try {
-      await transport.setDTR(false);
-      await transport.setRTS(true);
-      await new Promise((r) => setTimeout(r, 120));
-      await transport.setRTS(false);
-      await new Promise((r) => setTimeout(r, 250));
-    } catch (_) {
-      // Transport reset API unavailable — fall through to main()'s own reset.
-    }
+    const esploader = new ESPLoader({
+      transport,
+      baudrate: 115200,
+      romBaudrate: 115200,
+      terminal,
+      enableTracing: false,
+    });
 
     appendLog("[flash] Connecting to device...");
     setProgress("flash", 8, "Connecting to device");
-    const chip = await esploader.main();
+    await esploader.main();
+    await esploader.flashId();
+    const chip = esploader.chip.CHIP_NAME;
     appendLog(`[flash] Connected: ${chip}`);
 
     if (eraseBeforeFlash) {
@@ -363,42 +374,52 @@ async function flashDevice() {
     if (!manifestRes.ok) throw new Error(`Manifest fetch failed: ${manifestRes.status}`);
     const manifestData = await manifestRes.json();
 
-    const build = manifestData.builds?.find((b) => b.chipFamily === "ESP32-S3") || manifestData.builds?.[0];
+    const build = manifestData.builds?.find((b) => b.chipFamily === chip) || manifestData.builds?.[0];
     if (!build?.parts?.length) throw new Error("No compatible build found in manifest");
 
     const baseUrl = manifestUrl.substring(0, manifestUrl.lastIndexOf("/") + 1);
     const fileArray = [];
+    let totalSize = 0;
     for (const part of build.parts) {
       if (!part.path) continue;
       const binUrl = new URL(part.path, baseUrl).href;
       appendLog(`[flash] Fetching ${part.path}...`);
-      const binRes = await fetch(binUrl);
-      if (!binRes.ok) throw new Error(`Failed to download ${part.path}: ${binRes.status}`);
-      const data = new Uint8Array(await binRes.arrayBuffer());
+      // esptool-js expects each binary as a "binary string" (one byte per
+      // char code), NOT a Uint8Array — readAsBinaryString produces that.
+      const data = await fetchBinaryString(binUrl);
       fileArray.push({ data, address: part.offset });
+      totalSize += data.length;
     }
 
     appendLog(`[flash] Writing ${fileArray.length} partitions...`);
     setProgress("flash", 30, "Writing firmware to device");
 
+    let totalWritten = 0;
     await esploader.writeFlash({
       fileArray,
+      flashSize: "keep",
       flashMode: "keep",
       flashFreq: "keep",
-      flashSize: "keep",
       eraseAll: false,
       compress: true,
       reportProgress: (fileIndex, written, total) => {
-        const partProgress = total > 0 ? written / total : 0;
-        const overall = 30 + ((fileIndex + partProgress) / fileArray.length) * 65;
-        setProgress("flash", overall, `Writing partition ${fileIndex + 1}/${fileArray.length}`);
+        const uncompressedWritten = (written / total) * fileArray[fileIndex].data.length;
+        if (written === total) {
+          totalWritten += uncompressedWritten;
+          return;
+        }
+        const overall = 30 + ((totalWritten + written) / totalSize) * 65;
+        setProgress("flash", overall, `Writing firmware (${Math.floor(((totalWritten + written) / totalSize) * 100)}%)`);
       },
     });
 
     appendLog("[flash] Firmware installed successfully!");
     setProgress("flash", 98, "Resetting device");
 
-    await esploader.after("hard_reset");
+    // Hard reset: assert RTS (EN low), then chip-specific release via after().
+    await transport.setRTS(true);
+    await new Promise((r) => setTimeout(r, 100));
+    await esploader.after();
     appendLog("[flash] Device reset. New firmware running.");
     setProgress("flash", 100, "Firmware installed successfully");
 
@@ -417,6 +438,14 @@ async function flashDevice() {
     if (alert && msgEl) {
       msgEl.textContent = msg;
       alert.classList.add("is-visible");
+    }
+    // Release the port so the next attempt (or the monitor) can claim it.
+    if (transport) {
+      try {
+        await transport.disconnect();
+      } catch (_) {
+        // Already closed or never opened — nothing to clean up.
+      }
     }
   } finally {
     isFlashing = false;
