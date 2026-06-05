@@ -97,14 +97,14 @@ const PLATFORM_CARDS = [
       {
         id: "MicRecordToSD_E1001",
         name: "Microphone Recording",
-        description: "Record audio from the onboard PDM microphone to MicroSD.",
+        description: "Records audio from the onboard PDM microphone and saves it as a WAV file on the MicroSD card. Press the green KEY0 button once to start recording; press it again to stop. The LED blinks while recording is in progress.",
         category: "Audio",
         compatible: ["E1001", "E1002"],
       },
       {
         id: "MicRecordToSD_E1003",
         name: "Microphone Recording",
-        description: "Record audio from the onboard PDM microphone to MicroSD.",
+        description: "Records audio from the onboard PDM microphone and saves it as a WAV file on the MicroSD card. Press the green KEY0 button once to start recording; press it again to stop. The LED blinks while recording is in progress.",
         category: "Audio",
         compatible: ["E1003"],
       },
