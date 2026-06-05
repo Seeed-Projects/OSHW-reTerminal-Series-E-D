@@ -455,8 +455,8 @@ p { color: var(--muted); }
   justify-content: center;
 }
 .selected-device-photo img {
-  width: 100px;
-  height: 100px;
+  width: 200px;
+  height: 200px;
   object-fit: contain;
   border-radius: 8px;
 }
