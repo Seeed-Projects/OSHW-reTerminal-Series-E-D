@@ -1,0 +1,56 @@
+{
+  "Battery_Monitor": [
+    "latest"
+  ],
+  "Buzzer_Control": [
+    "latest"
+  ],
+  "Buzzer_Music": [
+    "latest"
+  ],
+  "E1003_TouchDraw": [
+    "latest"
+  ],
+  "GxEPD2_reTerminal_E1001": [
+    "latest"
+  ],
+  "GxEPD2_reTerminal_E1001_Gray4": [
+    "latest"
+  ],
+  "GxEPD2_reTerminal_E1002": [
+    "latest"
+  ],
+  "GxEPD2_reTerminal_E1003": [
+    "latest"
+  ],
+  "GxEPD2_reTerminal_E1003_Gray16": [
+    "latest"
+  ],
+  "GxEPD2_reTerminal_E1004": [
+    "latest"
+  ],
+  "LED_Control_E1001": [
+    "latest"
+  ],
+  "LED_Control_E1003": [
+    "latest"
+  ],
+  "LED_Control_E1004": [
+    "latest"
+  ],
+  "LowPower_DeepSleep": [
+    "latest"
+  ],
+  "MicRecordToSD": [
+    "latest"
+  ],
+  "MicroSD_ListFiles": [
+    "latest"
+  ],
+  "RTC_PCF8563": [
+    "latest"
+  ],
+  "UserButtons": [
+    "latest"
+  ]
+}

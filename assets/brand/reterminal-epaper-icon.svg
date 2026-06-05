@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="reTerminal ePaper icon">
+  <rect width="64" height="64" rx="14" fill="#004966"/>
+  <rect x="10" y="14" width="44" height="38" rx="5" fill="#f8fbfa"/>
+  <rect x="14" y="18" width="36" height="25" rx="2.5" fill="#edf2f1" stroke="#d5dedb" stroke-width="1.6"/>
+  <rect x="14" y="44" width="36" height="5" rx="1.8" fill="#ffffff"/>
+  <rect x="39" y="10" width="11" height="4.5" rx="2.25" fill="#8FC31F"/>
+  <path d="M22 26h20M22 32h15M22 38h22" stroke="#004966" stroke-width="2.6" stroke-linecap="round"/>
+</svg>
