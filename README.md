@@ -65,11 +65,12 @@
 <!-- Replace with an actual screenshot of the Firmware Hub -->
 <!-- ![Firmware Hub Screenshot](docs/images/screenshot.png) -->
 
-The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you flash firmware onto Seeed Studio's reTerminal E-Series ePaper devices in three simple steps:
+The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you flash firmware onto Seeed Studio's reTerminal E-Series ePaper devices in four simple steps:
 
 1. **Select a platform** — choose from Base demos, ESPHome, SquareLine Vision, or OpenDisplay
-2. **Pick your version** — configure firmware options (Wi-Fi credentials for ESPHome, etc.)
-3. **Flash** — click the button and write firmware over USB, right in your browser
+2. **Review the selected platform** — confirm the device and demo summary
+3. **Pick your firmware and version** — choose a Base demo and available release
+4. **Flash** — click the button and write firmware over USB, right in your browser
 
 A built-in **serial monitor** lets you view real-time device logs without leaving the page.
 
@@ -125,8 +126,9 @@ The quickest way to get started — no local setup needed:
 
 1. Open the **[Firmware Hub](https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/)** in **Chrome** or **Edge** (desktop only)
 2. Connect your reTerminal E-Series device via USB
-3. Select a platform → pick your device → click **Install**
-4. Choose the serial port when prompted and wait for the flash to complete
+3. Select a platform and device
+4. Pick a firmware demo and version, then click **Install**
+5. Choose the serial port when prompted and wait for the flash to complete
 
 > **Note:** Web Serial requires **HTTPS** or **localhost** and is only available in Chromium-based browsers (Chrome, Edge, Opera). Safari and Firefox are not supported.
 
@@ -224,13 +226,14 @@ OSHW-reTerminal-Series-E-D/
 
 ## CI/CD
 
-The GitHub Actions workflow ([`build-and-deploy.yml`](.github/workflows/build-and-deploy.yml)) runs on every push to `main`:
+The GitHub Actions workflow ([`build-and-deploy.yml`](.github/workflows/build-and-deploy.yml)) runs on pushes to `main` and on tags that match `v*`:
 
 1. **Build** — compiles all Arduino sketches in parallel using `arduino-cli` with the XIAO ESP32-S3 board config
-2. **Package** — generates `manifest.json` for each firmware (required by ESP Web Tools)
-3. **Deploy** — assembles the static site + firmware binaries and publishes to GitHub Pages
+2. **Package** — writes each firmware to `firmware/{sketch}/latest/` and generates an ESP Web Tools `manifest.json`
+3. **Version** — on tag builds, also writes `firmware/{sketch}/{version}/` and updates `firmware/versions.json`
+4. **Deploy** — pushes the static site and firmware files directly to the `gh-pages` branch
 
-The deployed site is available at **https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/**.
+Configure GitHub Pages to serve from the `gh-pages` branch. The deployed site is available at **https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/**.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
