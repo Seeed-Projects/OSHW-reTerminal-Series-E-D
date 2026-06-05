@@ -259,9 +259,6 @@ function renderSelectedRelease() {
     selectedFirmwareOption?.description || selectedPlatform.description;
 
   container.innerHTML = `
-    <div class="selected-icon">
-      <img src="${selectedPlatform.logo}" alt="${selectedPlatform.name} logo">
-    </div>
     <div class="selected-copy">
       <div class="selected-tags">
         <span class="tag tag-platform">${selectedPlatform.name}</span>
@@ -272,6 +269,9 @@ function renderSelectedRelease() {
       <div class="compat-list">
         ${renderDeviceSpecs(selectedDevice, "compat-badge active")}
       </div>
+    </div>
+    <div class="selected-device-photo">
+      <img src="${selectedDevice.image}" alt="${selectedDevice.imageAlt}">
     </div>
   `;
 }
