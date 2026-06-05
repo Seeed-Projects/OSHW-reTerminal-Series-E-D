@@ -1,6 +1,7 @@
 #include <SPI.h>
 #include <FS.h>
 #include <SD.h>
+#include <Preferences.h>
 #include "TFT_eSPI.h"
 #include "dither.h"
 #include "image_loader.h"
@@ -26,29 +27,92 @@ static constexpr int    PIN_DBG_TX   = 43;
 // USER CONFIGURATION
 // =============================================================================
 
-static const char* IMAGE_PATH = "/img/demo.jpg";
-
-// DITHER_NONE / DITHER_BAYER8 / DITHER_FS / DITHER_JARVIS / DITHER_ATKINSON
-static const DitherMethod DITHER_METHOD = DITHER_FS;
-// 1.0 = neutral, >1.0 darkens, <1.0 brightens
-static const float DITHER_GAMMA = 1.0f;
-// false = normal, true = invert black/white
-static const bool DITHER_INVERT = false;
-
-// ANCHOR_TOP_LEFT / ANCHOR_TOP_CENTER / ANCHOR_TOP_RIGHT /
-// ANCHOR_MIDDLE_LEFT / ANCHOR_CENTER / ANCHOR_MIDDLE_RIGHT /
-// ANCHOR_BOTTOM_LEFT / ANCHOR_BOTTOM_CENTER / ANCHOR_BOTTOM_RIGHT
 enum DisplayAnchor {
   ANCHOR_TOP_LEFT, ANCHOR_TOP_CENTER, ANCHOR_TOP_RIGHT,
   ANCHOR_MIDDLE_LEFT, ANCHOR_CENTER, ANCHOR_MIDDLE_RIGHT,
   ANCHOR_BOTTOM_LEFT, ANCHOR_BOTTOM_CENTER, ANCHOR_BOTTOM_RIGHT,
 };
-static const DisplayAnchor DISPLAY_ANCHOR = ANCHOR_CENTER;
 
-// FIT_ORIGINAL / FIT_CONTAIN / FIT_SCALE
 enum DisplayFit { FIT_ORIGINAL, FIT_CONTAIN, FIT_SCALE };
-static const DisplayFit DISPLAY_FIT   = FIT_SCALE;
-static const float      DISPLAY_SCALE = 0.7f;
+
+static constexpr const char* DEFAULT_IMAGE_FILE = "/img/demo.jpg";
+static constexpr DitherMethod DEFAULT_DITHER = DITHER_FS;
+static constexpr float DEFAULT_GAMMA = 1.0f;
+static constexpr bool DEFAULT_INVERT = false;
+static constexpr DisplayAnchor DEFAULT_ANCHOR = ANCHOR_CENTER;
+static constexpr DisplayFit DEFAULT_FIT = FIT_SCALE;
+static constexpr float DEFAULT_SCALE = 0.7f;
+
+static String imagePath = DEFAULT_IMAGE_FILE;
+static DitherMethod ditherMethod = DEFAULT_DITHER;
+static float ditherGamma = DEFAULT_GAMMA;
+static bool ditherInvert = DEFAULT_INVERT;
+static DisplayAnchor displayAnchor = DEFAULT_ANCHOR;
+static DisplayFit displayFit = DEFAULT_FIT;
+static float displayScale = DEFAULT_SCALE;
+
+// Reads a float stored as a 4-byte NVS blob.
+// 读取以 4 字节 blob 保存的浮点数配置。
+static float read_float_config(Preferences& prefs, const char* key, float default_value) {
+  float value = default_value;
+  if (prefs.getBytesLength(key) == sizeof(value)) {
+    prefs.getBytes(key, &value, sizeof(value));
+  }
+  return value;
+}
+
+// Converts a stored integer into a valid dithering enum value.
+// 把保存的整数转换成有效的抖动算法枚举值。
+static DitherMethod read_dither_config(int value) {
+  switch (value) {
+    case DITHER_NONE:
+    case DITHER_BAYER8:
+    case DITHER_FS:
+    case DITHER_JARVIS:
+    case DITHER_ATKINSON:
+      return (DitherMethod)value;
+    default:
+      return DEFAULT_DITHER;
+  }
+}
+
+// Converts a stored integer into a valid image anchor enum value.
+// 把保存的整数转换成有效的图片定位枚举值。
+static DisplayAnchor read_anchor_config(int value) {
+  if (value >= ANCHOR_TOP_LEFT && value <= ANCHOR_BOTTOM_RIGHT) {
+    return (DisplayAnchor)value;
+  }
+  return DEFAULT_ANCHOR;
+}
+
+// Converts a stored integer into a valid image fit enum value.
+// 把保存的整数转换成有效的图片缩放模式枚举值。
+static DisplayFit read_fit_config(int value) {
+  if (value >= FIT_ORIGINAL && value <= FIT_SCALE) {
+    return (DisplayFit)value;
+  }
+  return DEFAULT_FIT;
+}
+
+// Loads user configuration from the NVS namespace named "config".
+// 从名为 "config" 的 NVS 命名空间读取用户配置。
+static void loadConfig() {
+  Preferences prefs;
+  if (!prefs.begin("config", true)) {
+    LOG.println(TAG " config open failed; using defaults");
+    return;
+  }
+
+  imagePath = prefs.getString("imagePath", DEFAULT_IMAGE_FILE);
+  ditherMethod = read_dither_config(prefs.getInt("dither", (int)DEFAULT_DITHER));
+  ditherGamma = read_float_config(prefs, "gamma", DEFAULT_GAMMA);
+  ditherInvert = prefs.getUChar("invert", DEFAULT_INVERT ? 1 : 0) != 0;
+  displayAnchor = read_anchor_config(prefs.getInt("anchor", (int)DEFAULT_ANCHOR));
+  displayFit = read_fit_config(prefs.getInt("fitMode", (int)DEFAULT_FIT));
+  displayScale = read_float_config(prefs, "scale", DEFAULT_SCALE);
+  prefs.end();
+  LOG.println(TAG " config loaded");
+}
 
 // =============================================================================
 // (implementation below -- no need to edit)
@@ -115,10 +179,10 @@ static void compute_anchor_xy(int img_w, int img_h, DisplayAnchor a,
 
 static bool show_image_on_panel(RgbImage* img) {
   int W, H;
-  compute_target_size(img->width, img->height, DISPLAY_FIT, DISPLAY_SCALE,
+  compute_target_size(img->width, img->height, displayFit, displayScale,
                       EPD_WIDTH, EPD_HEIGHT, &W, &H);
   int x, y;
-  compute_anchor_xy(W, H, DISPLAY_ANCHOR, EPD_WIDTH, EPD_HEIGHT, &x, &y);
+  compute_anchor_xy(W, H, displayAnchor, EPD_WIDTH, EPD_HEIGHT, &x, &y);
 
   if (W != img->width || H != img->height) {
     if (!resize_image(img, W, H)) { LOG.println("[layout] resize OOM"); return false; }
@@ -129,8 +193,8 @@ static bool show_image_on_panel(RgbImage* img) {
   if (!idx) { LOG.println(TAG " OOM idx"); return false; }
 
   static const char* kDN[] = {"NONE","BAYER8","FS","JARVIS","ATKINSON"};
-  LOG.printf(TAG " dithering BW with %s, gamma=%.2f\n", kDN[(int)DITHER_METHOD], DITHER_GAMMA);
-  if (!dither_image(img->pixels, W, H, PAL_BW, DITHER_METHOD, DITHER_GAMMA, DITHER_INVERT, idx)) {
+  LOG.printf(TAG " dithering BW with %s, gamma=%.2f\n", kDN[(int)ditherMethod], ditherGamma);
+  if (!dither_image(img->pixels, W, H, PAL_BW, ditherMethod, ditherGamma, ditherInvert, idx)) {
     free(idx); return false;
   }
   image_free(img);
@@ -150,6 +214,7 @@ static bool show_image_on_panel(RgbImage* img) {
 
 void setup() {
   LOG.begin(115200, SERIAL_8N1, PIN_DBG_RX, PIN_DBG_TX);
+  loadConfig();
   delay(2500);
   LOG.println("==============================================");
   LOG.println("  reTerminal E1001 -- SD Bitmap (BW)");
@@ -174,7 +239,7 @@ void setup() {
   list_sd_root();
 
   RgbImage img;
-  if (!load_image_from_sd(IMAGE_PATH, 0, 0, &img)) {
+  if (!load_image_from_sd(imagePath.c_str(), 0, 0, &img)) {
     LOG.println(TAG " load failed -- aborting"); return;
   }
   log_mem("after decode");

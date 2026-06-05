@@ -222,9 +222,18 @@ const PLATFORM_CARDS = [
         description: "Load a JPEG/PNG from MicroSD and render it on the E1001 panel with dithering.",
         category: "Display",
         compatible: ["E1001"],
+        configFields: [
+          { id: "cfgImagePath", nvsKey: "imagePath", nvsType: "string", label: "Image file path", type: "text", defaultValue: "/img/demo.jpg", placeholder: "/img/demo.jpg" },
+          { id: "cfgDither", nvsKey: "dither", nvsType: "i32", label: "Dithering algorithm", type: "select", defaultValue: 2, options: [{ value: 0, label: "None" }, { value: 1, label: "Bayer 8x8" }, { value: 2, label: "Floyd-Steinberg" }, { value: 3, label: "Jarvis-Judice-Ninke" }, { value: 4, label: "Atkinson" }] },
+          { id: "cfgGamma", nvsKey: "gamma", nvsType: "float", label: "Gamma correction", type: "number", defaultValue: 1.0, min: 0.1, max: 3.0, step: 0.1 },
+          { id: "cfgInvert", nvsKey: "invert", nvsType: "u8", label: "Invert black/white", type: "checkbox", defaultValue: 0 },
+          { id: "cfgAnchor", nvsKey: "anchor", nvsType: "i32", label: "Image position", type: "select", defaultValue: 4, options: [{ value: 0, label: "Top-Left" }, { value: 1, label: "Top-Center" }, { value: 2, label: "Top-Right" }, { value: 3, label: "Middle-Left" }, { value: 4, label: "Center" }, { value: 5, label: "Middle-Right" }, { value: 6, label: "Bottom-Left" }, { value: 7, label: "Bottom-Center" }, { value: 8, label: "Bottom-Right" }] },
+          { id: "cfgFitMode", nvsKey: "fitMode", nvsType: "i32", label: "Scaling mode", type: "select", defaultValue: 2, options: [{ value: 0, label: "Original size" }, { value: 1, label: "Fit to screen" }, { value: 2, label: "Custom scale" }] },
+          { id: "cfgScale", nvsKey: "scale", nvsType: "float", label: "Scale factor", type: "number", defaultValue: 0.7, min: 0.1, max: 2.0, step: 0.1 },
+        ],
         notes: [
           { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
-          { type: "info", text: "Supports Floyd-Steinberg, Bayer, Jarvis, and Atkinson dithering. Configure in source code." },
+          { type: "info", text: "Supports Floyd-Steinberg, Bayer, Jarvis, and Atkinson dithering. Configure before flashing in Firmware Hub." },
         ],
       },
       {
@@ -233,6 +242,14 @@ const PLATFORM_CARDS = [
         description: "Load a JPEG/PNG from MicroSD and render it in 4-level grayscale on the E1001 panel.",
         category: "Display",
         compatible: ["E1001"],
+        configFields: [
+          { id: "cfgImagePath", nvsKey: "imagePath", nvsType: "string", label: "Image file path", type: "text", defaultValue: "/img/demo.jpg", placeholder: "/img/demo.jpg" },
+          { id: "cfgDither", nvsKey: "dither", nvsType: "i32", label: "Dithering algorithm", type: "select", defaultValue: 2, options: [{ value: 0, label: "None" }, { value: 1, label: "Bayer 8x8" }, { value: 2, label: "Floyd-Steinberg" }, { value: 3, label: "Jarvis-Judice-Ninke" }, { value: 4, label: "Atkinson" }] },
+          { id: "cfgGamma", nvsKey: "gamma", nvsType: "float", label: "Gamma correction", type: "number", defaultValue: 1.0, min: 0.1, max: 3.0, step: 0.1 },
+          { id: "cfgAnchor", nvsKey: "anchor", nvsType: "i32", label: "Image position", type: "select", defaultValue: 4, options: [{ value: 0, label: "Top-Left" }, { value: 1, label: "Top-Center" }, { value: 2, label: "Top-Right" }, { value: 3, label: "Middle-Left" }, { value: 4, label: "Center" }, { value: 5, label: "Middle-Right" }, { value: 6, label: "Bottom-Left" }, { value: 7, label: "Bottom-Center" }, { value: 8, label: "Bottom-Right" }] },
+          { id: "cfgFitMode", nvsKey: "fitMode", nvsType: "i32", label: "Scaling mode", type: "select", defaultValue: 2, options: [{ value: 0, label: "Original size" }, { value: 1, label: "Fit to screen" }, { value: 2, label: "Custom scale" }] },
+          { id: "cfgScale", nvsKey: "scale", nvsType: "float", label: "Scale factor", type: "number", defaultValue: 0.7, min: 0.1, max: 2.0, step: 0.1 },
+        ],
         notes: [
           { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
         ],
@@ -243,6 +260,14 @@ const PLATFORM_CARDS = [
         description: "Load a JPEG/PNG from MicroSD and render it in 6-color on the E1002 Spectra 6 panel.",
         category: "Display",
         compatible: ["E1002"],
+        configFields: [
+          { id: "cfgImagePath", nvsKey: "imagePath", nvsType: "string", label: "Image file path", type: "text", defaultValue: "/img/demo.jpg", placeholder: "/img/demo.jpg" },
+          { id: "cfgDither", nvsKey: "dither", nvsType: "i32", label: "Dithering algorithm", type: "select", defaultValue: 2, options: [{ value: 0, label: "None" }, { value: 1, label: "Bayer 8x8" }, { value: 2, label: "Floyd-Steinberg" }, { value: 3, label: "Jarvis-Judice-Ninke" }, { value: 4, label: "Atkinson" }] },
+          { id: "cfgGamma", nvsKey: "gamma", nvsType: "float", label: "Gamma correction", type: "number", defaultValue: 1.0, min: 0.1, max: 3.0, step: 0.1 },
+          { id: "cfgAnchor", nvsKey: "anchor", nvsType: "i32", label: "Image position", type: "select", defaultValue: 4, options: [{ value: 0, label: "Top-Left" }, { value: 1, label: "Top-Center" }, { value: 2, label: "Top-Right" }, { value: 3, label: "Middle-Left" }, { value: 4, label: "Center" }, { value: 5, label: "Middle-Right" }, { value: 6, label: "Bottom-Left" }, { value: 7, label: "Bottom-Center" }, { value: 8, label: "Bottom-Right" }] },
+          { id: "cfgFitMode", nvsKey: "fitMode", nvsType: "i32", label: "Scaling mode", type: "select", defaultValue: 2, options: [{ value: 0, label: "Original size" }, { value: 1, label: "Fit to screen" }, { value: 2, label: "Custom scale" }] },
+          { id: "cfgScale", nvsKey: "scale", nvsType: "float", label: "Scale factor", type: "number", defaultValue: 0.7, min: 0.1, max: 2.0, step: 0.1 },
+        ],
         notes: [
           { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
         ],
@@ -253,6 +278,14 @@ const PLATFORM_CARDS = [
         description: "Load a JPEG/PNG from MicroSD and render it in 16-level grayscale on the E1003 panel.",
         category: "Display",
         compatible: ["E1003"],
+        configFields: [
+          { id: "cfgImagePath", nvsKey: "imagePath", nvsType: "string", label: "Image file path", type: "text", defaultValue: "/img/demo.jpg", placeholder: "/img/demo.jpg" },
+          { id: "cfgDither", nvsKey: "dither", nvsType: "i32", label: "Dithering algorithm", type: "select", defaultValue: 2, options: [{ value: 0, label: "None" }, { value: 1, label: "Bayer 8x8" }, { value: 2, label: "Floyd-Steinberg" }, { value: 3, label: "Jarvis-Judice-Ninke" }, { value: 4, label: "Atkinson" }] },
+          { id: "cfgGamma", nvsKey: "gamma", nvsType: "float", label: "Gamma correction", type: "number", defaultValue: 1.0, min: 0.1, max: 3.0, step: 0.1 },
+          { id: "cfgAnchor", nvsKey: "anchor", nvsType: "i32", label: "Image position", type: "select", defaultValue: 4, options: [{ value: 0, label: "Top-Left" }, { value: 1, label: "Top-Center" }, { value: 2, label: "Top-Right" }, { value: 3, label: "Middle-Left" }, { value: 4, label: "Center" }, { value: 5, label: "Middle-Right" }, { value: 6, label: "Bottom-Left" }, { value: 7, label: "Bottom-Center" }, { value: 8, label: "Bottom-Right" }] },
+          { id: "cfgFitMode", nvsKey: "fitMode", nvsType: "i32", label: "Scaling mode", type: "select", defaultValue: 0, options: [{ value: 0, label: "Original size" }, { value: 1, label: "Fit to screen" }, { value: 2, label: "Custom scale" }] },
+          { id: "cfgScale", nvsKey: "scale", nvsType: "float", label: "Scale factor", type: "number", defaultValue: 1.0, min: 0.1, max: 2.0, step: 0.1 },
+        ],
         notes: [
           { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
         ],
@@ -263,6 +296,14 @@ const PLATFORM_CARDS = [
         description: "Load a JPEG/PNG from MicroSD and render it in 6-color on the E1004 Spectra 6 panel.",
         category: "Display",
         compatible: ["E1004"],
+        configFields: [
+          { id: "cfgImagePath", nvsKey: "imagePath", nvsType: "string", label: "Image file path", type: "text", defaultValue: "/img/demo.jpg", placeholder: "/img/demo.jpg" },
+          { id: "cfgDither", nvsKey: "dither", nvsType: "i32", label: "Dithering algorithm", type: "select", defaultValue: 1, options: [{ value: 0, label: "None" }, { value: 1, label: "Bayer 8x8" }, { value: 2, label: "Floyd-Steinberg" }, { value: 3, label: "Jarvis-Judice-Ninke" }, { value: 4, label: "Atkinson" }] },
+          { id: "cfgGamma", nvsKey: "gamma", nvsType: "float", label: "Gamma correction", type: "number", defaultValue: 1.0, min: 0.1, max: 3.0, step: 0.1 },
+          { id: "cfgAnchor", nvsKey: "anchor", nvsType: "i32", label: "Image position", type: "select", defaultValue: 4, options: [{ value: 0, label: "Top-Left" }, { value: 1, label: "Top-Center" }, { value: 2, label: "Top-Right" }, { value: 3, label: "Middle-Left" }, { value: 4, label: "Center" }, { value: 5, label: "Middle-Right" }, { value: 6, label: "Bottom-Left" }, { value: 7, label: "Bottom-Center" }, { value: 8, label: "Bottom-Right" }] },
+          { id: "cfgFitMode", nvsKey: "fitMode", nvsType: "i32", label: "Scaling mode", type: "select", defaultValue: 0, options: [{ value: 0, label: "Original size" }, { value: 1, label: "Fit to screen" }, { value: 2, label: "Custom scale" }] },
+          { id: "cfgScale", nvsKey: "scale", nvsType: "float", label: "Scale factor", type: "number", defaultValue: 1.0, min: 0.1, max: 2.0, step: 0.1 },
+        ],
         notes: [
           { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
         ],

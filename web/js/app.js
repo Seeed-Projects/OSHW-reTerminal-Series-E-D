@@ -323,13 +323,16 @@ function renderConfigArea() {
   if (!container || !selectedPlatform) return;
 
   const notes = selectedFirmwareOption?.notes || [];
+  const platformFields = selectedPlatform?.configFields || [];
+  const fwFields = selectedFirmwareOption?.configFields || [];
+  const allFields = [...platformFields, ...fwFields];
   const notesHtml = notes.map((n) => `
     <div class="alert alert-${n.type === "warning" ? "warning" : "info"} is-visible">
       <span>${n.text}</span>
     </div>
   `).join("");
 
-  if (!selectedPlatform.configFields.length) {
+  if (!allFields.length) {
     container.innerHTML = notesHtml || `
       <div class="config-empty">
         <strong>No setup fields required</strong>
@@ -339,12 +342,59 @@ function renderConfigArea() {
     return;
   }
 
-  container.innerHTML = notesHtml + selectedPlatform.configFields.map((field) => `
-    <label class="field-block" for="${field.id}">
-      <span>${field.label}</span>
-      <input id="${field.id}" type="${field.type}" placeholder="${field.placeholder || ""}">
-    </label>
-  `).join("");
+  container.innerHTML = notesHtml + allFields.map((field) => {
+    let control = "";
+    if (field.type === "select") {
+      const options = field.options || [];
+      control = `
+        <select id="${field.id}">
+          ${options.map((option) => `
+            <option value="${option.value}" ${option.value === field.defaultValue ? "selected" : ""}>${option.label}</option>
+          `).join("")}
+        </select>
+      `;
+    } else if (field.type === "checkbox") {
+      control = `<input id="${field.id}" type="checkbox" ${field.defaultValue ? "checked" : ""}>`;
+    } else if (field.type === "number") {
+      const minAttr = field.min !== undefined ? ` min="${field.min}"` : "";
+      const maxAttr = field.max !== undefined ? ` max="${field.max}"` : "";
+      const stepAttr = field.step !== undefined ? ` step="${field.step}"` : "";
+      control = `<input id="${field.id}" type="number" value="${field.defaultValue}"${minAttr}${maxAttr}${stepAttr}>`;
+    } else {
+      control = `<input id="${field.id}" type="text" value="${field.defaultValue || ""}" placeholder="${field.placeholder || ""}">`;
+    }
+
+    return `
+      <label class="field-block" for="${field.id}">
+        <span>${field.label}</span>
+        ${control}
+      </label>
+    `;
+  }).join("");
+}
+
+function collectConfigValues() {
+  const platformFields = selectedPlatform?.configFields || [];
+  const fwFields = selectedFirmwareOption?.configFields || [];
+  const allFields = [...platformFields, ...fwFields];
+  if (!allFields.length) return [];
+  return allFields.map((field) => {
+    const el = document.getElementById(field.id);
+    if (!el) return null;
+    let value;
+    if (field.type === "checkbox") value = el.checked ? 1 : 0;
+    else if (field.type === "select" || field.type === "number") value = field.nvsType === "float" ? parseFloat(el.value) : parseInt(el.value, 10);
+    else value = el.value || field.defaultValue || "";
+    let nvsType = field.nvsType;
+    let nvsValue = value;
+    if (nvsType === "float") {
+      const buf = new ArrayBuffer(4);
+      new DataView(buf).setFloat32(0, value, true);
+      nvsType = "blob";
+      nvsValue = new Uint8Array(buf);
+    }
+    return { key: field.nvsKey, type: nvsType, value: nvsValue };
+  }).filter(Boolean);
 }
 
 let eraseBeforeFlash = false;
@@ -491,6 +541,18 @@ async function flashDevice() {
       const data = await fetchBinaryString(binUrl);
       fileArray.push({ data, address: part.offset });
       totalSize += data.length;
+    }
+
+    const configValues = collectConfigValues();
+    if (configValues.length > 0) {
+      appendLog("[flash] Generating user config for NVS partition...");
+      const { generateNvsPartition } = await import("./nvs.js");
+      const nvsData = generateNvsPartition(configValues);
+      let nvsBinStr = "";
+      for (let i = 0; i < nvsData.length; i++) nvsBinStr += String.fromCharCode(nvsData[i]);
+      fileArray.push({ data: nvsBinStr, address: 0x9000 });
+      totalSize += nvsData.length;
+      appendLog(`[flash] NVS config: ${configValues.length} entries, ${nvsData.length} bytes at 0x9000`);
     }
 
     appendLog(`[flash] Writing ${fileArray.length} partitions...`);
