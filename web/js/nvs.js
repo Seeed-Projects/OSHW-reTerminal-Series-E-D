@@ -155,6 +155,8 @@ function initActivePage(partition) {
   return page;
 }
 
+export const NVS_VERSION = 2;
+
 export function generateNvsPartition(entries) {
   if (!Array.isArray(entries)) {
     throw new Error("NVS entries must be an array");
