@@ -1,11 +1,12 @@
 # Contributing Guide
 
 This guide is the single source of truth for modifying the reTerminal E-Series
-Firmware Hub. It covers three scenarios:
+Firmware Hub. It covers four scenarios:
 
 - **[Scenario A](#scenario-a--add-a-firmware-example-to-the-base-platform)** — Add a firmware example to the Base platform (most common)
 - **[Scenario B](#scenario-b--enable-firmware-for-a-non-base-platform)** — Enable firmware flashing for an existing platform (ESPHome, SquareLine, OpenDisplay)
 - **[Scenario C](#scenario-c--add-a-completely-new-platform)** — Add a completely new platform
+- **[Scenario D](#scenario-d--adapt-a-sketch-for-web-configurable-parameters)** — Adapt a sketch for web-configurable parameters (NVS Config Framework)
 
 Follow every step — skipping one will leave the firmware invisible on the web
 page or missing from CI.
@@ -414,32 +415,118 @@ Base firmware options (see [Field reference](#field-reference) above):
 Each firmware option needs a matching CI matrix entry — follow
 [Step 2](#step-2--register-in-the-ci-workflow) from Scenario A.
 
-### B4. Handle config fields (if applicable)
+### B4. Handle config fields (NVS Config Framework)
 
-Some platforms have pre-flash configuration (e.g. Wi-Fi credentials for ESPHome).
-These are defined in the platform's `configFields` array:
+Firmware can declare user-configurable parameters via `configFields`. The web UI
+auto-renders input forms for these fields, and at flash time the values are
+written to the ESP32's **NVS partition** (offset 0x9000, 20 KB) alongside the
+firmware binary. The firmware reads them at boot using the Arduino `Preferences`
+library, falling back to compiled defaults when no NVS data is present.
+
+`configFields` can be defined at **both** the platform level and the individual
+`firmwareOption` level — the web UI merges them automatically.
+
+#### configField schema
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | string | **yes** | DOM element ID — must be unique across all fields |
+| `nvsKey` | string | **yes** | NVS key name (max 15 chars, ASCII, no spaces) |
+| `nvsType` | string | **yes** | One of `"string"`, `"i32"`, `"u8"`, `"float"` |
+| `label` | string | **yes** | Human-readable label shown in the form |
+| `type` | string | **yes** | Input widget: `"text"`, `"number"`, `"select"`, `"checkbox"` |
+| `defaultValue` | any | **yes** | Default value used when the user doesn't change the field |
+| `options` | array | select only | Array of `{ value, label }` for dropdown menus |
+| `min` | number | number only | Minimum value for number inputs |
+| `max` | number | number only | Maximum value for number inputs |
+| `step` | number | number only | Step increment for number inputs |
+| `placeholder` | string | no | Placeholder text for text inputs |
+
+#### nvsType → Arduino Preferences mapping
+
+| `nvsType` | NVS Type Code | Preferences API | JS value |
+|-----------|---------------|-----------------|----------|
+| `"string"` | STR (0x21) | `getString(key, default)` | String |
+| `"i32"` | I32 (0x14) | `getInt(key, default)` | Number (integer) |
+| `"u8"` | U8 (0x01) | `getUChar(key, default)` | Number (0–255) |
+| `"float"` | BLOB (0x41) | `getFloat(key, default)` | Number (IEEE 754 → 4-byte blob) |
+
+#### Example: firmwareOption with configFields
+
+From `SD_ImagePipeline_E1001_BW`:
 
 ```js
-    configFields: [
-      {
-        id: "wifiSsid",
-        label: "Wi-Fi SSID",
-        type: "text",
-        placeholder: "Office Wi-Fi",
-      },
-      {
-        id: "wifiPassword",
-        label: "Wi-Fi password",
-        type: "password",
-        placeholder: "Stored locally before flashing",
-      },
-    ],
+configFields: [
+  { id: "cfgImagePath", nvsKey: "imagePath", nvsType: "string",
+    label: "Image file path", type: "text",
+    defaultValue: "/img/demo.jpg", placeholder: "/img/demo.jpg" },
+  { id: "cfgDither", nvsKey: "dither", nvsType: "i32",
+    label: "Dithering algorithm", type: "select", defaultValue: 2,
+    options: [
+      { value: 0, label: "None" },
+      { value: 1, label: "Bayer 8x8" },
+      { value: 2, label: "Floyd-Steinberg" },
+      { value: 3, label: "Jarvis-Judice-Ninke" },
+      { value: 4, label: "Atkinson" },
+    ]},
+  { id: "cfgGamma", nvsKey: "gamma", nvsType: "float",
+    label: "Gamma correction", type: "number",
+    defaultValue: 1.0, min: 0.1, max: 3.0, step: 0.1 },
+  { id: "cfgInvert", nvsKey: "invert", nvsType: "u8",
+    label: "Invert black/white", type: "checkbox", defaultValue: 0 },
+],
 ```
 
-Config field values are displayed in the "Version and setup" panel. **Note:**
-currently the web page renders these inputs but does not inject the values into
-the firmware binary. To actually use config values at flash time, you would need
-to implement a firmware binary patching step in `app.js` (not yet built).
+#### Firmware-side pattern (copy-paste template)
+
+Add NVS reads to your sketch so it picks up user-configured values at boot:
+
+```cpp
+#include <Preferences.h>
+
+// Compiled defaults — used when NVS has no config
+static const char* DEFAULT_IMAGE_FILE = "/img/demo.jpg";
+static const int   DEFAULT_DITHER     = 2;   // Floyd-Steinberg
+static const float DEFAULT_GAMMA      = 1.0f;
+
+static String imagePath;
+static int    ditherMethod;
+static float  ditherGamma;
+
+void loadConfig() {
+  Preferences prefs;
+  if (!prefs.begin("config", true)) {  // read-only mode
+    return;  // NVS not available — compiled defaults apply
+  }
+  imagePath    = prefs.getString("imagePath", DEFAULT_IMAGE_FILE);
+  ditherMethod = prefs.getInt("dither", DEFAULT_DITHER);
+  ditherGamma  = prefs.getFloat("gamma", DEFAULT_GAMMA);
+  prefs.end();
+}
+
+void setup() {
+  loadConfig();  // call before using any config values
+  // ... rest of setup
+}
+```
+
+#### How it works under the hood
+
+1. `app.js` merges platform-level + firmwareOption-level `configFields` and
+   renders form inputs in the "Version and setup" panel.
+2. At flash time, `collectConfigValues()` reads all form values.
+3. `nvs.js` generates a 20 KB NVS partition binary (ESP-IDF V2 format).
+4. The binary is flashed to offset **0x9000** alongside the firmware.
+5. The NVS namespace is always `"config"` — all keys live under this namespace.
+6. Firmware **without** configFields: no NVS binary is injected; flash works as
+   before (fully backward-compatible).
+
+#### NVS key naming rules
+
+- Maximum 15 characters, ASCII only, no spaces
+- Must match exactly between `nvsKey` in `firmwares.js` and the key string in
+  `prefs.getString()` / `prefs.getInt()` / etc. on the firmware side
+- Convention: `camelCase` (e.g. `imagePath`, `fitMode`, `ditherGamma`)
 
 ### B5. Update version entries
 
@@ -563,6 +650,297 @@ Add the new platform to the README's feature list and update any relevant tables
 
 ---
 
+# Scenario D — Adapt a sketch for web-configurable parameters
+
+When a sketch has user-facing settings that are currently **hardcoded constants**
+(image path, algorithm selection, thresholds, scaling modes, etc.), you can make
+them configurable from the Firmware Hub web page. Users will see input forms
+before flashing, and the values are written to the ESP32's NVS partition — the
+firmware reads them at boot.
+
+This scenario assumes the sketch is **already registered** (Scenario A or B). If
+not, complete those steps first.
+
+## Overview: what changes and why
+
+A "plain" Arduino sketch uses compile-time constants:
+
+```cpp
+// BEFORE: user must edit source code and recompile to change these
+#define IMAGE_PATH   "/img/demo.jpg"
+#define DITHER_MODE  2
+#define SCALE        0.7f
+```
+
+After adaptation, these become runtime-configurable via NVS:
+
+```cpp
+// AFTER: values come from the web page → NVS → Preferences at boot
+#include <Preferences.h>
+static const char* DEFAULT_IMAGE_FILE = "/img/demo.jpg";
+static const int   DEFAULT_DITHER     = 2;
+static const float DEFAULT_SCALE      = 0.7f;
+
+static String imagePath;
+static int    ditherMethod;
+static float  displayScale;
+
+void loadConfig() {
+  Preferences prefs;
+  if (!prefs.begin("config", true)) return;
+  imagePath    = prefs.getString("imagePath", DEFAULT_IMAGE_FILE);
+  ditherMethod = prefs.getInt("dither", DEFAULT_DITHER);
+  displayScale = prefs.getFloat("scale", DEFAULT_SCALE);
+  prefs.end();
+}
+```
+
+You need to change **two places**: the Arduino sketch and `firmwares.js`.
+
+## Step-by-step guide
+
+### D1. Identify configurable parameters in the sketch
+
+Look for constants near the top of the `.ino` file — usually under a
+`USER CONFIGURATION` comment block, or `#define`/`constexpr` declarations that
+a user would want to change. Common candidates:
+
+| What to look for | Example |
+|-------------------|---------|
+| File paths | `#define IMAGE_PATH "/img/demo.jpg"` |
+| Algorithm selectors (enums) | `#define DITHER_METHOD DITHER_FS` |
+| Numeric thresholds | `#define GAMMA 1.0f` |
+| Boolean toggles | `#define INVERT false` |
+| Display/layout modes | `#define FIT_MODE FIT_SCALE` |
+
+**Rule of thumb:** if a user would need to edit the `.ino` and recompile to
+change a value, it is a candidate for NVS configuration.
+
+### D2. Modify the Arduino sketch
+
+Follow this checklist for each sketch file:
+
+#### D2a. Add the Preferences header
+
+```cpp
+#include <Preferences.h>
+```
+
+#### D2b. Convert hardcoded constants to defaults + runtime variables
+
+**Before:**
+```cpp
+#define IMAGE_PATH "/img/demo.jpg"
+#define DITHER_METHOD DITHER_FS
+#define SCALE 0.7f
+```
+
+**After:**
+```cpp
+// Compiled defaults — used when NVS has no config
+static constexpr const char* DEFAULT_IMAGE_FILE = "/img/demo.jpg";
+static constexpr DitherMethod DEFAULT_DITHER = DITHER_FS;
+static constexpr float DEFAULT_SCALE = 0.7f;
+
+// Runtime config variables — populated by loadConfig()
+static String imagePath = DEFAULT_IMAGE_FILE;
+static DitherMethod ditherMethod = DEFAULT_DITHER;
+static float displayScale = DEFAULT_SCALE;
+```
+
+#### D2c. Add the `loadConfig()` function
+
+Place it after the variable declarations, before `setup()`:
+
+```cpp
+void loadConfig() {
+  Preferences prefs;
+  if (!prefs.begin("config", true)) {  // read-only mode
+    return;  // NVS not available — compiled defaults apply
+  }
+  imagePath    = prefs.getString("imagePath", DEFAULT_IMAGE_FILE);
+  ditherMethod = (DitherMethod)prefs.getInt("dither", (int)DEFAULT_DITHER);
+  displayScale = prefs.getFloat("scale", DEFAULT_SCALE);
+  prefs.end();
+}
+```
+
+**Important notes:**
+
+- The namespace **must** be `"config"` — this matches what the web-side NVS
+  generator writes.
+- The first argument to `getString`/`getInt`/`getFloat` is the **NVS key** —
+  it must match the `nvsKey` you define in `firmwares.js` (next step).
+- The second argument is the **default value** — used when NVS is empty or
+  when the user flashes without configuring anything.
+- For `float` values stored via the web UI: the NVS generator writes them as
+  4-byte BLOB (IEEE 754). Use a helper function to read them:
+
+```cpp
+static float read_float_config(Preferences& prefs, const char* key, float def) {
+  float value = def;
+  if (prefs.getBytesLength(key) == sizeof(value)) {
+    prefs.getBytes(key, &value, sizeof(value));
+  }
+  return value;
+}
+```
+
+- For **enum** values (like dither method, anchor position), add a validation
+  helper to reject invalid NVS values:
+
+```cpp
+static DitherMethod read_dither_config(int value) {
+  switch (value) {
+    case DITHER_NONE: case DITHER_BAYER8: case DITHER_FS:
+    case DITHER_JARVIS: case DITHER_ATKINSON:
+      return (DitherMethod)value;
+    default:
+      return DEFAULT_DITHER;  // invalid value — use default
+  }
+}
+```
+
+#### D2d. Call `loadConfig()` at the start of `setup()`
+
+```cpp
+void setup() {
+  Serial.begin(115200);
+  loadConfig();  // must be called before using any config values
+  // ... rest of setup using imagePath, ditherMethod, displayScale
+}
+```
+
+#### D2e. Replace all references to the old constants
+
+Find every place in the code that uses the old constant name and replace it
+with the new runtime variable:
+
+| Old | New |
+|-----|-----|
+| `IMAGE_PATH` | `imagePath` (or `imagePath.c_str()` for C-string APIs) |
+| `DITHER_METHOD` | `ditherMethod` |
+| `SCALE` | `displayScale` |
+
+### D3. Register `configFields` in `firmwares.js`
+
+Open `web/js/firmwares.js` and find the `firmwareOptions` entry for your sketch.
+Add a `configFields` array:
+
+```js
+{
+  id: "My_Sketch",
+  name: "My Sketch",
+  description: "...",
+  category: "Display",
+  compatible: ["E1001"],
+  configFields: [
+    {
+      id: "cfgImagePath",       // unique DOM element ID
+      nvsKey: "imagePath",      // must match prefs.getString("imagePath", ...)
+      nvsType: "string",        // see type mapping table in B4
+      label: "Image file path", // shown to the user
+      type: "text",             // input widget type
+      defaultValue: "/img/demo.jpg",
+      placeholder: "/img/demo.jpg",
+    },
+    {
+      id: "cfgDither",
+      nvsKey: "dither",         // must match prefs.getInt("dither", ...)
+      nvsType: "i32",
+      label: "Dithering algorithm",
+      type: "select",
+      defaultValue: 2,
+      options: [
+        { value: 0, label: "None" },
+        { value: 1, label: "Bayer 8x8" },
+        { value: 2, label: "Floyd-Steinberg" },
+      ],
+    },
+    {
+      id: "cfgScale",
+      nvsKey: "scale",          // must match read_float_config(prefs, "scale", ...)
+      nvsType: "float",
+      label: "Scale factor",
+      type: "number",
+      defaultValue: 0.7,
+      min: 0.1, max: 2.0, step: 0.1,
+    },
+  ],
+},
+```
+
+#### Matching rules (critical)
+
+The `nvsKey` in `firmwares.js` and the key string in the Arduino `Preferences`
+call **must be identical** — this is the link between the web form and the
+firmware. If they don't match, the firmware won't see the configured value.
+
+| firmwares.js | Arduino sketch | Must match? |
+|-------------|----------------|-------------|
+| `nvsKey: "imagePath"` | `prefs.getString("imagePath", ...)` | **Yes — exact** |
+| `nvsType: "i32"` | `prefs.getInt(...)` | **Yes — type must correspond** |
+| `defaultValue: 2` | `DEFAULT_DITHER = 2` | Should match (consistency) |
+
+#### Input type → nvsType mapping
+
+| User-facing input | `type` | `nvsType` | Arduino API |
+|-------------------|--------|-----------|-------------|
+| Text box | `"text"` | `"string"` | `getString()` |
+| Number spinner | `"number"` | `"float"` or `"i32"` | `getFloat()` or `getInt()` |
+| Dropdown menu | `"select"` | `"i32"` | `getInt()` |
+| Checkbox toggle | `"checkbox"` | `"u8"` | `getUChar()` |
+
+### D4. Verify the adaptation
+
+1. **Compile check:** build the sketch with Arduino CLI to confirm
+   `#include <Preferences.h>` and variable changes compile cleanly.
+2. **Default behavior:** flash the firmware **without** changing any config
+   fields on the web page. The firmware should behave identically to the
+   original hardcoded version (all defaults match).
+3. **Custom config:** change a value on the web page (e.g. set image path to
+   `/test.jpg`), flash, and open the serial monitor. Verify the firmware
+   prints/uses the custom value instead of the default.
+4. **No-config firmware:** flash a different firmware that has no `configFields`
+   (e.g. `Blink_Test`). Verify no NVS binary is injected and it works as before.
+
+### D5. Checklist summary
+
+- [ ] `#include <Preferences.h>` added to the sketch
+- [ ] Old `#define` / `constexpr` constants converted to `DEFAULT_*` + runtime variables
+- [ ] `loadConfig()` reads from NVS namespace `"config"` with defaults as fallback
+- [ ] `loadConfig()` called at the start of `setup()`
+- [ ] All old constant references replaced with runtime variables
+- [ ] Enum values validated with boundary-checking helper functions
+- [ ] Float values read with `read_float_config()` helper (4-byte blob)
+- [ ] `configFields` added to the `firmwareOptions` entry in `firmwares.js`
+- [ ] Every `nvsKey` matches the corresponding `Preferences` key string exactly
+- [ ] Every `nvsType` corresponds to the correct `Preferences` getter method
+- [ ] `defaultValue` in `firmwares.js` matches `DEFAULT_*` in the sketch
+- [ ] Sketch compiles without errors
+- [ ] Default behavior is identical to the original hardcoded version
+
+## Worked example — SD_ImagePipeline_E1001_BW
+
+The `SD_ImagePipeline_E1001_BW` sketch was adapted from a simple demo with
+7 hardcoded constants to a fully web-configurable firmware. Here is the mapping:
+
+| Parameter | Old constant | Runtime variable | NVS key | nvsType | Input type | Default |
+|-----------|-------------|-----------------|---------|---------|------------|---------|
+| Image path | `IMAGE_PATH` | `imagePath` | `imagePath` | string | text | `/img/demo.jpg` |
+| Dither algorithm | `DITHER_METHOD` | `ditherMethod` | `dither` | i32 | select | 2 (Floyd-Steinberg) |
+| Gamma | `DITHER_GAMMA` | `ditherGamma` | `gamma` | float | number | 1.0 |
+| Invert B/W | `INVERT` | `ditherInvert` | `invert` | u8 | checkbox | 0 (off) |
+| Anchor position | `DISPLAY_ANCHOR` | `displayAnchor` | `anchor` | i32 | select | 4 (Center) |
+| Fit mode | `DISPLAY_FIT` | `displayFit` | `fitMode` | i32 | select | 2 (Custom scale) |
+| Scale factor | `DISPLAY_SCALE` | `displayScale` | `scale` | float | number | 0.7 |
+
+The adapted sketch also added three validation helpers (`read_dither_config`,
+`read_anchor_config`, `read_fit_config`) to guard against invalid enum values
+stored in NVS, and a `read_float_config` helper for reading IEEE 754 blobs.
+
+---
+
 # Reference: project file map
 
 A summary of every file that participates in the firmware pipeline:
@@ -573,6 +951,7 @@ A summary of every file that participates in the firmware pipeline:
 | `.github/workflows/build-and-deploy.yml` | CI: compile, deploy, release | Human |
 | `web/js/firmwares.js` | Device + platform + firmware metadata | Human |
 | `web/js/app.js` | UI logic, serial flash, monitor | Human (rarely) |
+| `web/js/nvs.js` | NVS partition binary generator for config values | **Do not edit** |
 | `web/css/style.css` | Page styles | Human (rarely) |
 | `web/index.html` | Page structure | Human (rarely) |
 | `web/assets/platforms/` | Platform logos and previews | Human |
