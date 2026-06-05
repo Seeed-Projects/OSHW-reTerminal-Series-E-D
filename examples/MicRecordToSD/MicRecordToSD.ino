@@ -33,9 +33,10 @@
 // USER CONFIGURATION
 // ============================================================
 
-// Uncomment ONE line to select your hardware model:
+// Select your hardware model. When building locally, uncomment ONE line:
 // #define DEVICE_E1001_E1002   // reTerminal E1001 or E1002
-#define DEVICE_E1003      // reTerminal E1003
+// #define DEVICE_E1003         // reTerminal E1003
+// CI injects the correct define via build_flags; no need to edit for hub builds.
 
 // Recording parameters
 #define SAMPLE_RATE      16000U  // Sample rate in Hz (8000 / 16000 / 44100)

@@ -62,10 +62,16 @@ jobs:
             path: examples/LowPower_DeepSleep
             needs_gfx: false
             needs_gxepd2: false
-          - name: MicRecordToSD
+          - name: MicRecordToSD_E1001
             path: examples/MicRecordToSD
             needs_gfx: false
             needs_gxepd2: false
+            build_flags: "-DDEVICE_E1001_E1002"
+          - name: MicRecordToSD_E1003
+            path: examples/MicRecordToSD
+            needs_gfx: false
+            needs_gxepd2: false
+            build_flags: "-DDEVICE_E1003"
           - name: E1003_TouchDraw
             path: examples/E1003_TouchDraw
             needs_gfx: true
@@ -278,7 +284,7 @@ jobs:
             echo "|:---------|:-------------------|"
             echo "| RTC_PCF8563 | E1001 – E1004 |"
             echo "| LowPower_DeepSleep | E1001 – E1004 |"
-            echo "| MicRecordToSD | E1001 – E1003 |"
+            echo "| MicRecordToSD | E1001/E1002, E1003 (per-device build) |"
             echo "| E1003_TouchDraw | E1003 |"
             echo "| LED_Control | E1001/E1002, E1003, E1004 (per-device build) |"
             echo "| Buzzer_Control | E1001 – E1004 |"

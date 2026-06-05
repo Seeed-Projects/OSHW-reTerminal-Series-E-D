@@ -95,11 +95,18 @@ const PLATFORM_CARDS = [
         compatible: ["E1001", "E1002", "E1003", "E1004"],
       },
       {
-        id: "MicRecordToSD",
+        id: "MicRecordToSD_E1001",
         name: "Microphone Recording",
         description: "Record audio from the onboard PDM microphone to MicroSD.",
         category: "Audio",
-        compatible: ["E1001", "E1002", "E1003"],
+        compatible: ["E1001", "E1002"],
+      },
+      {
+        id: "MicRecordToSD_E1003",
+        name: "Microphone Recording",
+        description: "Record audio from the onboard PDM microphone to MicroSD.",
+        category: "Audio",
+        compatible: ["E1003"],
       },
       {
         id: "E1003_TouchDraw",
