@@ -44,6 +44,12 @@
   "MicRecordToSD": [
     "latest"
   ],
+  "MicRecordToSD_E1001": [
+    "latest"
+  ],
+  "MicRecordToSD_E1003": [
+    "latest"
+  ],
   "MicroSD_ListFiles": [
     "latest"
   ],
