@@ -140,6 +140,28 @@ jobs:
             needs_gfx: false
             needs_gxepd2: false
             needs_sht4x: true
+          # SD card image pipeline demos (per-device, uses Seeed_GFX/TFT_eSPI).
+          # SD 卡图片显示流水线演示（按设备编译，依赖 Seeed_GFX/TFT_eSPI）。
+          - name: SD_ImagePipeline_E1001_BW
+            path: examples/SD_ImagePipeline_E1001_BW
+            needs_gfx: true
+            needs_gxepd2: false
+          - name: SD_ImagePipeline_E1001_Gray4
+            path: examples/SD_ImagePipeline_E1001_Gray4
+            needs_gfx: true
+            needs_gxepd2: false
+          - name: SD_ImagePipeline_E1002
+            path: examples/SD_ImagePipeline_E1002
+            needs_gfx: true
+            needs_gxepd2: false
+          - name: SD_ImagePipeline_E1003
+            path: examples/SD_ImagePipeline_E1003
+            needs_gfx: true
+            needs_gxepd2: false
+          - name: SD_ImagePipeline_E1004
+            path: examples/SD_ImagePipeline_E1004
+            needs_gfx: true
+            needs_gxepd2: false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -271,6 +293,11 @@ jobs:
             echo "| GxEPD2_reTerminal_E1001_Gray4 | E1001 |"
             echo "| GxEPD2_reTerminal_E1003_Gray16 | E1003 |"
             echo "| SHT4x_Sensor | E1001 – E1004 |"
+            echo "| SD_ImagePipeline_E1001_BW | E1001 |"
+            echo "| SD_ImagePipeline_E1001_Gray4 | E1001 |"
+            echo "| SD_ImagePipeline_E1002 | E1002 |"
+            echo "| SD_ImagePipeline_E1003 | E1003 |"
+            echo "| SD_ImagePipeline_E1004 | E1004 |"
             echo ""
             echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${last_tag:-$(git rev-list --max-parents=0 HEAD | head -1)}...${{ steps.version.outputs.tag }}"
             echo "CHANGELOG_EOF"

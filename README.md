@@ -194,6 +194,11 @@ Each example lives in the `examples/` directory and can be flashed via the Firmw
 | [`E1003_TouchDraw`](examples/E1003_TouchDraw/) | E1003 | Draw on the 10.3″ ePaper display using touch input |
 | [`E1003_ChineseTextDemo`](examples/E1003_ChineseTextDemo/) | E1003 | Render Chinese text with a TTF font stored in SPIFFS |
 | [`SHT4x_Sensor`](examples/SHT4x_Sensor/) | E1001 – E1004 | Read temperature and humidity from the SHT40 sensor over I2C |
+| [`SD_ImagePipeline_E1001_BW`](examples/SD_ImagePipeline_E1001_BW/) | E1001 | Display a JPEG/PNG from MicroSD with B&W dithering |
+| [`SD_ImagePipeline_E1001_Gray4`](examples/SD_ImagePipeline_E1001_Gray4/) | E1001 | Display a JPEG/PNG from MicroSD in 4-level grayscale |
+| [`SD_ImagePipeline_E1002`](examples/SD_ImagePipeline_E1002/) | E1002 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
+| [`SD_ImagePipeline_E1003`](examples/SD_ImagePipeline_E1003/) | E1003 | Display a JPEG/PNG from MicroSD in 16-level grayscale |
+| [`SD_ImagePipeline_E1004`](examples/SD_ImagePipeline_E1004/) | E1004 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
