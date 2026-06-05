@@ -458,7 +458,7 @@ jobs:
           PY
 
           echo "=== GitHub Pages content preview ==="
-          find . -type f | head -80
+          find . -type f | sort
 
       - name: Commit and push gh-pages
         run: |
