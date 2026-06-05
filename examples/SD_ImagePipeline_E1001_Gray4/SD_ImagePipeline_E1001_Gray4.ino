@@ -102,6 +102,9 @@ static void loadConfig() {
   }
 
   imagePath = prefs.getString("imagePath", DEFAULT_IMAGE_FILE);
+  // The ESP32 SD/VFS layer requires absolute paths; prepend "/" if missing.
+  // ESP32 的 SD/VFS 层要求绝对路径；缺少前导 "/" 时自动补上。
+  if (imagePath.length() > 0 && imagePath[0] != '/') imagePath = "/" + imagePath;
   ditherMethod = read_dither_config(prefs.getInt("dither", (int)DEFAULT_DITHER));
   ditherGamma = read_float_config(prefs, "gamma", DEFAULT_GAMMA);
   displayAnchor = read_anchor_config(prefs.getInt("anchor", (int)DEFAULT_ANCHOR));
