@@ -441,7 +441,7 @@ p { color: var(--muted); }
 
 .selected-release {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -449,19 +449,16 @@ p { color: var(--muted); }
   background: #fafcfb;
 }
 
-.selected-icon {
-  display: grid;
-  place-items: center;
-  width: 58px;
-  height: 58px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background: #fff;
+.selected-device-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.selected-icon img {
-  max-width: 40px;
-  max-height: 40px;
+.selected-device-photo img {
+  width: 100px;
+  height: 100px;
   object-fit: contain;
+  border-radius: 8px;
 }
 .selected-copy { min-width: 0; }
 .selected-copy h3 { margin-bottom: 5px; }
@@ -804,4 +801,5 @@ pre#log {
     min-height: 128px;
   }
   .selected-release { grid-template-columns: 1fr; }
+  .selected-device-photo { display: none; }
 }
