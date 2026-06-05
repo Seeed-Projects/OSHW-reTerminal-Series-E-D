@@ -50,6 +50,21 @@
   "RTC_PCF8563": [
     "latest"
   ],
+  "SD_ImagePipeline_E1001_BW": [
+    "latest"
+  ],
+  "SD_ImagePipeline_E1001_Gray4": [
+    "latest"
+  ],
+  "SD_ImagePipeline_E1002": [
+    "latest"
+  ],
+  "SD_ImagePipeline_E1003": [
+    "latest"
+  ],
+  "SD_ImagePipeline_E1004": [
+    "latest"
+  ],
   "SHT4x_Sensor": [
     "latest"
   ],

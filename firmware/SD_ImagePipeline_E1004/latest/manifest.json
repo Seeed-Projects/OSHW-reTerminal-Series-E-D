@@ -1,0 +1,14 @@
+{
+  "name": "SD_ImagePipeline_E1004",
+  "version": "latest",
+  "new_install_prompt_erase": true,
+  "builds": [{
+    "chipFamily": "ESP32-S3",
+    "parts": [
+      {"path": "SD_ImagePipeline_E1004.ino.bootloader.bin", "offset": 0},
+      {"path": "SD_ImagePipeline_E1004.ino.partitions.bin", "offset": 32768},
+      {"path": "boot_app0.bin", "offset": 57344},
+      {"path": "SD_ImagePipeline_E1004.ino.bin", "offset": 65536}
+    ]
+  }]
+}

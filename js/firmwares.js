@@ -216,6 +216,57 @@ const PLATFORM_CARDS = [
           { type: "info", text: "An SHT40 sensor must be connected to the I2C Grove port (SDA=GPIO19, SCL=GPIO20). Readings print every 5 seconds on Serial1 (GPIO43 TX, 115200 baud)." },
         ],
       },
+      {
+        id: "SD_ImagePipeline_E1001_BW",
+        name: "SD Image Display (B&W)",
+        description: "Load a JPEG/PNG from MicroSD and render it on the E1001 panel with dithering.",
+        category: "Display",
+        compatible: ["E1001"],
+        notes: [
+          { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
+          { type: "info", text: "Supports Floyd-Steinberg, Bayer, Jarvis, and Atkinson dithering. Configure in source code." },
+        ],
+      },
+      {
+        id: "SD_ImagePipeline_E1001_Gray4",
+        name: "SD Image Display (4-Gray)",
+        description: "Load a JPEG/PNG from MicroSD and render it in 4-level grayscale on the E1001 panel.",
+        category: "Display",
+        compatible: ["E1001"],
+        notes: [
+          { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
+        ],
+      },
+      {
+        id: "SD_ImagePipeline_E1002",
+        name: "SD Image Display (Color)",
+        description: "Load a JPEG/PNG from MicroSD and render it in 6-color on the E1002 Spectra 6 panel.",
+        category: "Display",
+        compatible: ["E1002"],
+        notes: [
+          { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
+        ],
+      },
+      {
+        id: "SD_ImagePipeline_E1003",
+        name: "SD Image Display (16-Gray)",
+        description: "Load a JPEG/PNG from MicroSD and render it in 16-level grayscale on the E1003 panel.",
+        category: "Display",
+        compatible: ["E1003"],
+        notes: [
+          { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
+        ],
+      },
+      {
+        id: "SD_ImagePipeline_E1004",
+        name: "SD Image Display (Color)",
+        description: "Load a JPEG/PNG from MicroSD and render it in 6-color on the E1004 Spectra 6 panel.",
+        category: "Display",
+        compatible: ["E1004"],
+        notes: [
+          { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
+        ],
+      },
     ],
   },
   {
