@@ -1,5 +1,8 @@
 /*
- * MicRecordToSD — PDM Microphone Recording to SD Card
+ * MicRecordToSD — Record Microphone Audio to an SD Card
+ *
+ * This project records audio from the onboard PDM microphone and saves it
+ * as a WAV file on the MicroSD card.
  *
  * Compatible with : reTerminal E1001 / E1002 / E1003
  * NOT compatible  : reTerminal E1004 (no onboard microphone)
@@ -11,9 +14,11 @@
  * 3. Flash to your device (board: XIAO_ESP32S3, PSRAM: OPI PSRAM, Flash: 8 MB).
  * 4. Open a serial monitor on the carrier USB-UART bridge (GPIO43 TX / GPIO44 RX,
  *    115200 baud) — this is Serial1, not the USB-CDC Serial.
- * 5. Press KEY0 (right button) to start recording.
+ * 5. Press the green KEY0 button once to start recording.
  *    The LED blinks while recording is in progress.
- * 6. Press KEY0 again (or wait for MAX_RECORD_SECS) to stop.
+ * 6. Press the green KEY0 button once again to stop recording.
+ *    This is two separate single presses, not a long press.
+ *    Recording also stops automatically when MAX_RECORD_SECS is reached.
  *    The WAV file is saved to RECORD_DIR on the SD card.
  *
  * Output file format
