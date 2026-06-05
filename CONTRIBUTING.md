@@ -1,8 +1,14 @@
-# Contributing — Adding a New Firmware Example
+# Contributing Guide
 
-This guide is the single source of truth for integrating a new Arduino example into
-the reTerminal E-Series Firmware Hub. Follow every step — skipping one will leave
-the example invisible on the web page or missing from CI.
+This guide is the single source of truth for modifying the reTerminal E-Series
+Firmware Hub. It covers three scenarios:
+
+- **[Scenario A](#scenario-a--add-a-firmware-example-to-the-base-platform)** — Add a firmware example to the Base platform (most common)
+- **[Scenario B](#scenario-b--enable-firmware-for-a-non-base-platform)** — Enable firmware flashing for an existing platform (ESPHome, SquareLine, OpenDisplay)
+- **[Scenario C](#scenario-c--add-a-completely-new-platform)** — Add a completely new platform
+
+Follow every step — skipping one will leave the firmware invisible on the web
+page or missing from CI.
 
 ## Architecture at a glance
 
@@ -25,6 +31,13 @@ esptool-js (browser)      Flashes .bin over USB serial in Chrome / Edge
 Live site: <https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/>
 
 ---
+
+---
+
+# Scenario A — Add a firmware example to the Base platform
+
+This is the most common case: you have a new Arduino sketch and want it to appear
+in the "Base" platform's firmware dropdown on the web page.
 
 ## Quick checklist
 
@@ -350,3 +363,217 @@ Check the GitHub Actions run. Once it succeeds:
 | Flash fails with "No compatible build" | Manifest was not generated | Verify CI passed and check `firmware/<Sketch>/latest/manifest.json` exists on gh-pages |
 | Version dropdown only shows "latest" | No tag has been pushed | Push a version tag: `git tag v1.0.0 && git push origin v1.0.0` |
 | New firmware not on live site | GitHub Pages cache | Wait 2-3 minutes, or hard-refresh (`Ctrl+Shift+R`) |
+
+---
+
+# Scenario B — Enable firmware for a non-Base platform
+
+The web page ships with placeholder platform cards (ESPHome, SquareLine Vision,
+OpenDisplay) that have `installReady: false`. These platforms show a "Firmware not
+published yet" notice instead of the Flash button. To enable actual firmware
+flashing for one of these platforms, follow these steps.
+
+## What to change
+
+**File:** `web/js/firmwares.js`
+
+Find the platform entry in `PLATFORM_CARDS` (e.g. `id: "esphome"`) and make these
+changes:
+
+### B1. Set `installReady` to `true`
+
+```js
+    installReady: true,   // was false
+```
+
+This enables the "Connect & flash" button for the platform.
+
+### B2. Add firmware options
+
+Add entries to the platform's `firmwareOptions` array. The fields are identical to
+Base firmware options (see [Field reference](#field-reference) above):
+
+```js
+    firmwareOptions: [
+      {
+        id: "ESPHome_E1001_ePaper",
+        name: "ESPHome ePaper Dashboard",
+        description: "Home Assistant dashboard on the 7.5\" ePaper display.",
+        category: "Display",
+        compatible: ["E1001"],
+      },
+    ],
+```
+
+### B3. Register sketches in CI
+
+Each firmware option needs a matching CI matrix entry — follow
+[Step 2](#step-2--register-in-the-ci-workflow) from Scenario A.
+
+### B4. Handle config fields (if applicable)
+
+Some platforms have pre-flash configuration (e.g. Wi-Fi credentials for ESPHome).
+These are defined in the platform's `configFields` array:
+
+```js
+    configFields: [
+      {
+        id: "wifiSsid",
+        label: "Wi-Fi SSID",
+        type: "text",
+        placeholder: "Office Wi-Fi",
+      },
+      {
+        id: "wifiPassword",
+        label: "Wi-Fi password",
+        type: "password",
+        placeholder: "Stored locally before flashing",
+      },
+    ],
+```
+
+Config field values are displayed in the "Version and setup" panel. **Note:**
+currently the web page renders these inputs but does not inject the values into
+the firmware binary. To actually use config values at flash time, you would need
+to implement a firmware binary patching step in `app.js` (not yet built).
+
+### B5. Update version entries
+
+The platform's `versions` array provides the static version list for non-Base
+platforms. When `installReady` is `true` and `firmwareOptions` is populated, the
+version dropdown is driven by `firmware/versions.json` instead (same as Base).
+You can keep the static `versions` as a fallback:
+
+```js
+    versions: [
+      { version: "2026.5.2", label: "Preview" },
+    ],
+```
+
+---
+
+# Scenario C — Add a completely new platform
+
+If the new platform does not already exist in `PLATFORM_CARDS`, you need to create
+the full platform entry plus its assets.
+
+## C1. Prepare platform assets
+
+Add two image files to `web/assets/platforms/`:
+
+| File | Purpose | Recommended format |
+|------|---------|--------------------|
+| `<platform>-logo.svg` or `.png` | Square logo shown in the platform card (44×44 area) | SVG preferred, PNG ≤ 64×64 |
+| `<platform>-preview.png` or `.svg` | Preview image shown in the expanded platform card (right side) | 16:9 or 4:3 ratio, ≥ 520px wide |
+
+These paths go into the `logo` and `preview` fields of the platform entry.
+
+## C2. Add the platform entry
+
+**File:** `web/js/firmwares.js`
+
+Add a new object to the `PLATFORM_CARDS` array:
+
+```js
+  {
+    id: "micropython",
+    name: "MicroPython",
+    tagline: "Run Python scripts directly on ESP32-S3 with REPL access.",
+    description:
+      "MicroPython provides an interactive Python environment on the ESP32-S3, "
+      + "ideal for rapid prototyping and scripting without compiling C code.",
+    logo: "assets/platforms/micropython-logo.svg",
+    preview: "assets/platforms/micropython-preview.png",
+    previewAlt: "MicroPython REPL preview",
+    accent: "#004966",
+    highlight: "#8FC31F",
+    supportedDevices: ["E1001", "E1002", "E1003", "E1004"],
+    installReady: true,
+    bullets: [
+      "Interactive Python REPL via serial",
+      "No compilation required for scripts",
+      "Good for rapid prototyping and education",
+    ],
+    versions: [
+      { version: "1.23.0", label: "Stable" },
+    ],
+    configFields: [],
+    firmwareOptions: [
+      {
+        id: "MicroPython_Base",
+        name: "MicroPython Base Image",
+        description: "Vanilla MicroPython firmware with REPL and filesystem.",
+        category: "Runtime",
+        compatible: ["E1001", "E1002", "E1003", "E1004"],
+      },
+    ],
+  },
+```
+
+### Platform entry field reference
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | **yes** | Unique platform identifier (lowercase, no spaces). Used internally only. |
+| `name` | string | **yes** | Display name shown in the platform card heading. |
+| `tagline` | string | **yes** | One-line summary shown below the platform name in the collapsed card. |
+| `description` | string | **yes** | Longer description shown when the platform card is expanded. |
+| `logo` | string | **yes** | Path to the platform logo image (relative to `web/`). |
+| `preview` | string | **yes** | Path to the platform preview image (relative to `web/`). |
+| `previewAlt` | string | **yes** | Alt text for the preview image. |
+| `accent` | string | **yes** | CSS hex color for card border on hover/expand. Use `"#004966"` to match existing platforms. |
+| `highlight` | string | **yes** | CSS hex color for highlight accents. Use `"#8FC31F"` (Seeed green) to match existing platforms. |
+| `supportedDevices` | string[] | **yes** | Device IDs that appear as selectable device buttons when the platform is expanded. |
+| `installReady` | boolean | **yes** | `true` to enable the Flash button; `false` shows "Firmware not published yet". |
+| `bullets` | string[] | **yes** | 2-4 short selling points shown in the expanded card. |
+| `versions` | object[] | **yes** | Static version list. Overridden by `firmware/versions.json` at runtime for `installReady` platforms. |
+| `configFields` | object[] | **yes** | Pre-flash configuration inputs. Use `[]` if none needed. |
+| `firmwareOptions` | object[] | **yes** | Firmware entries for this platform. Same structure as Base firmware options (see [Field reference](#field-reference)). Use `[]` if the platform has no flashable firmware yet. |
+
+## C3. Register firmware in CI
+
+Each entry in `firmwareOptions` needs a corresponding CI matrix entry — follow
+[Step 2](#step-2--register-in-the-ci-workflow) from Scenario A.
+
+## C4. Update supportedDevices if adding a new device
+
+If the new platform supports a device that does not yet exist in the `DEVICES`
+array at the top of `firmwares.js`, add a device entry:
+
+```js
+  {
+    id: "E2001",
+    name: "reTerminal E2001",
+    description: '5.8" color TFT display',
+    image: "assets/devices/reterminal-e2001.jpg",
+    imageAlt: "reTerminal E2001 product photo",
+    specs: ['5.8" display', "Full color", "TFT LCD"],
+  },
+```
+
+Also add the device photo to `web/assets/devices/`.
+
+## C5. Update README
+
+Add the new platform to the README's feature list and update any relevant tables.
+
+---
+
+# Reference: project file map
+
+A summary of every file that participates in the firmware pipeline:
+
+| File | Role | Edited by |
+|------|------|-----------|
+| `examples/<Sketch>/<Sketch>.ino` | Arduino source code | Human |
+| `.github/workflows/build-and-deploy.yml` | CI: compile, deploy, release | Human |
+| `web/js/firmwares.js` | Device + platform + firmware metadata | Human |
+| `web/js/app.js` | UI logic, serial flash, monitor | Human (rarely) |
+| `web/css/style.css` | Page styles | Human (rarely) |
+| `web/index.html` | Page structure | Human (rarely) |
+| `web/assets/platforms/` | Platform logos and previews | Human |
+| `web/assets/devices/` | Device product photos | Human |
+| `firmware/versions.json` | Version index | **Auto-generated by CI** |
+| `firmware/<Sketch>/*/manifest.json` | Flash manifest per version | **Auto-generated by CI** |
+| `firmware/<Sketch>/*/*.bin` | Compiled firmware binaries | **Auto-generated by CI** |
+| `README.md` | Project documentation | Human |
