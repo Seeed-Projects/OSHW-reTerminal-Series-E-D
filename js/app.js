@@ -546,7 +546,9 @@ async function flashDevice() {
     const configValues = collectConfigValues();
     if (configValues.length > 0) {
       appendLog("[flash] Generating user config for NVS partition...");
-      const { generateNvsPartition } = await import("./nvs.js");
+      const { generateNvsPartition, NVS_VERSION } = await import("./nvs.js?v=2");
+      console.log(`[nvs] generator v${NVS_VERSION} loaded (expect v2)`);
+      console.log("[nvs] config entries:", configValues.map(e => ({ key: e.key, type: e.type, value: e.value instanceof Uint8Array ? `blob[${e.value.length}]` : e.value })));
       const nvsData = generateNvsPartition(configValues);
       let nvsBinStr = "";
       for (let i = 0; i < nvsData.length; i++) nvsBinStr += String.fromCharCode(nvsData[i]);
