@@ -193,6 +193,7 @@ Each example lives in the `examples/` directory and can be flashed via the Firmw
 | [`MicRecordToSD`](examples/MicRecordToSD/) | E1001 – E1003 | Record PDM microphone audio to WAV files on MicroSD |
 | [`E1003_TouchDraw`](examples/E1003_TouchDraw/) | E1003 | Draw on the 10.3″ ePaper display using touch input |
 | [`E1003_ChineseTextDemo`](examples/E1003_ChineseTextDemo/) | E1003 | Render Chinese text with a TTF font stored in SPIFFS |
+| [`SHT4x_Sensor`](examples/SHT4x_Sensor/) | E1001 – E1004 | Read temperature and humidity from the SHT40 sensor over I2C |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

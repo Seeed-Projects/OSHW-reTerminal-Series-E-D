@@ -206,6 +206,16 @@ const PLATFORM_CARDS = [
         category: "Display",
         compatible: ["E1003"],
       },
+      {
+        id: "SHT4x_Sensor",
+        name: "Temperature & Humidity Sensor",
+        description: "Read temperature and humidity from the SHT40 sensor via I2C every 5 seconds.",
+        category: "Peripheral",
+        compatible: ["E1001", "E1002", "E1003", "E1004"],
+        notes: [
+          { type: "info", text: "An SHT40 sensor must be connected to the I2C Grove port (SDA=GPIO19, SCL=GPIO20). Readings print every 5 seconds on Serial1 (GPIO43 TX, 115200 baud)." },
+        ],
+      },
     ],
   },
   {

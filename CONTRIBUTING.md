@@ -133,6 +133,7 @@ and add a new entry. Copy-paste this template and fill in the values:
             path: examples/WiFi_Scanner
             needs_gfx: false
             needs_gxepd2: false
+            needs_sht4x: false
 ```
 
 #### Matrix entry fields
@@ -143,6 +144,7 @@ and add a new entry. Copy-paste this template and fill in the values:
 | `path` | string | **yes** | Relative path from repo root to the sketch folder. |
 | `needs_gfx` | boolean | **yes** | Set `true` to install the [Seeed_GFX](https://github.com/Seeed-Studio/Seeed_GFX) library before compiling. |
 | `needs_gxepd2` | boolean | **yes** | Set `true` to install [Seeed_GxEPD2](https://github.com/Seeed-Projects/Seeed_GxEPD2), Adafruit GFX Library, and Adafruit BusIO before compiling. |
+| `needs_sht4x` | boolean | optional | Set `true` to install the [Sensirion I2C SHT4x](https://github.com/Sensirion/arduino-i2c-sht4x) library before compiling. |
 | `build_flags` | string | optional | Extra compiler flags passed via `build.extra_flags`. Used for device-variant builds (e.g. `"-DDEVICE_MODEL=1001"`). |
 
 #### Supported library flags reference
@@ -151,8 +153,9 @@ and add a new entry. Copy-paste this template and fill in the values:
 |------|--------------------|
 | `needs_gfx: true` | `Seeed_GFX` (from GitHub) |
 | `needs_gxepd2: true` | `Seeed_GxEPD2` (from GitHub), `Adafruit GFX Library` (registry), `Adafruit BusIO` (registry) |
+| `needs_sht4x: true` | `Sensirion I2C SHT4x` (registry, includes Sensirion Core dependency) |
 
-Both can be `true` simultaneously if a sketch needs both libraries.
+Multiple flags can be `true` simultaneously if a sketch needs several libraries.
 
 #### Per-device variant builds
 
@@ -303,6 +306,7 @@ In `.github/workflows/build-and-deploy.yml`, under `matrix.sketch`:
             path: examples/WiFi_Scanner
             needs_gfx: false
             needs_gxepd2: false
+            needs_sht4x: false
 ```
 
 In the same file, in the `Generate changelog` step, add:
@@ -359,7 +363,7 @@ Check the GitHub Actions run. Once it succeeds:
 |---------|-------|-----|
 | Sketch not in the firmware dropdown | `id` in `firmwares.js` does not match `name` in CI matrix | Make them identical (case-sensitive) |
 | Firmware dropdown is empty for a device | `compatible` array does not include that device ID | Add the device ID string to `compatible` |
-| CI build fails | Missing library | Set `needs_gfx: true` or `needs_gxepd2: true` in the matrix entry |
+| CI build fails | Missing library | Set `needs_gfx: true`, `needs_gxepd2: true`, or `needs_sht4x: true` in the matrix entry |
 | Flash fails with "No compatible build" | Manifest was not generated | Verify CI passed and check `firmware/<Sketch>/latest/manifest.json` exists on gh-pages |
 | Version dropdown only shows "latest" | No tag has been pushed | Push a version tag: `git tag v1.0.0 && git push origin v1.0.0` |
 | New firmware not on live site | GitHub Pages cache | Wait 2-3 minutes, or hard-refresh (`Ctrl+Shift+R`) |

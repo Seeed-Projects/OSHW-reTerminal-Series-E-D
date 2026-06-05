@@ -133,6 +133,13 @@ jobs:
             path: examples/GxEPD2_reTerminal_E1003_Gray16
             needs_gfx: false
             needs_gxepd2: true
+          # I2C sensor demos.
+          # I2C 传感器演示。
+          - name: SHT4x_Sensor
+            path: examples/SHT4x_Sensor
+            needs_gfx: false
+            needs_gxepd2: false
+            needs_sht4x: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -165,6 +172,11 @@ jobs:
         run: |
           arduino-cli config set library.enable_unsafe_install true
           arduino-cli lib install --git-url https://github.com/Seeed-Studio/Seeed_GFX.git
+
+      - name: Install Sensirion SHT4x library
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_sht4x
+        run: |
+          arduino-cli lib install "Sensirion I2C SHT4x"
 
       - name: Install Seeed_GxEPD2 and Adafruit_GFX
         if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_gxepd2
@@ -258,6 +270,7 @@ jobs:
             echo "| GxEPD2_reTerminal_E1004 | E1004 |"
             echo "| GxEPD2_reTerminal_E1001_Gray4 | E1001 |"
             echo "| GxEPD2_reTerminal_E1003_Gray16 | E1003 |"
+            echo "| SHT4x_Sensor | E1001 – E1004 |"
             echo ""
             echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${last_tag:-$(git rev-list --max-parents=0 HEAD | head -1)}...${{ steps.version.outputs.tag }}"
             echo "CHANGELOG_EOF"
