@@ -30,7 +30,9 @@ function crc32(bytes) {
   for (const byte of bytes) {
     crc = (crc >>> 8) ^ crcTable[(crc ^ byte) & 0xff];
   }
-  return (crc ^ 0xffffffff) >>> 0;
+  // ESP-IDF NVS uses CRC32 without the standard final XOR inversion.
+  // ESP-IDF NVS 使用不带 final XOR 反转的 CRC32。
+  return crc >>> 0;
 }
 
 function writeUint32LE(data, offset, value) {
