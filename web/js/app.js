@@ -364,8 +364,9 @@ function renderConfigArea() {
       control = `<input id="${field.id}" type="text" value="${field.defaultValue || ""}" placeholder="${field.placeholder || ""}">`;
     }
 
+    const blockClass = field.type === "checkbox" ? "field-block field-block--checkbox" : "field-block";
     return `
-      <label class="field-block" for="${field.id}">
+      <label class="${blockClass}" for="${field.id}">
         <span>${field.label}</span>
         ${control}
       </label>
