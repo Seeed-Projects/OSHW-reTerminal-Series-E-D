@@ -389,15 +389,29 @@ async function flashDevice() {
 
   let transport = null;
   try {
-    appendLog("[flash] Requesting serial port...");
-    setProgress("flash", 2, "Waiting for port selection");
-    const port = await navigator.serial.requestPort({
-      filters: [
-        { usbVendorId: 0x303a },
-        { usbVendorId: 0x10c4 },
-        { usbVendorId: 0x1a86 },
-      ],
-    });
+    // Reuse the monitor port if already connected; otherwise prompt the user.
+    // 如果串口监视器正在连接，先断开并复用同一个端口，避免重复选择。
+    let port = null;
+    if (monitorPort) {
+      appendLog("[flash] Disconnecting monitor to free the port...");
+      setProgress("flash", 2, "Releasing serial port");
+      port = monitorPort;
+      await disconnectMonitor();
+    } else if (lastFlashedPort) {
+      appendLog("[flash] Reusing previously connected port...");
+      setProgress("flash", 2, "Reusing serial port");
+      port = lastFlashedPort;
+    } else {
+      appendLog("[flash] Requesting serial port...");
+      setProgress("flash", 2, "Waiting for port selection");
+      port = await navigator.serial.requestPort({
+        filters: [
+          { usbVendorId: 0x303a },
+          { usbVendorId: 0x10c4 },
+          { usbVendorId: 0x1a86 },
+        ],
+      });
+    }
 
     appendLog("[flash] Loading esptool-js...");
     setProgress("flash", 5, "Loading flash tool");
