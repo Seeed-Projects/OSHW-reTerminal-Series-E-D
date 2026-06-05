@@ -201,8 +201,15 @@ const PLATFORM_CARDS = [
       },
       {
         id: "GxEPD2_reTerminal_E1001_Gray4",
-        name: "4-Level Grayscale Demo",
-        description: "Four grayscale bands and concentric circles on the E1001 panel.",
+        name: "4-Level Grayscale Demo (Adafruit GFX)",
+        description: "Four grayscale bands and concentric circles on the E1001 panel. Uses Adafruit_GFX canvas with raw SPI register access.",
+        category: "Display",
+        compatible: ["E1001"],
+      },
+      {
+        id: "Seeed_GFX_E1001_Gray4",
+        name: "4-Level Grayscale Demo (Seeed GFX)",
+        description: "Four horizontal grayscale bands on the E1001 panel using the Seeed_GFX / TFT_eSPI high-level EPaper API.",
         category: "Display",
         compatible: ["E1001"],
       },

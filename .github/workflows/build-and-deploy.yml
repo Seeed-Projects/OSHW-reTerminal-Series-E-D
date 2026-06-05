@@ -135,6 +135,10 @@ jobs:
             path: examples/GxEPD2_reTerminal_E1001_Gray4
             needs_gfx: false
             needs_gxepd2: true
+          - name: Seeed_GFX_E1001_Gray4
+            path: examples/Seeed_GFX_E1001_Gray4
+            needs_gfx: true
+            needs_gxepd2: false
           - name: GxEPD2_reTerminal_E1003_Gray16
             path: examples/GxEPD2_reTerminal_E1003_Gray16
             needs_gfx: false
@@ -297,6 +301,7 @@ jobs:
             echo "| GxEPD2_reTerminal_E1003 | E1003 |"
             echo "| GxEPD2_reTerminal_E1004 | E1004 |"
             echo "| GxEPD2_reTerminal_E1001_Gray4 | E1001 |"
+            echo "| Seeed_GFX_E1001_Gray4 | E1001 |"
             echo "| GxEPD2_reTerminal_E1003_Gray16 | E1003 |"
             echo "| SHT4x_Sensor | E1001 – E1004 |"
             echo "| SD_ImagePipeline_E1001_BW | E1001 |"
