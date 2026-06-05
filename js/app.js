@@ -390,18 +390,39 @@ async function flashDevice() {
   let transport = null;
   try {
     // Reuse the monitor port if already connected; otherwise prompt the user.
+    // Validate that a cached port is still physically present before reusing it.
     // 如果串口监视器正在连接，先断开并复用同一个端口，避免重复选择。
+    // 复用前先检查端口是否仍然物理连接，防止设备拔出后静默失败。
     let port = null;
+    const availablePorts = await navigator.serial.getPorts();
+
     if (monitorPort) {
-      appendLog("[flash] Disconnecting monitor to free the port...");
-      setProgress("flash", 2, "Releasing serial port");
-      port = monitorPort;
-      await disconnectMonitor();
-    } else if (lastFlashedPort) {
-      appendLog("[flash] Reusing previously connected port...");
-      setProgress("flash", 2, "Reusing serial port");
-      port = lastFlashedPort;
-    } else {
+      if (availablePorts.includes(monitorPort)) {
+        appendLog("[flash] Disconnecting monitor to free the port...");
+        setProgress("flash", 2, "Releasing serial port");
+        port = monitorPort;
+        await disconnectMonitor();
+      } else {
+        appendLog("[flash] Monitor port disconnected, cleaning up...");
+        monitorPort = null;
+        lastFlashedPort = null;
+        setMonitorControls(false);
+        setSerialState("disconnected", "Device disconnected");
+      }
+    }
+
+    if (!port && lastFlashedPort) {
+      if (availablePorts.includes(lastFlashedPort)) {
+        appendLog("[flash] Reusing previously connected port...");
+        setProgress("flash", 2, "Reusing serial port");
+        port = lastFlashedPort;
+      } else {
+        appendLog("[flash] Previous port no longer available...");
+        lastFlashedPort = null;
+      }
+    }
+
+    if (!port) {
       appendLog("[flash] Requesting serial port...");
       setProgress("flash", 2, "Waiting for port selection");
       port = await navigator.serial.requestPort({
