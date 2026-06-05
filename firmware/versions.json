@@ -50,6 +50,9 @@
   "RTC_PCF8563": [
     "latest"
   ],
+  "SHT4x_Sensor": [
+    "latest"
+  ],
   "UserButtons": [
     "latest"
   ]
