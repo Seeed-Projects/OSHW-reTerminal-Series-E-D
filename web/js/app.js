@@ -6,10 +6,13 @@ let selectedVersion = null;
 let monitorPort = null;
 let monitorReader = null;
 let monitorKeepReading = false;
+let firmwareVersions = {};
 const monitorDecoder = new TextDecoder();
+const DEFAULT_FIRMWARE_VERSION = "latest";
 
 document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
+  void loadFirmwareVersions();
   renderPlatformCards();
   renderFlowState();
   bindFlowEvents();
@@ -29,7 +32,8 @@ function getDevice(deviceId) {
 }
 
 function getDefaultVersion(platform) {
-  return platform?.versions?.[0] || null;
+  const versions = getVersionOptions(platform);
+  return versions[0] || null;
 }
 
 function getAvailableFirmwareOptions(platform, deviceId) {
@@ -40,8 +44,62 @@ function getAvailableFirmwareOptions(platform, deviceId) {
 }
 
 function getInstallManifest() {
-  if (!selectedPlatform?.installReady) return "";
-  return selectedFirmwareOption?.manifest || selectedVersion?.manifest || "";
+  if (!selectedPlatform?.installReady || !selectedFirmwareOption) return "";
+  const version = selectedVersion?.version || DEFAULT_FIRMWARE_VERSION;
+  return `firmware/${selectedFirmwareOption.id}/${version}/manifest.json`;
+}
+
+function normalizeFirmwareVersions(data) {
+  if (!data || typeof data !== "object") return {};
+
+  return Object.fromEntries(
+    Object.entries(data).map(([firmwareId, versions]) => [
+      firmwareId,
+      Array.isArray(versions) && versions.length
+        ? versions.map((version) => String(version))
+        : [DEFAULT_FIRMWARE_VERSION],
+    ])
+  );
+}
+
+async function loadFirmwareVersions() {
+  try {
+    const response = await fetch("firmware/versions.json");
+    if (!response.ok) throw new Error(`Version manifest fetch failed: ${response.status}`);
+    firmwareVersions = normalizeFirmwareVersions(await response.json());
+  } catch (_) {
+    firmwareVersions = {};
+  }
+
+  if (selectedPlatform) {
+    selectedVersion = getDefaultVersion(selectedPlatform);
+    renderVersionPanel();
+    updateFlashState();
+  }
+}
+
+function getFirmwareVersionValues(firmwareOption) {
+  if (!firmwareOption?.id) return [DEFAULT_FIRMWARE_VERSION];
+  const versions = firmwareVersions[firmwareOption.id];
+  return Array.isArray(versions) && versions.length
+    ? versions
+    : [DEFAULT_FIRMWARE_VERSION];
+}
+
+function getVersionOptions(platform = selectedPlatform) {
+  if (platform?.installReady && selectedFirmwareOption) {
+    return getFirmwareVersionValues(selectedFirmwareOption).map((version) => ({
+      version,
+      label: version,
+    }));
+  }
+
+  return platform?.versions || [
+    {
+      version: DEFAULT_FIRMWARE_VERSION,
+      label: DEFAULT_FIRMWARE_VERSION,
+    },
+  ];
 }
 
 function renderDeviceSpecs(device, className = "") {
@@ -197,6 +255,8 @@ function renderSelectedRelease() {
   if (!container || !selectedPlatform || !selectedDevice) return;
 
   const firmwareName = selectedFirmwareOption?.name || selectedPlatform.name;
+  const firmwareDescription =
+    selectedFirmwareOption?.description || selectedPlatform.description;
 
   container.innerHTML = `
     <div class="selected-icon">
@@ -208,7 +268,7 @@ function renderSelectedRelease() {
         <span class="tag tag-device">${selectedDevice.name}</span>
       </div>
       <h3>${firmwareName}</h3>
-      <p>${selectedPlatform.description}</p>
+      <p>${firmwareDescription}</p>
       <div class="compat-list">
         ${renderDeviceSpecs(selectedDevice, "compat-badge active")}
       </div>
@@ -244,8 +304,15 @@ function renderVersionPanel() {
   const versionSelect = document.getElementById("versionSelect");
   if (!versionSelect || !selectedPlatform) return;
 
-  versionSelect.innerHTML = selectedPlatform.versions.map((item) => {
-    const label = `${item.version} - ${item.label}`;
+  const versions = getVersionOptions(selectedPlatform);
+  if (!versions.some((item) => item.version === selectedVersion?.version)) {
+    selectedVersion = versions[0] || null;
+  }
+
+  versionSelect.innerHTML = versions.map((item) => {
+    const label = item.label && item.label !== item.version
+      ? `${item.version} - ${item.label}`
+      : item.version;
     const selectedAttr = item.version === selectedVersion?.version ? "selected" : "";
     return `<option value="${item.version}" ${selectedAttr}>${label}</option>`;
   }).join("");
@@ -296,8 +363,8 @@ function updateFlashState() {
   if (installNote) installNote.classList.toggle("is-visible", !ready);
 }
 
-// Fetch a binary file and return it as a "binary string" (one byte per char
-// code), the format esptool-js writeFlash expects for each fileArray entry.
+// Fetches a binary file as the string format expected by esptool-js.
+// 获取二进制文件，并转成 esptool-js 需要的字符串格式。
 function fetchBinaryString(url) {
   return fetch(url).then((resp) => {
     if (!resp.ok) throw new Error(`Failed to download ${url}: ${resp.status}`);
@@ -384,8 +451,8 @@ async function flashDevice() {
       if (!part.path) continue;
       const binUrl = new URL(part.path, baseUrl).href;
       appendLog(`[flash] Fetching ${part.path}...`);
-      // esptool-js expects each binary as a "binary string" (one byte per
-      // char code), NOT a Uint8Array — readAsBinaryString produces that.
+      // esptool-js expects each binary as a binary string, not a Uint8Array.
+      // esptool-js 需要二进制字符串，而不是 Uint8Array。
       const data = await fetchBinaryString(binUrl);
       fileArray.push({ data, address: part.offset });
       totalSize += data.length;
@@ -416,7 +483,8 @@ async function flashDevice() {
     appendLog("[flash] Firmware installed successfully!");
     setProgress("flash", 98, "Resetting device");
 
-    // Hard reset: assert RTS (EN low), then chip-specific release via after().
+    // Hard reset asserts RTS, then releases the chip through esptool-js.
+    // 硬复位会先拉低 RTS，再通过 esptool-js 释放芯片。
     await transport.setRTS(true);
     await new Promise((r) => setTimeout(r, 100));
     await esploader.after();
@@ -439,12 +507,14 @@ async function flashDevice() {
       msgEl.textContent = msg;
       alert.classList.add("is-visible");
     }
-    // Release the port so the next attempt (or the monitor) can claim it.
+    // Releases the port so the next flash attempt or monitor can use it.
+    // 释放串口，方便下一次烧录或串口监视器继续使用。
     if (transport) {
       try {
         await transport.disconnect();
       } catch (_) {
-        // Already closed or never opened — nothing to clean up.
+        // The port is already closed or was never opened.
+        // 串口已经关闭，或从未成功打开。
       }
     }
   } finally {
@@ -609,7 +679,9 @@ function bindFlowEvents() {
       const options = getAvailableFirmwareOptions(selectedPlatform, selectedDevice?.id);
       selectedFirmwareOption =
         options.find((item) => item.id === firmwareSelect.value) || options[0] || null;
+      selectedVersion = getDefaultVersion(selectedPlatform);
       renderSelectedRelease();
+      renderVersionPanel();
       renderConfigArea();
       updateFlashState();
       resetProgress();
@@ -621,7 +693,7 @@ function bindFlowEvents() {
   if (versionSelect) {
     versionSelect.addEventListener("change", () => {
       selectedVersion =
-        selectedPlatform?.versions.find((item) => item.version === versionSelect.value) ||
+        getVersionOptions(selectedPlatform).find((item) => item.version === versionSelect.value) ||
         getDefaultVersion(selectedPlatform);
       updateFlashState();
       resetProgress();

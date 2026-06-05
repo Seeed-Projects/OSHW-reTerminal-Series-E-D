@@ -3,7 +3,8 @@ name: Build Firmware & Deploy Pages
 on:
   push:
     branches: [main]
-  workflow_dispatch:
+    tags:
+      - "v*"
 
 permissions:
   contents: write
@@ -19,7 +20,8 @@ env:
 
 jobs:
 
-  # ── Job 1: Detect whether firmware source changed ──
+  # Job 1: Detect whether firmware source changed.
+  # 任务 1：检测固件源码是否发生变化。
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -33,28 +35,25 @@ jobs:
       - name: Check for firmware changes
         id: check
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          changed=$(git diff --name-only HEAD~1 HEAD -- examples/ || true)
+          if [ -n "$changed" ]; then
             echo "firmware_changed=true" >> "$GITHUB_OUTPUT"
-            echo "Manual trigger — treating all firmware as changed"
+            echo "Firmware source changed:"
+            echo "$changed"
           else
-            changed=$(git diff --name-only HEAD~1 HEAD -- examples/ || true)
-            if [ -n "$changed" ]; then
-              echo "firmware_changed=true" >> "$GITHUB_OUTPUT"
-              echo "Firmware source changed:"
-              echo "$changed"
-            else
-              echo "firmware_changed=false" >> "$GITHUB_OUTPUT"
-              echo "No firmware changes detected"
-            fi
+            echo "firmware_changed=false" >> "$GITHUB_OUTPUT"
+            echo "No firmware changes detected"
           fi
 
-  # ── Job 2: Build firmware (with per-sketch caching) ──
+  # Job 2: Build firmware with per-sketch caching.
+  # 任务 2：按固件示例分别构建并使用缓存。
   build-firmware:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         sketch:
-          # ── Existing demos ──
+          # Existing demos.
+          # 已有演示。
           - name: RTC_PCF8563
             path: examples/RTC_PCF8563
             needs_gfx: false
@@ -71,7 +70,8 @@ jobs:
             path: examples/E1003_TouchDraw
             needs_gfx: true
             needs_gxepd2: false
-          # ── Simple peripherals (no external libs) ──
+          # Simple peripherals with no external libraries.
+          # 不依赖外部库的简单外设演示。
           - name: LED_Control_E1001
             path: examples/LED_Control
             needs_gfx: false
@@ -107,7 +107,8 @@ jobs:
             path: examples/MicroSD_ListFiles
             needs_gfx: false
             needs_gxepd2: false
-          # ── GxEPD2 display demos ──
+          # GxEPD2 display demos.
+          # GxEPD2 显示演示。
           - name: GxEPD2_reTerminal_E1001
             path: examples/GxEPD2_reTerminal_E1001
             needs_gfx: false
@@ -192,10 +193,11 @@ jobs:
           path: build/${{ matrix.sketch.name }}/
           retention-days: 30
 
-  # ── Job 3: Create GitHub Release (only when firmware changed) ──
+  # Job 3: Create GitHub Release only when firmware changed on main.
+  # 任务 3：仅在 main 分支固件变化时创建 GitHub Release。
   create-release:
     needs: [detect-changes, build-firmware]
-    if: needs.detect-changes.outputs.firmware_changed == 'true'
+    if: github.ref == 'refs/heads/main' && needs.detect-changes.outputs.firmware_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -288,70 +290,189 @@ jobs:
             --notes "${{ steps.changelog.outputs.body }}" \
             release-assets/*
 
-  # ── Job 4: Deploy to GitHub Pages (always) ──
+  # Job 4: Deploy to the gh-pages branch.
+  # 任务 4：部署到 gh-pages 分支。
   deploy-pages:
     needs: build-firmware
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout repository
+      - name: Checkout source repository
         uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Resolve deploy version
+        id: deploy_version
+        run: |
+          version="latest"
+          is_versioned="false"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            case "${GITHUB_REF_NAME}" in
+              v*)
+                version="${GITHUB_REF_NAME#v}"
+                is_versioned="true"
+                ;;
+            esac
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "is_versioned=$is_versioned" >> "$GITHUB_OUTPUT"
+          echo "Deploy version: $version"
 
       - name: Download all firmware artifacts
         uses: actions/download-artifact@v4
         with:
-          path: firmware-artifacts
+          path: source/firmware-artifacts
 
-      - name: Prepare deployment directory
+      - name: Checkout gh-pages branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p _site/firmware
+          mkdir -p pages
+          cd pages
+          git init
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch --depth=1 origin gh-pages
+            git switch --create gh-pages FETCH_HEAD
+          else
+            git switch --orphan gh-pages
+          fi
 
-          cp web/index.html _site/
-          cp -r web/css _site/
-          cp -r web/js _site/
-          [ -d web/assets ] && cp -r web/assets _site/ || true
+      - name: Prepare GitHub Pages content
+        env:
+          DEPLOY_VERSION: ${{ steps.deploy_version.outputs.version }}
+          IS_VERSIONED_TAG: ${{ steps.deploy_version.outputs.is_versioned }}
+        run: |
+          set -euo pipefail
 
-          for sketch_dir in firmware-artifacts/firmware-*/; do
-            sketch_name=$(basename "$sketch_dir" | sed 's/^firmware-//')
-            dest="_site/firmware/$sketch_name"
+          copy_part() {
+            source_dir="$1"
+            sketch_name="$2"
+            pattern="$3"
+            target="$4"
+            dest="$5"
+            part=$(find "$source_dir" -maxdepth 1 -name "$pattern" -print -quit)
+            if [ -z "$part" ]; then
+              echo "::error::Missing $pattern for $sketch_name"
+              exit 1
+            fi
+            cp "$part" "$dest/$target"
+          }
+
+          copy_firmware() {
+            source_dir="$1"
+            sketch_name="$2"
+            dest="$3"
             mkdir -p "$dest"
+            copy_part "$source_dir" "$sketch_name" "*.ino.bootloader.bin" "$sketch_name.ino.bootloader.bin" "$dest"
+            copy_part "$source_dir" "$sketch_name" "*.ino.partitions.bin" "$sketch_name.ino.partitions.bin" "$dest"
+            copy_part "$source_dir" "$sketch_name" "*.ino.bin" "$sketch_name.ino.bin" "$dest"
+            if [ ! -f "$source_dir/boot_app0.bin" ]; then
+              echo "::error::Missing boot_app0.bin for $sketch_name"
+              exit 1
+            fi
+            cp "$source_dir/boot_app0.bin" "$dest/boot_app0.bin"
+          }
 
-            cp "$sketch_dir"/*.bin "$dest/" 2>/dev/null || true
-
-            fw_bin=$(ls "$dest/"*.ino.bin 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
-            bl_bin=$(ls "$dest/"*.ino.bootloader.bin 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
-            pt_bin=$(ls "$dest/"*.ino.partitions.bin 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
-
+          generate_manifest() {
+            sketch_name="$1"
+            version="$2"
+            dest="$3"
             cat > "$dest/manifest.json" << MANIFEST
           {
             "name": "$sketch_name",
+            "version": "$version",
             "new_install_prompt_erase": true,
-            "builds": [
-              {
-                "chipFamily": "ESP32-S3",
-                "parts": [
-                  { "path": "$bl_bin", "offset": 0 },
-                  { "path": "$pt_bin", "offset": 32768 },
-                  { "path": "boot_app0.bin", "offset": 57344 },
-                  { "path": "$fw_bin", "offset": 65536 }
-                ]
-              }
-            ]
+            "builds": [{
+              "chipFamily": "ESP32-S3",
+              "parts": [
+                {"path": "$sketch_name.ino.bootloader.bin", "offset": 0},
+                {"path": "$sketch_name.ino.partitions.bin", "offset": 32768},
+                {"path": "boot_app0.bin", "offset": 57344},
+                {"path": "$sketch_name.ino.bin", "offset": 65536}
+              ]
+            }]
           }
           MANIFEST
+          }
+
+          cp source/web/index.html pages/index.html
+          mkdir -p pages/css pages/js
+          cp -R source/web/css/. pages/css/
+          cp -R source/web/js/. pages/js/
+          if [ -d source/web/assets ]; then
+            mkdir -p pages/assets
+            cp -R source/web/assets/. pages/assets/
+          fi
+
+          mkdir -p pages/firmware
+          for sketch_dir in source/firmware-artifacts/firmware-*/; do
+            [ -d "$sketch_dir" ] || continue
+            sketch_name=$(basename "$sketch_dir" | sed 's/^firmware-//')
+
+            latest_dest="pages/firmware/$sketch_name/latest"
+            copy_firmware "$sketch_dir" "$sketch_name" "$latest_dest"
+            generate_manifest "$sketch_name" "latest" "$latest_dest"
+
+            if [ "$IS_VERSIONED_TAG" = "true" ]; then
+              version_dest="pages/firmware/$sketch_name/$DEPLOY_VERSION"
+              copy_firmware "$sketch_dir" "$sketch_name" "$version_dest"
+              generate_manifest "$sketch_name" "$DEPLOY_VERSION" "$version_dest"
+            fi
           done
 
-          echo "=== Deployment directory structure ==="
-          find _site -type f | head -50
+          cd pages
+          python3 - <<'PY'
+          import json
+          import re
+          from pathlib import Path
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+          def version_key(value):
+              return [
+                  (0, int(part)) if part.isdigit() else (1, part)
+                  for part in re.split(r"([0-9]+)", value)
+              ]
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+          firmware_root = Path("firmware")
+          versions = {}
+          if firmware_root.exists():
+              for sketch_dir in sorted(path for path in firmware_root.iterdir() if path.is_dir()):
+                  entries = []
+                  latest_manifest = sketch_dir / "latest" / "manifest.json"
+                  if latest_manifest.exists():
+                      entries.append("latest")
+                  version_names = [
+                      path.name
+                      for path in sketch_dir.iterdir()
+                      if path.is_dir()
+                      and path.name != "latest"
+                      and (path / "manifest.json").exists()
+                  ]
+                  entries.extend(sorted(version_names, key=version_key))
+                  versions[sketch_dir.name] = entries
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          (firmware_root / "versions.json").write_text(
+              json.dumps(versions, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+          echo "=== GitHub Pages content preview ==="
+          find . -type f | head -80
+
+      - name: Commit and push gh-pages
+        run: |
+          cd pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html css js assets firmware
+          if git diff --cached --quiet; then
+            echo "No Pages changes to commit"
+          else
+            git commit -m "chore: deploy firmware hub"
+          fi
+          git push --force origin gh-pages
+
+      - name: GitHub Pages branch source note
+        run: |
+          echo "Configure GitHub Pages to serve from the gh-pages branch in repository settings."

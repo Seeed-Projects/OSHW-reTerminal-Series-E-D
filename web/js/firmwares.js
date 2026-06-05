@@ -72,7 +72,6 @@ const PLATFORM_CARDS = [
       {
         version: "1.0.0",
         label: "Stable",
-        manifest: "firmware/RTC_PCF8563/manifest.json",
       },
     ],
     configFields: [],
@@ -83,7 +82,6 @@ const PLATFORM_CARDS = [
         description: "Read and write the onboard PCF8563 real-time clock.",
         category: "Peripheral",
         compatible: ["E1001", "E1002", "E1003", "E1004"],
-        manifest: "firmware/RTC_PCF8563/manifest.json",
         notes: [
           { type: "warning", text: "Install a CR1220 coin cell battery in the RTC slot before flashing — without it, the clock resets every time the board loses power." },
           { type: "info", text: "First flash: the firmware automatically writes the build timestamp to the RTC. Subsequent reboots: the stored time is preserved (battery must be installed). The clock prints every second on Serial1 (GPIO43 TX, 115200 baud)." },
@@ -95,7 +93,6 @@ const PLATFORM_CARDS = [
         description: "Enter ESP32-S3 deep sleep and wake on button press.",
         category: "Power",
         compatible: ["E1001", "E1002", "E1003", "E1004"],
-        manifest: "firmware/LowPower_DeepSleep/manifest.json",
       },
       {
         id: "MicRecordToSD",
@@ -103,7 +100,6 @@ const PLATFORM_CARDS = [
         description: "Record audio from the onboard PDM microphone to MicroSD.",
         category: "Audio",
         compatible: ["E1001", "E1002", "E1003"],
-        manifest: "firmware/MicRecordToSD/manifest.json",
       },
       {
         id: "E1003_TouchDraw",
@@ -111,7 +107,6 @@ const PLATFORM_CARDS = [
         description: "Draw dots on the E1003 ePaper display from touch input.",
         category: "Display",
         compatible: ["E1003"],
-        manifest: "firmware/E1003_TouchDraw/manifest.json",
       },
       {
         id: "LED_Control_E1001",
@@ -119,7 +114,6 @@ const PLATFORM_CARDS = [
         description: "Toggle the onboard LED with 1-second intervals.",
         category: "Peripheral",
         compatible: ["E1001", "E1002"],
-        manifest: "firmware/LED_Control_E1001/manifest.json",
       },
       {
         id: "LED_Control_E1003",
@@ -127,7 +121,6 @@ const PLATFORM_CARDS = [
         description: "Toggle the onboard LED with 1-second intervals.",
         category: "Peripheral",
         compatible: ["E1003"],
-        manifest: "firmware/LED_Control_E1003/manifest.json",
       },
       {
         id: "LED_Control_E1004",
@@ -135,7 +128,6 @@ const PLATFORM_CARDS = [
         description: "Toggle the onboard LED with 1-second intervals.",
         category: "Peripheral",
         compatible: ["E1004"],
-        manifest: "firmware/LED_Control_E1004/manifest.json",
       },
       {
         id: "Buzzer_Control",
@@ -143,7 +135,6 @@ const PLATFORM_CARDS = [
         description: "Play basic alert tones: single beep, double beep, and alarm.",
         category: "Peripheral",
         compatible: ["E1001", "E1002", "E1003", "E1004"],
-        manifest: "firmware/Buzzer_Control/manifest.json",
       },
       {
         id: "Buzzer_Music",
@@ -151,7 +142,6 @@ const PLATFORM_CARDS = [
         description: "Play musical note arpeggios using the onboard buzzer.",
         category: "Peripheral",
         compatible: ["E1001", "E1002", "E1003", "E1004"],
-        manifest: "firmware/Buzzer_Music/manifest.json",
       },
       {
         id: "UserButtons",
@@ -159,7 +149,6 @@ const PLATFORM_CARDS = [
         description: "Detect and report presses on all three user buttons.",
         category: "Peripheral",
         compatible: ["E1001", "E1002", "E1003", "E1004"],
-        manifest: "firmware/UserButtons/manifest.json",
       },
       {
         id: "Battery_Monitor",
@@ -167,7 +156,6 @@ const PLATFORM_CARDS = [
         description: "Read and display the battery voltage via ADC.",
         category: "Power",
         compatible: ["E1001", "E1002", "E1003", "E1004"],
-        manifest: "firmware/Battery_Monitor/manifest.json",
       },
       {
         id: "MicroSD_ListFiles",
@@ -175,7 +163,6 @@ const PLATFORM_CARDS = [
         description: "Mount the MicroSD card and list files to serial output.",
         category: "Peripheral",
         compatible: ["E1001", "E1002", "E1003", "E1004"],
-        manifest: "firmware/MicroSD_ListFiles/manifest.json",
       },
       {
         id: "GxEPD2_reTerminal_E1001",
@@ -183,7 +170,6 @@ const PLATFORM_CARDS = [
         description: "Six-screen B&W demo: splash, system info, typography, geometry, patterns, dashboard.",
         category: "Display",
         compatible: ["E1001"],
-        manifest: "firmware/GxEPD2_reTerminal_E1001/manifest.json",
       },
       {
         id: "GxEPD2_reTerminal_E1002",
@@ -191,7 +177,6 @@ const PLATFORM_CARDS = [
         description: "Six-screen 6-color demo showcasing the full color palette and patterns.",
         category: "Display",
         compatible: ["E1002"],
-        manifest: "firmware/GxEPD2_reTerminal_E1002/manifest.json",
       },
       {
         id: "GxEPD2_reTerminal_E1003",
@@ -199,7 +184,6 @@ const PLATFORM_CARDS = [
         description: "Six-screen monochrome demo optimized for the 10.3\" 1872x1404 panel.",
         category: "Display",
         compatible: ["E1003"],
-        manifest: "firmware/GxEPD2_reTerminal_E1003/manifest.json",
       },
       {
         id: "GxEPD2_reTerminal_E1004",
@@ -207,7 +191,6 @@ const PLATFORM_CARDS = [
         description: "Six-screen 6-color demo for the 13.3\" dual-chip Spectra 6 panel.",
         category: "Display",
         compatible: ["E1004"],
-        manifest: "firmware/GxEPD2_reTerminal_E1004/manifest.json",
       },
       {
         id: "GxEPD2_reTerminal_E1001_Gray4",
@@ -215,7 +198,6 @@ const PLATFORM_CARDS = [
         description: "Four grayscale bands and concentric circles on the E1001 panel.",
         category: "Display",
         compatible: ["E1001"],
-        manifest: "firmware/GxEPD2_reTerminal_E1001_Gray4/manifest.json",
       },
       {
         id: "GxEPD2_reTerminal_E1003_Gray16",
@@ -223,7 +205,6 @@ const PLATFORM_CARDS = [
         description: "Sixteen grayscale bands and gradient bar on the E1003 IT8951 panel.",
         category: "Display",
         compatible: ["E1003"],
-        manifest: "firmware/GxEPD2_reTerminal_E1003_Gray16/manifest.json",
       },
     ],
   },
@@ -249,7 +230,6 @@ const PLATFORM_CARDS = [
       {
         version: "2026.5.2",
         label: "Preview",
-        manifest: "firmware/ESPHome/manifest.json",
       },
     ],
     configFields: [
@@ -290,7 +270,6 @@ const PLATFORM_CARDS = [
       {
         version: "1.3.0",
         label: "Preview",
-        manifest: "firmware/SquareLine_Vision/manifest.json",
       },
     ],
     configFields: [],
@@ -318,7 +297,6 @@ const PLATFORM_CARDS = [
       {
         version: "0.1.0",
         label: "Preview",
-        manifest: "firmware/OpenDisplay/manifest.json",
       },
     ],
     configFields: [],
