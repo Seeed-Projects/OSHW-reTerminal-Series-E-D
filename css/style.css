@@ -526,7 +526,7 @@ p { color: var(--muted); }
 }
 
 .field-block select,
-.field-block input {
+.field-block input:not([type="checkbox"]) {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line-dark);
@@ -537,9 +537,28 @@ p { color: var(--muted); }
   font-size: 13px;
 }
 .field-block select:focus,
-.field-block input:focus {
+.field-block input:not([type="checkbox"]):focus {
   outline: 3px solid rgba(143, 195, 31, .22);
   border-color: var(--seeed);
+}
+
+.field-block--checkbox {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  border: 1px solid var(--line-dark);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  cursor: pointer;
+}
+.field-block--checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--seeed);
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .config-empty {
