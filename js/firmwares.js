@@ -322,6 +322,70 @@ const PLATFORM_CARDS = [
           { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
         ],
       },
+      {
+        id: "ePaper_VoiceMemo_E1001",
+        name: "Voice Memo Reminder",
+        description: "AI-powered voice memo to ePaper reminder list. Hold KEY0 to record, release to create a sorted to-do item via Groq Whisper + Llama 3.3.",
+        category: "Application",
+        compatible: ["E1001"],
+        configFields: [
+          { id: "cfgWifiSsid", nvsKey: "wifiSsid", nvsType: "string", label: "Wi-Fi SSID", type: "text", defaultValue: "", placeholder: "Your Wi-Fi network name" },
+          { id: "cfgWifiPass", nvsKey: "wifiPass", nvsType: "string", label: "Wi-Fi Password", type: "text", defaultValue: "", placeholder: "Your Wi-Fi password" },
+          { id: "cfgApiKey", nvsKey: "apiKey", nvsType: "string", label: "Groq API Key", type: "text", defaultValue: "", placeholder: "gsk_..." },
+        ],
+        notes: [
+          { type: "warning", text: "Requires a free Groq API key. Get one at https://console.groq.com — the free tier includes Whisper and Llama 3.3." },
+          { type: "info", text: "Hold KEY0 to record (up to 20s), release to process. Reminders persist across reboots via NVS. The screen auto-refreshes every 5 minutes." },
+        ],
+      },
+      {
+        id: "ePaper_VoiceMemo_E1002",
+        name: "Voice Memo Reminder",
+        description: "AI-powered voice memo to ePaper reminder list. Hold KEY0 to record, release to create a sorted to-do item via Groq Whisper + Llama 3.3.",
+        category: "Application",
+        compatible: ["E1002"],
+        configFields: [
+          { id: "cfgWifiSsid", nvsKey: "wifiSsid", nvsType: "string", label: "Wi-Fi SSID", type: "text", defaultValue: "", placeholder: "Your Wi-Fi network name" },
+          { id: "cfgWifiPass", nvsKey: "wifiPass", nvsType: "string", label: "Wi-Fi Password", type: "text", defaultValue: "", placeholder: "Your Wi-Fi password" },
+          { id: "cfgApiKey", nvsKey: "apiKey", nvsType: "string", label: "Groq API Key", type: "text", defaultValue: "", placeholder: "gsk_..." },
+        ],
+        notes: [
+          { type: "warning", text: "Requires a free Groq API key. Get one at https://console.groq.com — the free tier includes Whisper and Llama 3.3." },
+          { type: "info", text: "Hold KEY0 to record (up to 20s), release to process. Reminders persist across reboots via NVS. The screen auto-refreshes every 5 minutes." },
+        ],
+      },
+      {
+        id: "ePaper_VoiceMemo_E1003",
+        name: "Voice Memo Reminder",
+        description: "AI-powered voice memo to ePaper reminder list with touch checkboxes. Hold KEY0 to record, tap checkboxes to mark items done.",
+        category: "Application",
+        compatible: ["E1003"],
+        configFields: [
+          { id: "cfgWifiSsid", nvsKey: "wifiSsid", nvsType: "string", label: "Wi-Fi SSID", type: "text", defaultValue: "", placeholder: "Your Wi-Fi network name" },
+          { id: "cfgWifiPass", nvsKey: "wifiPass", nvsType: "string", label: "Wi-Fi Password", type: "text", defaultValue: "", placeholder: "Your Wi-Fi password" },
+          { id: "cfgApiKey", nvsKey: "apiKey", nvsType: "string", label: "Groq API Key", type: "text", defaultValue: "", placeholder: "gsk_..." },
+        ],
+        notes: [
+          { type: "warning", text: "Requires a free Groq API key. Get one at https://console.groq.com — the free tier includes Whisper and Llama 3.3." },
+          { type: "info", text: "Hold KEY0 to record (up to 20s), release to process. Tap a checkbox to mark it done. Reminders persist across reboots. The screen auto-refreshes every 5 minutes." },
+        ],
+      },
+      {
+        id: "ePaper_VoiceMemo_E1003_ZH",
+        name: "Voice Memo Reminder (Chinese)",
+        description: "Chinese language voice memo reminder with embedded TrueType font rendering. Hold KEY0 to record in Chinese, tap checkboxes to mark items done.",
+        category: "Application",
+        compatible: ["E1003"],
+        configFields: [
+          { id: "cfgWifiSsid", nvsKey: "wifiSsid", nvsType: "string", label: "Wi-Fi SSID", type: "text", defaultValue: "", placeholder: "Your Wi-Fi network name" },
+          { id: "cfgWifiPass", nvsKey: "wifiPass", nvsType: "string", label: "Wi-Fi Password", type: "text", defaultValue: "", placeholder: "Your Wi-Fi password" },
+          { id: "cfgApiKey", nvsKey: "apiKey", nvsType: "string", label: "Groq API Key", type: "text", defaultValue: "", placeholder: "gsk_..." },
+        ],
+        notes: [
+          { type: "warning", text: "Requires a free Groq API key. Get one at https://console.groq.com — the free tier includes Whisper and Llama 3.3." },
+          { type: "info", text: "This firmware includes an embedded Chinese TrueType font (~800KB). It renders Chinese text natively via OpenFontRender." },
+        ],
+      },
     ],
   },
   {
