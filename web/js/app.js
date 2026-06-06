@@ -218,6 +218,7 @@ function bindBlankAreaCollapse() {
 // Selects the platform-device pair that drives the remaining setup flow.
 // 选择平台和设备组合，用来驱动后续配置流程。
 function selectPlatformDevice(platformId, deviceId) {
+  document.body.classList.remove("is-flash-step");
   selectedPlatform =
     PLATFORM_CARDS.find((platform) => platform.id === platformId) || null;
   selectedDevice = getDevice(deviceId);
@@ -237,6 +238,7 @@ function selectPlatformDevice(platformId, deviceId) {
 }
 
 function clearPlatformSelection() {
+  document.body.classList.remove("is-flash-step");
   selectedPlatform = null;
   selectedDevice = null;
   selectedFirmwareOption = null;
@@ -461,6 +463,7 @@ async function flashDevice() {
   if (!manifest) return;
 
   isFlashing = true;
+  document.body.classList.add("is-flash-step");
   hideError();
   const flashBtn = document.getElementById("flashButton");
   if (flashBtn) flashBtn.disabled = true;
