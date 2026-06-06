@@ -108,63 +108,80 @@ function renderDeviceSpecs(device, className = "") {
   return device.specs.map((spec) => `<span${classAttr}>${spec}</span>`).join("");
 }
 
+function renderPlatformCard(platform) {
+  const isExpanded = platform.id === expandedPlatformId;
+  const devices = platform.supportedDevices
+    .map((deviceId) => {
+      const device = getDevice(deviceId);
+      if (!device) return "";
+      return `
+        <button class="device-option" data-platform="${platform.id}" data-device="${device.id}" type="button">
+          <span class="device-image">
+            <img src="${device.image}" alt="${device.imageAlt}">
+          </span>
+          <span class="device-copy">
+            <strong>${device.name}</strong>
+            <span>${device.description}</span>
+            <span class="device-specs">${renderDeviceSpecs(device)}</span>
+          </span>
+        </button>
+      `;
+    })
+    .join("");
+  const bullets = platform.bullets
+    .map((item) => `<li>${item}</li>`)
+    .join("");
+
+  return `
+    <article class="platform-card ${isExpanded ? "is-expanded" : ""}" style="--platform-accent:${platform.accent};--platform-highlight:${platform.highlight};">
+      <button class="platform-card-main" data-expand-platform="${platform.id}" type="button">
+        <span class="platform-logo-wrap">
+          <img src="${platform.logo}" alt="${platform.name} logo">
+        </span>
+        <span class="platform-card-copy">
+          <strong>${platform.name}</strong>
+          <span>${platform.tagline}</span>
+        </span>
+        <span class="platform-card-action">${isExpanded ? "Expanded" : "View"}</span>
+      </button>
+      <div class="platform-detail">
+        <div class="platform-detail-copy">
+          <p>${platform.description}</p>
+          <ul>${bullets}</ul>
+        </div>
+        <figure class="platform-preview">
+          <img src="${platform.preview}" alt="${platform.previewAlt}">
+        </figure>
+        <div class="device-choice">
+          <div>
+            <p class="eyebrow">Supported devices</p>
+            <h3>Select device type</h3>
+          </div>
+          <div class="device-options">${devices}</div>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
 function renderPlatformCards() {
   const container = document.getElementById("platformGrid");
   if (!container) return;
 
-  container.innerHTML = PLATFORM_CARDS.map((platform) => {
-    const isExpanded = platform.id === expandedPlatformId;
-    const devices = platform.supportedDevices
-      .map((deviceId) => {
-        const device = getDevice(deviceId);
-        if (!device) return "";
-        return `
-          <button class="device-option" data-platform="${platform.id}" data-device="${device.id}" type="button">
-            <span class="device-image">
-              <img src="${device.image}" alt="${device.imageAlt}">
-            </span>
-            <span class="device-copy">
-              <strong>${device.name}</strong>
-              <span>${device.description}</span>
-              <span class="device-specs">${renderDeviceSpecs(device)}</span>
-            </span>
-          </button>
-        `;
-      })
-      .join("");
-    const bullets = platform.bullets
-      .map((item) => `<li>${item}</li>`)
-      .join("");
+  container.innerHTML = PLATFORM_GROUPS.map((group) => {
+    const platforms = PLATFORM_CARDS.filter((platform) => platform.group === group.id);
+    if (!platforms.length) return "";
 
     return `
-      <article class="platform-card ${isExpanded ? "is-expanded" : ""}" style="--platform-accent:${platform.accent};--platform-highlight:${platform.highlight};">
-        <button class="platform-card-main" data-expand-platform="${platform.id}" type="button">
-          <span class="platform-logo-wrap">
-            <img src="${platform.logo}" alt="${platform.name} logo">
-          </span>
-          <span class="platform-card-copy">
-            <strong>${platform.name}</strong>
-            <span>${platform.tagline}</span>
-          </span>
-          <span class="platform-card-action">${isExpanded ? "Expanded" : "View"}</span>
-        </button>
-        <div class="platform-detail">
-          <div class="platform-detail-copy">
-            <p>${platform.description}</p>
-            <ul>${bullets}</ul>
-          </div>
-          <figure class="platform-preview">
-            <img src="${platform.preview}" alt="${platform.previewAlt}">
-          </figure>
-          <div class="device-choice">
-            <div>
-              <p class="eyebrow">Supported devices</p>
-              <h3>Select device type</h3>
-            </div>
-            <div class="device-options">${devices}</div>
-          </div>
+      <section class="platform-group" aria-labelledby="platformGroup-${group.id}">
+        <div class="platform-group-head">
+          <h3 id="platformGroup-${group.id}">${group.title}</h3>
+          <p>${group.description}</p>
         </div>
-      </article>
+        <div class="platform-group-grid">
+          ${platforms.map(renderPlatformCard).join("")}
+        </div>
+      </section>
     `;
   }).join("");
 
@@ -287,6 +304,16 @@ function renderFirmwareSelect() {
   if (!field || !select || !selectedPlatform || !selectedDevice) return;
 
   const options = getAvailableFirmwareOptions(selectedPlatform, selectedDevice.id);
+  const label = field.querySelector("span");
+  if (label) {
+    label.textContent =
+      selectedPlatform.group === "base"
+        ? "Base demo"
+        : selectedPlatform.group === "community"
+          ? "Project firmware"
+          : "Firmware option";
+  }
+
   field.classList.toggle("is-hidden", options.length === 0);
   if (!options.length) {
     select.innerHTML = "";
