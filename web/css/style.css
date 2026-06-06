@@ -120,37 +120,6 @@ h1, h2, h3, p { margin: 0; }
 .brand-text b { font-size: 14px; font-weight: 700; letter-spacing: 0; }
 .brand-text small { font-size: 11px; color: var(--muted); }
 
-.topbar-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  margin-right: 20px;
-}
-
-.topbar-meta span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 26px;
-  border: 1px solid rgba(179, 199, 194, .76);
-  border-radius: 999px;
-  padding: 4px 9px;
-  background: rgba(255, 255, 255, .54);
-  color: #4b5b5e;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.topbar-meta i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--seeed);
-  box-shadow: 0 0 0 4px rgba(143, 195, 31, .16);
-}
-
 .topbar-links {
   display: flex;
   align-items: center;
@@ -1123,7 +1092,6 @@ pre#log {
   .setup-grid {
     grid-template-columns: 1fr;
   }
-  .topbar-meta { display: none; }
   h1 { font-size: clamp(31px, 9vw, 44px); }
 }
 
