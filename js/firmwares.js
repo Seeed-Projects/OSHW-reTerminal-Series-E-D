@@ -49,9 +49,28 @@ const DEVICES = [
   },
 ];
 
+const PLATFORM_GROUPS = [
+  {
+    id: "official",
+    title: "Official Platforms",
+    description: "Start from supported ecosystem firmware and product workflows.",
+  },
+  {
+    id: "base",
+    title: "Base",
+    description: "Use hardware bring-up demos to verify core device behavior first.",
+  },
+  {
+    id: "community",
+    title: "Community Projects",
+    description: "Explore contributed examples that build on the official device stack.",
+  },
+];
+
 const PLATFORM_CARDS = [
   {
     id: "base",
+    group: "base",
     name: "Base",
     tagline: "Product bring-up demos for first-time hardware checks.",
     description:
@@ -322,6 +341,132 @@ const PLATFORM_CARDS = [
           { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
         ],
       },
+    ],
+  },
+  {
+    id: "esphome",
+    group: "official",
+    name: "ESPHome",
+    tagline: "Smart-home firmware with YAML setup and Home Assistant integration.",
+    description:
+      "ESPHome turns microcontroller boards into local smart-home devices using simple YAML configuration, web tools, and Home Assistant workflows.",
+    logo: "assets/platforms/esphome-logo-card.png",
+    preview: "assets/platforms/esphome-preview-enhanced.png",
+    previewAlt: "ESPHome dashboard preview",
+    accent: "#004966",
+    highlight: "#8FC31F",
+    supportedDevices: ["E1001", "E1002", "E1003"],
+    installReady: false,
+    bullets: [
+      "Home Assistant friendly",
+      "Wi-Fi provisioning expected",
+      "Good for dashboards, sensors, and local automation",
+    ],
+    versions: [
+      {
+        version: "2026.5.2",
+        label: "Preview",
+      },
+    ],
+    configFields: [
+      {
+        id: "wifiSsid",
+        label: "Wi-Fi SSID",
+        type: "text",
+        placeholder: "Office Wi-Fi",
+      },
+      {
+        id: "wifiPassword",
+        label: "Wi-Fi password",
+        type: "password",
+        placeholder: "Stored locally before flashing",
+      },
+    ],
+    firmwareOptions: [],
+  },
+  {
+    id: "squareline",
+    group: "official",
+    name: "SquareLine Vision",
+    tagline: "Visual UI workflow for embedded screen experiences.",
+    description:
+      "SquareLine Vision focuses on designing embedded interfaces visually, then preparing UI assets and implementation output for screen-based products.",
+    logo: "assets/platforms/squareline-logo.png",
+    preview: "assets/platforms/squareline-preview-43.png",
+    previewAlt: "SquareLine Vision product preview",
+    accent: "#004966",
+    highlight: "#8FC31F",
+    supportedDevices: ["E1002", "E1003"],
+    installReady: false,
+    bullets: [
+      "Visual UI design workflow",
+      "Useful for screen-first product demos",
+      "Best with display-capable devices",
+    ],
+    versions: [
+      {
+        version: "1.3.0",
+        label: "Preview",
+      },
+    ],
+    configFields: [],
+    firmwareOptions: [],
+  },
+  {
+    id: "opendisplay",
+    group: "official",
+    name: "OpenDisplay",
+    tagline: "Open-source ePaper firmware and protocol for BLE display control.",
+    description:
+      "OpenDisplay provides firmware and browser tools for low-power ePaper display projects, including BLE control, configuration, and image upload flows.",
+    logo: "assets/platforms/opendisplay-logo-card-v2.png",
+    preview: "assets/platforms/opendisplay-screen-enhanced.png",
+    previewAlt: "OpenDisplay browser upload flow",
+    accent: "#004966",
+    highlight: "#8FC31F",
+    supportedDevices: ["E1001", "E1002", "E1003"],
+    installReady: false,
+    bullets: [
+      "BLE-oriented ePaper control",
+      "Browser-based configuration and image upload",
+      "Good for always-on information panels",
+    ],
+    versions: [
+      {
+        version: "0.1.0",
+        label: "Preview",
+      },
+    ],
+    configFields: [],
+    firmwareOptions: [],
+  },
+  {
+    id: "voice-memo-reminder",
+    group: "community",
+    name: "Voice Memo Reminder",
+    tagline: "Community AI voice memo project for ePaper reminder lists.",
+    description:
+      "Voice Memo Reminder records a spoken memo, sends it to Groq Whisper and Llama 3.3, then turns it into a sorted ePaper reminder list.",
+    logo: "assets/brand/reterminal-epaper-icon.svg",
+    preview: "assets/devices/reterminal-e1003.jpg",
+    previewAlt: "reTerminal E1003 running an ePaper reminder workflow",
+    accent: "#004966",
+    highlight: "#8FC31F",
+    supportedDevices: ["E1001", "E1002", "E1003"],
+    installReady: true,
+    bullets: [
+      "Community project",
+      "Voice-to-reminder workflow",
+      "Requires Wi-Fi and a Groq API key",
+    ],
+    versions: [
+      {
+        version: "1.0.0",
+        label: "Stable",
+      },
+    ],
+    configFields: [],
+    firmwareOptions: [
       {
         id: "ePaper_VoiceMemo_E1001",
         name: "Voice Memo Reminder",
@@ -387,99 +532,5 @@ const PLATFORM_CARDS = [
         ],
       },
     ],
-  },
-  {
-    id: "esphome",
-    name: "ESPHome",
-    tagline: "Smart-home firmware with YAML setup and Home Assistant integration.",
-    description:
-      "ESPHome turns microcontroller boards into local smart-home devices using simple YAML configuration, web tools, and Home Assistant workflows.",
-    logo: "assets/platforms/esphome-logo-card.png",
-    preview: "assets/platforms/esphome-preview-enhanced.png",
-    previewAlt: "ESPHome dashboard preview",
-    accent: "#004966",
-    highlight: "#8FC31F",
-    supportedDevices: ["E1001", "E1002", "E1003"],
-    installReady: false,
-    bullets: [
-      "Home Assistant friendly",
-      "Wi-Fi provisioning expected",
-      "Good for dashboards, sensors, and local automation",
-    ],
-    versions: [
-      {
-        version: "2026.5.2",
-        label: "Preview",
-      },
-    ],
-    configFields: [
-      {
-        id: "wifiSsid",
-        label: "Wi-Fi SSID",
-        type: "text",
-        placeholder: "Office Wi-Fi",
-      },
-      {
-        id: "wifiPassword",
-        label: "Wi-Fi password",
-        type: "password",
-        placeholder: "Stored locally before flashing",
-      },
-    ],
-    firmwareOptions: [],
-  },
-  {
-    id: "squareline",
-    name: "SquareLine Vision",
-    tagline: "Visual UI workflow for embedded screen experiences.",
-    description:
-      "SquareLine Vision focuses on designing embedded interfaces visually, then preparing UI assets and implementation output for screen-based products.",
-    logo: "assets/platforms/squareline-logo.png",
-    preview: "assets/platforms/squareline-preview-43.png",
-    previewAlt: "SquareLine Vision product preview",
-    accent: "#004966",
-    highlight: "#8FC31F",
-    supportedDevices: ["E1002", "E1003"],
-    installReady: false,
-    bullets: [
-      "Visual UI design workflow",
-      "Useful for screen-first product demos",
-      "Best with display-capable devices",
-    ],
-    versions: [
-      {
-        version: "1.3.0",
-        label: "Preview",
-      },
-    ],
-    configFields: [],
-    firmwareOptions: [],
-  },
-  {
-    id: "opendisplay",
-    name: "OpenDisplay",
-    tagline: "Open-source ePaper firmware and protocol for BLE display control.",
-    description:
-      "OpenDisplay provides firmware and browser tools for low-power ePaper display projects, including BLE control, configuration, and image upload flows.",
-    logo: "assets/platforms/opendisplay-logo-card-v2.png",
-    preview: "assets/platforms/opendisplay-screen-enhanced.png",
-    previewAlt: "OpenDisplay browser upload flow",
-    accent: "#004966",
-    highlight: "#8FC31F",
-    supportedDevices: ["E1001", "E1002", "E1003"],
-    installReady: false,
-    bullets: [
-      "BLE-oriented ePaper control",
-      "Browser-based configuration and image upload",
-      "Good for always-on information panels",
-    ],
-    versions: [
-      {
-        version: "0.1.0",
-        label: "Preview",
-      },
-    ],
-    configFields: [],
-    firmwareOptions: [],
   },
 ];

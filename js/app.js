@@ -6,6 +6,9 @@ let selectedVersion = null;
 let monitorPort = null;
 let monitorReader = null;
 let monitorKeepReading = false;
+let monitorBaudRate = 115200;
+let logPaused = false;
+let logBuffer = [];
 let firmwareVersions = {};
 const monitorDecoder = new TextDecoder();
 const DEFAULT_FIRMWARE_VERSION = "latest";
@@ -108,63 +111,80 @@ function renderDeviceSpecs(device, className = "") {
   return device.specs.map((spec) => `<span${classAttr}>${spec}</span>`).join("");
 }
 
+function renderPlatformCard(platform) {
+  const isExpanded = platform.id === expandedPlatformId;
+  const devices = platform.supportedDevices
+    .map((deviceId) => {
+      const device = getDevice(deviceId);
+      if (!device) return "";
+      return `
+        <button class="device-option" data-platform="${platform.id}" data-device="${device.id}" type="button">
+          <span class="device-image">
+            <img src="${device.image}" alt="${device.imageAlt}">
+          </span>
+          <span class="device-copy">
+            <strong>${device.name}</strong>
+            <span>${device.description}</span>
+            <span class="device-specs">${renderDeviceSpecs(device)}</span>
+          </span>
+        </button>
+      `;
+    })
+    .join("");
+  const bullets = platform.bullets
+    .map((item) => `<li>${item}</li>`)
+    .join("");
+
+  return `
+    <article class="platform-card ${isExpanded ? "is-expanded" : ""}" style="--platform-accent:${platform.accent};--platform-highlight:${platform.highlight};">
+      <button class="platform-card-main" data-expand-platform="${platform.id}" type="button">
+        <span class="platform-logo-wrap">
+          <img src="${platform.logo}" alt="${platform.name} logo">
+        </span>
+        <span class="platform-card-copy">
+          <strong>${platform.name}</strong>
+          <span>${platform.tagline}</span>
+        </span>
+        <span class="platform-card-action">${isExpanded ? "Expanded" : "View"}</span>
+      </button>
+      <div class="platform-detail">
+        <div class="platform-detail-copy">
+          <p>${platform.description}</p>
+          <ul>${bullets}</ul>
+        </div>
+        <figure class="platform-preview">
+          <img src="${platform.preview}" alt="${platform.previewAlt}">
+        </figure>
+        <div class="device-choice">
+          <div>
+            <p class="eyebrow">Supported devices</p>
+            <h3>Select device type</h3>
+          </div>
+          <div class="device-options">${devices}</div>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
 function renderPlatformCards() {
   const container = document.getElementById("platformGrid");
   if (!container) return;
 
-  container.innerHTML = PLATFORM_CARDS.map((platform) => {
-    const isExpanded = platform.id === expandedPlatformId;
-    const devices = platform.supportedDevices
-      .map((deviceId) => {
-        const device = getDevice(deviceId);
-        if (!device) return "";
-        return `
-          <button class="device-option" data-platform="${platform.id}" data-device="${device.id}" type="button">
-            <span class="device-image">
-              <img src="${device.image}" alt="${device.imageAlt}">
-            </span>
-            <span class="device-copy">
-              <strong>${device.name}</strong>
-              <span>${device.description}</span>
-              <span class="device-specs">${renderDeviceSpecs(device)}</span>
-            </span>
-          </button>
-        `;
-      })
-      .join("");
-    const bullets = platform.bullets
-      .map((item) => `<li>${item}</li>`)
-      .join("");
+  container.innerHTML = PLATFORM_GROUPS.map((group) => {
+    const platforms = PLATFORM_CARDS.filter((platform) => platform.group === group.id);
+    if (!platforms.length) return "";
 
     return `
-      <article class="platform-card ${isExpanded ? "is-expanded" : ""}" style="--platform-accent:${platform.accent};--platform-highlight:${platform.highlight};">
-        <button class="platform-card-main" data-expand-platform="${platform.id}" type="button">
-          <span class="platform-logo-wrap">
-            <img src="${platform.logo}" alt="${platform.name} logo">
-          </span>
-          <span class="platform-card-copy">
-            <strong>${platform.name}</strong>
-            <span>${platform.tagline}</span>
-          </span>
-          <span class="platform-card-action">${isExpanded ? "Expanded" : "View"}</span>
-        </button>
-        <div class="platform-detail">
-          <div class="platform-detail-copy">
-            <p>${platform.description}</p>
-            <ul>${bullets}</ul>
-          </div>
-          <figure class="platform-preview">
-            <img src="${platform.preview}" alt="${platform.previewAlt}">
-          </figure>
-          <div class="device-choice">
-            <div>
-              <p class="eyebrow">Supported devices</p>
-              <h3>Select device type</h3>
-            </div>
-            <div class="device-options">${devices}</div>
-          </div>
+      <section class="platform-group" aria-labelledby="platformGroup-${group.id}">
+        <div class="platform-group-head">
+          <h3 id="platformGroup-${group.id}">${group.title}</h3>
+          <p>${group.description}</p>
         </div>
-      </article>
+        <div class="platform-group-grid">
+          ${platforms.map(renderPlatformCard).join("")}
+        </div>
+      </section>
     `;
   }).join("");
 
@@ -201,6 +221,7 @@ function bindBlankAreaCollapse() {
 // Selects the platform-device pair that drives the remaining setup flow.
 // 选择平台和设备组合，用来驱动后续配置流程。
 function selectPlatformDevice(platformId, deviceId) {
+  document.body.classList.remove("is-flash-step");
   selectedPlatform =
     PLATFORM_CARDS.find((platform) => platform.id === platformId) || null;
   selectedDevice = getDevice(deviceId);
@@ -220,6 +241,7 @@ function selectPlatformDevice(platformId, deviceId) {
 }
 
 function clearPlatformSelection() {
+  document.body.classList.remove("is-flash-step");
   selectedPlatform = null;
   selectedDevice = null;
   selectedFirmwareOption = null;
@@ -287,6 +309,16 @@ function renderFirmwareSelect() {
   if (!field || !select || !selectedPlatform || !selectedDevice) return;
 
   const options = getAvailableFirmwareOptions(selectedPlatform, selectedDevice.id);
+  const label = field.querySelector("span");
+  if (label) {
+    label.textContent =
+      selectedPlatform.group === "base"
+        ? "Base demo"
+        : selectedPlatform.group === "community"
+          ? "Project firmware"
+          : "Firmware option";
+  }
+
   field.classList.toggle("is-hidden", options.length === 0);
   if (!options.length) {
     select.innerHTML = "";
@@ -434,6 +466,7 @@ async function flashDevice() {
   if (!manifest) return;
 
   isFlashing = true;
+  document.body.classList.add("is-flash-step");
   hideError();
   const flashBtn = document.getElementById("flashButton");
   if (flashBtn) flashBtn.disabled = true;
@@ -626,12 +659,12 @@ async function flashDevice() {
 async function autoConnectMonitor(port) {
   await new Promise((resolve) => setTimeout(resolve, 1500));
   try {
-    await port.open({ baudRate: 115200 });
+    await port.open({ baudRate: monitorBaudRate });
     monitorPort = port;
     monitorKeepReading = true;
     setMonitorControls(true);
     setSerialState("connected", "Monitor connected");
-    appendLog("[monitor] Auto-connected at 115200 baud.");
+    appendLog(`[monitor] Auto-connected at ${monitorBaudRate} baud.`);
     void readMonitorLoop();
   } catch (error) {
     appendLog(`[monitor] Auto-connect failed: ${error.message || "Unknown error"}. Click "Connect monitor" manually.`);
@@ -658,31 +691,65 @@ function hideError() {
 }
 
 function appendLog(message) {
-  const log = document.getElementById("log");
-  if (!log) return;
-  log.textContent += `\n${message}`;
-  log.scrollTop = log.scrollHeight;
+  appendLogText(`${message}\n`, true);
 }
 
 function appendSerialChunk(message) {
+  appendLogText(message, false);
+}
+
+// Stores every log fragment and mirrors it to the visible log when not paused.
+// 保存每一段日志；未暂停时同步显示到可见日志窗口。
+function appendLogText(message, prefixLineBreak) {
+  const log = document.getElementById("log");
+  const currentText = logBuffer.join("");
+  const needsLineBreak = prefixLineBreak && currentText && !currentText.endsWith("\n");
+  const text = `${needsLineBreak ? "\n" : ""}${message}`;
+  logBuffer.push(text);
+  if (!log || logPaused) return;
+  log.textContent += text;
+  log.scrollTop = log.scrollHeight;
+}
+
+function seedLogBuffer() {
   const log = document.getElementById("log");
   if (!log) return;
-  log.textContent += message;
+  logBuffer = [log.textContent || ""];
+}
+
+function refreshLogView() {
+  const log = document.getElementById("log");
+  if (!log) return;
+  log.textContent = logBuffer.join("");
   log.scrollTop = log.scrollHeight;
 }
 
 function setSerialState(state, label) {
   const el = document.getElementById("serialStatus");
-  if (!el) return;
-  el.className = `serial-status state-${state}`;
-  el.innerHTML = `<i></i><b>${label}</b>`;
+  const led = document.querySelector(".monitor-led");
+  const stateText = document.getElementById("monitorStateText");
+  if (el) {
+    el.className = `serial-status state-${state}`;
+    el.innerHTML = `<i></i><b>${label}</b>`;
+  }
+  if (led) {
+    led.className = `monitor-led state-${state}`;
+  }
+  if (stateText) {
+    stateText.textContent = state === "connected" ? "Connected" : label;
+    stateText.className = `state-${state}`;
+  }
 }
 
 function setMonitorControls(connected) {
   const connectBtn = document.getElementById("connectMonitorButton");
   const disconnectBtn = document.getElementById("disconnectMonitorButton");
+  const portValue = document.getElementById("monitorPortValue");
+  const baudSelect = document.getElementById("baudRateSelect");
   if (connectBtn) connectBtn.classList.toggle("is-hidden", connected);
   if (disconnectBtn) disconnectBtn.classList.toggle("is-hidden", !connected);
+  if (portValue) portValue.textContent = "Unavailable";
+  if (baudSelect) baudSelect.disabled = connected;
 }
 
 async function connectMonitor() {
@@ -694,11 +761,11 @@ async function connectMonitor() {
 
   try {
     monitorPort = await navigator.serial.requestPort();
-    await monitorPort.open({ baudRate: 115200 });
+    await monitorPort.open({ baudRate: monitorBaudRate });
     monitorKeepReading = true;
     setMonitorControls(true);
     setSerialState("connected", "Monitor connected");
-    appendLog("[monitor] Connected at 115200 baud.");
+    appendLog(`[monitor] Connected at ${monitorBaudRate} baud.`);
     void readMonitorLoop();
   } catch (error) {
     monitorPort = null;
@@ -767,6 +834,34 @@ async function disconnectMonitor() {
   setSerialState("disconnected", "Disconnected");
 }
 
+function clearLog() {
+  logBuffer = [];
+  refreshLogView();
+}
+
+function toggleLogPaused() {
+  const pauseBtn = document.getElementById("pauseLogButton");
+  logPaused = !logPaused;
+  if (pauseBtn) pauseBtn.textContent = logPaused ? "Resume" : "Pause";
+  if (!logPaused) refreshLogView();
+}
+
+// Downloads the complete in-memory log as a local text file.
+// 将内存中的完整日志下载为本地文本文件。
+function saveLog() {
+  const text = logBuffer.join("");
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  link.href = url;
+  link.download = `device-log-${stamp}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function bindFlowEvents() {
   const changeBtn = document.getElementById("changePlatformButton");
   if (changeBtn) {
@@ -820,6 +915,19 @@ function bindFlowEvents() {
 }
 
 function bindWorkspaceEvents() {
+  seedLogBuffer();
+  setMonitorControls(false);
+  setSerialState("disconnected", "Disconnected");
+
+  const baudSelect = document.getElementById("baudRateSelect");
+  if (baudSelect) {
+    monitorBaudRate = Number.parseInt(baudSelect.value, 10) || monitorBaudRate;
+    baudSelect.addEventListener("change", () => {
+      monitorBaudRate = Number.parseInt(baudSelect.value, 10) || 115200;
+      appendLog(`[monitor] Baud rate set to ${monitorBaudRate}.`);
+    });
+  }
+
   const connectBtn = document.getElementById("connectMonitorButton");
   if (connectBtn) {
     connectBtn.addEventListener("click", connectMonitor);
@@ -833,10 +941,17 @@ function bindWorkspaceEvents() {
 
   const clearBtn = document.getElementById("clearLogButton");
   if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      const log = document.getElementById("log");
-      if (log) log.textContent = "";
-    });
+    clearBtn.addEventListener("click", clearLog);
+  }
+
+  const pauseBtn = document.getElementById("pauseLogButton");
+  if (pauseBtn) {
+    pauseBtn.addEventListener("click", toggleLogPaused);
+  }
+
+  const saveBtn = document.getElementById("saveLogButton");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", saveLog);
   }
 
   const flashBtn = document.getElementById("flashButton");

@@ -31,8 +31,8 @@
           Wiki
         </a>
         <a class="topbar-link" href="https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D" target="_blank" rel="noopener">
-          <svg class="nav-icon" viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M10 2.5a7.5 7.5 0 0 0-2.37 14.62c.37.07.5-.16.5-.35v-1.25c-2.04.44-2.47-.87-2.47-.87-.33-.84-.81-1.06-.81-1.06-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.11 1.7.79 2.12.6.06-.47.25-.79.46-.97-1.63-.19-3.34-.82-3.34-3.62 0-.8.29-1.45.75-1.96-.08-.18-.33-.93.07-1.94 0 0 .62-.2 2.03.75A7 7 0 0 1 10 7.2c.63 0 1.26.08 1.86.25 1.4-.95 2.02-.75 2.02-.75.4 1.01.15 1.76.08 1.94.47.51.75 1.16.75 1.96 0 2.81-1.72 3.43-3.35 3.61.26.23.5.68.5 1.37v2.03c0 .2.13.42.51.35A7.5 7.5 0 0 0 10 2.5Z" fill="currentColor"/>
+          <svg class="nav-icon" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.62 7.62 0 0 1 8 4.77c.68 0 1.36.09 2 .27 1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.06-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.45.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" fill="currentColor"/>
           </svg>
           GitHub
         </a>
@@ -50,10 +50,10 @@
           <p class="eyebrow">Browser firmware console</p>
           <h1 id="pageTitle">Flash reTerminal E-Series demos without leaving the browser.</h1>
           <p class="hero-sub">Choose a product path, prepare the matching firmware, and monitor serial output from one focused workspace.</p>
-          <div class="hero-stats" aria-label="Firmware Hub highlights">
-            <span><b>4</b><small>Device sizes</small></span>
-            <span><b>24+</b><small>Base demos</small></span>
-            <span><b>USB</b><small>Direct flash</small></span>
+          <div class="hero-steps" aria-label="Firmware Hub workflow">
+            <span class="hero-step" data-step="1"><b>01</b><small>Choose</small></span>
+            <span class="hero-step" data-step="2"><b>02</b><small>Configure</small></span>
+            <span class="hero-step" data-step="3"><b>03</b><small>Flash</small></span>
           </div>
         </div>
         <div class="hero-visual" aria-hidden="true">
@@ -61,10 +61,6 @@
             <img class="device-stack-main" src="assets/devices/reterminal-e1003.jpg" alt="">
             <img class="device-stack-small device-stack-small-a" src="assets/devices/reterminal-e1001.jpg" alt="">
             <img class="device-stack-small device-stack-small-b" src="assets/devices/reterminal-e1004.jpg" alt="">
-          </div>
-          <div class="signal-card">
-            <span>ready</span>
-            <b>115200 baud</b>
           </div>
         </div>
       </section>
@@ -89,10 +85,9 @@
       <article class="panel selected-panel step-panel is-hidden" id="selectedPanel">
         <div class="panel-heading">
           <div>
-            <p class="eyebrow">Step 2</p>
             <h2>Selected platform</h2>
           </div>
-          <button class="button button-secondary button-small" id="changePlatformButton" type="button">Change platform</button>
+          <button class="button button-secondary button-small" id="changePlatformButton" type="button">Back</button>
         </div>
         <div class="selected-release" id="selectedRelease"></div>
       </article>
@@ -100,7 +95,7 @@
       <article class="panel step-panel is-hidden" id="versionPanel">
         <div class="panel-heading">
           <div>
-            <p class="eyebrow">Step 3</p>
+            <p class="eyebrow">Step 2</p>
             <h2>Version and setup</h2>
           </div>
         </div>
@@ -120,7 +115,7 @@
       <article class="panel flash-panel step-panel is-hidden" id="flashPanel">
         <div class="panel-heading">
           <div>
-            <p class="eyebrow">Step 4</p>
+            <p class="eyebrow">Step 3</p>
             <h2>Flash to device</h2>
           </div>
         </div>
@@ -168,27 +163,53 @@
     <aside class="monitor-col">
       <article class="panel console-panel">
         <div class="console-heading">
-          <div>
-            <p class="eyebrow">Monitor</p>
-            <h2>Device log</h2>
+          <div class="console-title">
+            <span class="monitor-led" aria-hidden="true"></span>
+            <h2>Device Log</h2>
           </div>
           <span class="serial-status" id="serialStatus"><i></i><b>Disconnected</b></span>
         </div>
-        <div class="monitor-summary" aria-label="Monitor details">
-          <span><b>Port</b> USB Serial</span>
-          <span><b>Baud</b> 115200</span>
-          <span><b>State</b> Live log</span>
-        </div>
-        <div class="monitor-actions">
-          <span class="monitor-hint">Available throughout setup and flashing.</span>
-          <div class="monitor-buttons">
-            <button class="button button-small" id="connectMonitorButton" type="button">Connect monitor</button>
-            <button class="button button-secondary button-small is-hidden" id="disconnectMonitorButton" type="button">Disconnect</button>
-            <button class="button button-secondary button-small" id="clearLogButton" type="button">Clear output</button>
+
+        <div class="monitor-settings" aria-label="Monitor settings">
+          <div class="monitor-setting-row">
+            <span>Port</span>
+            <span class="monitor-port-status" id="monitorPortValue">Unavailable</span>
+          </div>
+          <div class="monitor-setting-row">
+            <label for="baudRateSelect">Baud rate</label>
+            <select id="baudRateSelect">
+              <option value="9600">9600</option>
+              <option value="57600">57600</option>
+              <option value="115200" selected>115200</option>
+              <option value="230400">230400</option>
+              <option value="460800">460800</option>
+              <option value="921600">921600</option>
+            </select>
+          </div>
+          <div class="monitor-setting-row">
+            <span>State</span>
+            <b id="monitorStateText">Disconnected</b>
           </div>
         </div>
+
+        <div class="monitor-buttons monitor-connection-actions">
+          <button class="button button-small" id="connectMonitorButton" type="button">Connect monitor</button>
+          <button class="button button-secondary button-small is-hidden" id="disconnectMonitorButton" type="button">Disconnect</button>
+        </div>
+
         <pre id="log" aria-label="Serial output">[system] Serial monitor ready.
 [system] Use "Connect monitor" for debug logs or "Connect and flash" to install firmware.</pre>
+
+        <div class="monitor-actions">
+          <button class="button button-secondary button-small" id="pauseLogButton" type="button">Pause</button>
+          <button class="button button-secondary button-small" id="clearLogButton" type="button">Clear</button>
+          <button class="button button-small" id="saveLogButton" type="button">
+            <svg width="15" height="15" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M7 1v8M7 9L4.5 6.5M7 9l2.5-2.5M2 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Save log
+          </button>
+        </div>
       </article>
     </aside>
 
