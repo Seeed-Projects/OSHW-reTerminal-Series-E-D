@@ -209,6 +209,8 @@ Each example lives in the `examples/` directory and can be flashed via the Firmw
 OSHW-reTerminal-Series-E-D/
 ├── .github/workflows/
 │   └── build-and-deploy.yml    # CI: compile firmware + deploy to GitHub Pages
+├── .github/scripts/
+│   └── firmware_release.py     # CI helper: changed-example planning + release packaging
 ├── examples/                   # Arduino sketches for reTerminal E-Series
 │   ├── RTC_PCF8563/
 │   ├── LowPower_DeepSleep/
@@ -235,12 +237,13 @@ OSHW-reTerminal-Series-E-D/
 
 ## CI/CD
 
-The GitHub Actions workflow ([`build-and-deploy.yml`](.github/workflows/build-and-deploy.yml)) runs on pushes to `main` and on tags that match `v*`:
+The GitHub Actions workflow ([`build-and-deploy.yml`](.github/workflows/build-and-deploy.yml)) runs on pushes to `main`:
 
-1. **Build** — compiles all Arduino sketches in parallel using `arduino-cli` with the XIAO ESP32-S3 board config
-2. **Package** — writes each firmware to `firmware/{sketch}/latest/` and generates an ESP Web Tools `manifest.json`
-3. **Version** — on tag builds, also writes `firmware/{sketch}/{version}/` and updates `firmware/versions.json`
-4. **Deploy** — pushes the static site and firmware files directly to the `gh-pages` branch
+1. **Plan** — detects which `examples/` folders changed during the push
+2. **Build** — compiles only the firmware targets mapped to changed examples
+3. **Version** — writes changed firmware to `firmware/{id}/{YYYY.MM.DD}/`, or `YYYY.MM.DD.n` for repeated builds on the same date
+4. **Deploy** — updates the static site, `firmware/versions.json`, `firmware/catalog.json`, and generated firmware manifests on the `gh-pages` branch
+5. **Release** — when firmware changed, creates a GitHub Release containing a full latest firmware package for all examples; unchanged firmware is reused from its previous latest published version
 
 Configure GitHub Pages to serve from the `gh-pages` branch. The deployed site is available at **https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/**.
 
@@ -279,8 +282,9 @@ Contributions make the open-source community thrive. Any contribution you make i
    ```
    esp32:esp32:XIAO_ESP32S3:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=opi
    ```
-3. Add the sketch to the build matrix in `.github/workflows/build-and-deploy.yml`
-4. Register the firmware in `web/js/firmwares.js`
+3. Add a short example README if setup steps are not obvious
+4. Do not edit generated firmware files, the `gh-pages` branch, or GitHub Releases
+5. For standard Arduino examples, GitHub Actions can auto-discover the folder and build only that example; for PlatformIO or multi-device builds, include supported devices and build environment details in the pull request description
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

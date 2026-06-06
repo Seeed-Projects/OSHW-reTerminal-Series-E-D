@@ -10,6 +10,7 @@ let monitorBaudRate = 115200;
 let logPaused = false;
 let logBuffer = [];
 let firmwareVersions = {};
+let firmwareCatalogLoaded = false;
 const monitorDecoder = new TextDecoder();
 const DEFAULT_FIRMWARE_VERSION = "latest";
 
@@ -65,6 +66,56 @@ function normalizeFirmwareVersions(data) {
   );
 }
 
+function getRegisteredFirmwareIds() {
+  return new Set(
+    PLATFORM_CARDS.flatMap((platform) =>
+      (platform.firmwareOptions || []).map((firmware) => firmware.id)
+    )
+  );
+}
+
+function getBasePlatform() {
+  return PLATFORM_CARDS.find((platform) => platform.id === "base") || null;
+}
+
+function mergeAutoDiscoveredFirmware(catalog) {
+  if (!Array.isArray(catalog?.firmware)) return;
+  const basePlatform = getBasePlatform();
+  if (!basePlatform) return;
+
+  const registeredIds = getRegisteredFirmwareIds();
+  const additions = catalog.firmware
+    .filter((firmware) => firmware?.autoDiscovered)
+    .filter((firmware) => firmware?.id && !registeredIds.has(firmware.id))
+    .filter((firmware) => Array.isArray(firmwareVersions[firmware.id]));
+
+  additions.forEach((firmware) => {
+    basePlatform.firmwareOptions.push({
+      id: firmware.id,
+      name: firmware.name || firmware.id,
+      description: `Auto-discovered firmware from ${firmware.path || "examples"}.`,
+      category: "Generated",
+      compatible: Array.isArray(firmware.compatible) && firmware.compatible.length
+        ? firmware.compatible
+        : basePlatform.supportedDevices,
+    });
+  });
+}
+
+async function loadFirmwareCatalog() {
+  if (firmwareCatalogLoaded) return;
+  firmwareCatalogLoaded = true;
+
+  try {
+    const response = await fetch("firmware/catalog.json");
+    if (!response.ok) throw new Error(`Firmware catalog fetch failed: ${response.status}`);
+    mergeAutoDiscoveredFirmware(await response.json());
+  } catch (_) {
+    // The catalog is generated on GitHub Pages; local previews can run without it.
+    // catalog 由 GitHub Pages 生成；本地预览没有它也可以运行。
+  }
+}
+
 async function loadFirmwareVersions() {
   try {
     const response = await fetch("firmware/versions.json");
@@ -73,6 +124,9 @@ async function loadFirmwareVersions() {
   } catch (_) {
     firmwareVersions = {};
   }
+
+  await loadFirmwareCatalog();
+  renderPlatformCards();
 
   if (selectedPlatform) {
     selectedVersion = getDefaultVersion(selectedPlatform);

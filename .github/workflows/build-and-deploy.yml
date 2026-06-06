@@ -3,8 +3,6 @@ name: Build Firmware & Deploy Pages
 on:
   push:
     branches: [main]
-    tags:
-      - "v*"
 
 permissions:
   contents: write
@@ -19,159 +17,64 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
-
-  # Job 1: Detect whether firmware source changed.
-  # 任务 1：检测固件源码是否发生变化。
-  detect-changes:
+  plan-firmware-release:
     runs-on: ubuntu-latest
     outputs:
-      firmware_changed: ${{ steps.check.outputs.firmware_changed }}
+      firmware_changed: ${{ steps.plan.outputs.firmware_changed }}
+      has_arduino: ${{ steps.plan.outputs.has_arduino }}
+      has_pio: ${{ steps.plan.outputs.has_pio }}
+      arduino_matrix: ${{ steps.plan.outputs.arduino_matrix }}
+      pio_matrix: ${{ steps.plan.outputs.pio_matrix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
-      - name: Check for firmware changes
-        id: check
+      - name: Collect changed example files
         run: |
-          changed=$(git diff --name-only HEAD~1 HEAD -- examples/ || true)
-          if [ -n "$changed" ]; then
-            echo "firmware_changed=true" >> "$GITHUB_OUTPUT"
-            echo "Firmware source changed:"
-            echo "$changed"
+          set -euo pipefail
+          before="${{ github.event.before }}"
+          after="${{ github.sha }}"
+
+          if [ "$before" = "0000000000000000000000000000000000000000" ]; then
+            git diff-tree --no-commit-id --name-only -r "$after" -- examples/ > changed-files.txt || true
           else
-            echo "firmware_changed=false" >> "$GITHUB_OUTPUT"
-            echo "No firmware changes detected"
+            git diff --name-only "$before" "$after" -- examples/ > changed-files.txt || true
           fi
 
-  # Job 2: Build firmware with per-sketch caching.
-  # 任务 2：按固件示例分别构建并使用缓存。
-  build-firmware:
+          echo "Changed example files:"
+          cat changed-files.txt || true
+
+      - name: Build firmware release plan
+        id: plan
+        run: |
+          set -euo pipefail
+          args=()
+          while IFS= read -r changed_file; do
+            [ -n "$changed_file" ] || continue
+            args+=(--changed-file "$changed_file")
+          done < changed-files.txt
+
+          python3 .github/scripts/firmware_release.py plan \
+            "${args[@]}" \
+            --output-file firmware-release-plan.json
+
+      - name: Upload firmware release plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-plan
+          path: firmware-release-plan.json
+          retention-days: 30
+
+  build-arduino-firmware:
+    needs: plan-firmware-release
+    if: needs.plan-firmware-release.outputs.has_arduino == 'true'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        sketch:
-          # Existing demos.
-          # 已有演示。
-          - name: RTC_PCF8563
-            path: examples/RTC_PCF8563
-            needs_gfx: false
-            needs_gxepd2: false
-          - name: LowPower_DeepSleep
-            path: examples/LowPower_DeepSleep
-            needs_gfx: false
-            needs_gxepd2: false
-          - name: MicRecordToSD_E1001
-            path: examples/MicRecordToSD
-            needs_gfx: false
-            needs_gxepd2: false
-            build_flags: "-DDEVICE_E1001_E1002"
-          - name: MicRecordToSD_E1003
-            path: examples/MicRecordToSD
-            needs_gfx: false
-            needs_gxepd2: false
-            build_flags: "-DDEVICE_E1003"
-          - name: E1003_TouchDraw
-            path: examples/E1003_TouchDraw
-            needs_gfx: true
-            needs_gxepd2: false
-          # Simple peripherals with no external libraries.
-          # 不依赖外部库的简单外设演示。
-          - name: LED_Control_E1001
-            path: examples/LED_Control
-            needs_gfx: false
-            needs_gxepd2: false
-            build_flags: "-DDEVICE_MODEL=1001"
-          - name: LED_Control_E1003
-            path: examples/LED_Control
-            needs_gfx: false
-            needs_gxepd2: false
-            build_flags: "-DDEVICE_MODEL=1003"
-          - name: LED_Control_E1004
-            path: examples/LED_Control
-            needs_gfx: false
-            needs_gxepd2: false
-            build_flags: "-DDEVICE_MODEL=1004"
-          - name: Buzzer_Control
-            path: examples/Buzzer_Control
-            needs_gfx: false
-            needs_gxepd2: false
-          - name: Buzzer_Music
-            path: examples/Buzzer_Music
-            needs_gfx: false
-            needs_gxepd2: false
-          - name: UserButtons
-            path: examples/UserButtons
-            needs_gfx: false
-            needs_gxepd2: false
-          - name: Battery_Monitor
-            path: examples/Battery_Monitor
-            needs_gfx: false
-            needs_gxepd2: false
-          - name: MicroSD_ListFiles
-            path: examples/MicroSD_ListFiles
-            needs_gfx: false
-            needs_gxepd2: false
-          # GxEPD2 display demos.
-          # GxEPD2 显示演示。
-          - name: GxEPD2_reTerminal_E1001
-            path: examples/GxEPD2_reTerminal_E1001
-            needs_gfx: false
-            needs_gxepd2: true
-          - name: GxEPD2_reTerminal_E1002
-            path: examples/GxEPD2_reTerminal_E1002
-            needs_gfx: false
-            needs_gxepd2: true
-          - name: GxEPD2_reTerminal_E1003
-            path: examples/GxEPD2_reTerminal_E1003
-            needs_gfx: false
-            needs_gxepd2: true
-          - name: GxEPD2_reTerminal_E1004
-            path: examples/GxEPD2_reTerminal_E1004
-            needs_gfx: false
-            needs_gxepd2: true
-          - name: GxEPD2_reTerminal_E1001_Gray4
-            path: examples/GxEPD2_reTerminal_E1001_Gray4
-            needs_gfx: false
-            needs_gxepd2: true
-          - name: Seeed_GFX_E1001_Gray4
-            path: examples/Seeed_GFX_E1001_Gray4
-            needs_gfx: true
-            needs_gxepd2: false
-          - name: GxEPD2_reTerminal_E1003_Gray16
-            path: examples/GxEPD2_reTerminal_E1003_Gray16
-            needs_gfx: false
-            needs_gxepd2: true
-          # I2C sensor demos.
-          # I2C 传感器演示。
-          - name: SHT4x_Sensor
-            path: examples/SHT4x_Sensor
-            needs_gfx: false
-            needs_gxepd2: false
-            needs_sht4x: true
-          # SD card image pipeline demos (per-device, uses Seeed_GFX/TFT_eSPI).
-          # SD 卡图片显示流水线演示（按设备编译，依赖 Seeed_GFX/TFT_eSPI）。
-          - name: SD_ImagePipeline_E1001_BW
-            path: examples/SD_ImagePipeline_E1001_BW
-            needs_gfx: true
-            needs_gxepd2: false
-          - name: SD_ImagePipeline_E1001_Gray4
-            path: examples/SD_ImagePipeline_E1001_Gray4
-            needs_gfx: true
-            needs_gxepd2: false
-          - name: SD_ImagePipeline_E1002
-            path: examples/SD_ImagePipeline_E1002
-            needs_gfx: true
-            needs_gxepd2: false
-          - name: SD_ImagePipeline_E1003
-            path: examples/SD_ImagePipeline_E1003
-            needs_gfx: true
-            needs_gxepd2: false
-          - name: SD_ImagePipeline_E1004
-            path: examples/SD_ImagePipeline_E1004
-            needs_gfx: true
-            needs_gxepd2: false
+        sketch: ${{ fromJSON(needs.plan-firmware-release.outputs.arduino_matrix).include }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -181,14 +84,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ./build/${{ matrix.sketch.name }}/
-          key: firmware-v2-${{ matrix.sketch.name }}-${{ hashFiles(format('{0}/**', matrix.sketch.path)) }}
+          key: firmware-arduino-v3-${{ matrix.sketch.name }}-${{ hashFiles(format('{0}/**', matrix.sketch.path)) }}
 
       - name: Install arduino-cli
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p "$HOME/.local/bin"
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=$HOME/.local/bin sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Install ESP32 board package
         if: steps.cache.outputs.cache-hit != 'true'
@@ -207,8 +110,7 @@ jobs:
 
       - name: Install Sensirion SHT4x library
         if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_sht4x
-        run: |
-          arduino-cli lib install "Sensirion I2C SHT4x"
+        run: arduino-cli lib install "Sensirion I2C SHT4x"
 
       - name: Install Seeed_GxEPD2 and Adafruit_GFX
         if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_gxepd2
@@ -218,9 +120,10 @@ jobs:
           arduino-cli lib install "Adafruit GFX Library"
           arduino-cli lib install "Adafruit BusIO"
 
-      - name: Compile ${{ matrix.sketch.name }}
+      - name: Compile firmware
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
+          set -euo pipefail
           BUILD_FLAGS="${{ matrix.sketch.build_flags }}"
           arduino-cli compile \
             --fqbn "esp32:esp32:XIAO_ESP32S3:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=opi" \
@@ -237,23 +140,14 @@ jobs:
           path: build/${{ matrix.sketch.name }}/
           retention-days: 30
 
-  build-firmware-pio:
+  build-platformio-firmware:
+    needs: plan-firmware-release
+    if: needs.plan-firmware-release.outputs.has_pio == 'true'
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        sketch:
-          - name: ePaper_VoiceMemo_E1001
-            path: examples/ePaper-Voice-Memo
-            pio_env: reterminal_e1001
-          - name: ePaper_VoiceMemo_E1002
-            path: examples/ePaper-Voice-Memo
-            pio_env: reterminal_e1002
-          - name: ePaper_VoiceMemo_E1003
-            path: examples/ePaper-Voice-Memo
-            pio_env: reterminal_e1003
-          - name: ePaper_VoiceMemo_E1003_ZH
-            path: examples/ePaper-Voice-Memo
-            pio_env: reterminal_e1003_zh
+        sketch: ${{ fromJSON(needs.plan-firmware-release.outputs.pio_matrix).include }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -263,21 +157,22 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ./build/${{ matrix.sketch.name }}/
-          key: firmware-pio-v1-${{ matrix.sketch.name }}-${{ hashFiles(format('{0}/**', matrix.sketch.path)) }}
+          key: firmware-pio-v2-${{ matrix.sketch.name }}-${{ hashFiles(format('{0}/**', matrix.sketch.path)) }}
 
       - name: Set up Python
         if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install PlatformIO
         if: steps.cache.outputs.cache-hit != 'true'
         run: pip install platformio
 
-      - name: Build ${{ matrix.sketch.name }}
+      - name: Build firmware
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
+          set -euo pipefail
           cd ${{ matrix.sketch.path }}
           pio run -e ${{ matrix.sketch.pio_env }}
 
@@ -285,9 +180,9 @@ jobs:
           OUT_DIR="${GITHUB_WORKSPACE}/build/${{ matrix.sketch.name }}"
           mkdir -p "$OUT_DIR"
 
-          cp "$BUILD_DIR/firmware.bin"    "$OUT_DIR/${{ matrix.sketch.name }}.ino.bin"
-          cp "$BUILD_DIR/bootloader.bin"  "$OUT_DIR/${{ matrix.sketch.name }}.ino.bootloader.bin"
-          cp "$BUILD_DIR/partitions.bin"  "$OUT_DIR/${{ matrix.sketch.name }}.ino.partitions.bin"
+          cp "$BUILD_DIR/firmware.bin" "$OUT_DIR/${{ matrix.sketch.name }}.ino.bin"
+          cp "$BUILD_DIR/bootloader.bin" "$OUT_DIR/${{ matrix.sketch.name }}.ino.bootloader.bin"
+          cp "$BUILD_DIR/partitions.bin" "$OUT_DIR/${{ matrix.sketch.name }}.ino.partitions.bin"
 
           BOOT_APP0=$(find ~/.platformio -name "boot_app0.bin" -print -quit)
           if [ -z "$BOOT_APP0" ]; then
@@ -305,148 +200,42 @@ jobs:
           path: build/${{ matrix.sketch.name }}/
           retention-days: 30
 
-  # Job 3: Create GitHub Release only when firmware changed on main.
-  # 任务 3：仅在 main 分支固件变化时创建 GitHub Release。
-  create-release:
-    needs: [detect-changes, build-firmware, build-firmware-pio]
-    if: github.ref == 'refs/heads/main' && needs.detect-changes.outputs.firmware_changed == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Generate version tag
-        id: version
-        run: |
-          today=$(date -u +%Y.%m.%d)
-          existing=$(git tag -l "v${today}*" | sort -V | tail -1)
-          if [ -z "$existing" ]; then
-            tag="v${today}"
-          elif [ "$existing" = "v${today}" ]; then
-            tag="v${today}.1"
-          else
-            suffix=$(echo "$existing" | sed "s/v${today}\.//")
-            tag="v${today}.$((suffix + 1))"
-          fi
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "Generated version tag: $tag"
-
-      - name: Generate changelog
-        id: changelog
-        run: |
-          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -n "$last_tag" ]; then
-            range="${last_tag}..HEAD"
-          else
-            range="HEAD"
-          fi
-
-          {
-            echo "body<<CHANGELOG_EOF"
-            echo "## What's Changed"
-            echo ""
-            git log "$range" --pretty=format:"- %s (%h)" --no-merges | head -50
-            echo ""
-            echo ""
-            echo "### Firmware Included"
-            echo ""
-            echo "| Firmware | Compatible Devices |"
-            echo "|:---------|:-------------------|"
-            echo "| RTC_PCF8563 | E1001 – E1004 |"
-            echo "| LowPower_DeepSleep | E1001 – E1004 |"
-            echo "| MicRecordToSD | E1001/E1002, E1003 (per-device build) |"
-            echo "| E1003_TouchDraw | E1003 |"
-            echo "| LED_Control | E1001/E1002, E1003, E1004 (per-device build) |"
-            echo "| Buzzer_Control | E1001 – E1004 |"
-            echo "| Buzzer_Music | E1001 – E1004 |"
-            echo "| UserButtons | E1001 – E1004 |"
-            echo "| Battery_Monitor | E1001 – E1004 |"
-            echo "| MicroSD_ListFiles | E1001 – E1004 |"
-            echo "| GxEPD2_reTerminal_E1001 | E1001 |"
-            echo "| GxEPD2_reTerminal_E1002 | E1002 |"
-            echo "| GxEPD2_reTerminal_E1003 | E1003 |"
-            echo "| GxEPD2_reTerminal_E1004 | E1004 |"
-            echo "| GxEPD2_reTerminal_E1001_Gray4 | E1001 |"
-            echo "| Seeed_GFX_E1001_Gray4 | E1001 |"
-            echo "| GxEPD2_reTerminal_E1003_Gray16 | E1003 |"
-            echo "| SHT4x_Sensor | E1001 – E1004 |"
-            echo "| ePaper_VoiceMemo | E1001 – E1003 (per-device build, includes Chinese variant) |"
-            echo "| SD_ImagePipeline_E1001_BW | E1001 |"
-            echo "| SD_ImagePipeline_E1001_Gray4 | E1001 |"
-            echo "| SD_ImagePipeline_E1002 | E1002 |"
-            echo "| SD_ImagePipeline_E1003 | E1003 |"
-            echo "| SD_ImagePipeline_E1004 | E1004 |"
-            echo ""
-            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${last_tag:-$(git rev-list --max-parents=0 HEAD | head -1)}...${{ steps.version.outputs.tag }}"
-            echo "CHANGELOG_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Download all firmware artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: firmware-artifacts
-
-      - name: Prepare release assets
-        run: |
-          mkdir -p release-assets
-          for sketch_dir in firmware-artifacts/firmware-*/; do
-            sketch_name=$(basename "$sketch_dir" | sed 's/^firmware-//')
-            for bin in "$sketch_dir"/*.bin; do
-              [ -f "$bin" ] || continue
-              cp "$bin" "release-assets/${sketch_name}_$(basename "$bin")"
-            done
-          done
-          echo "=== Release assets ==="
-          ls -lh release-assets/
-
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "${{ steps.version.outputs.tag }}" \
-            --title "${{ steps.version.outputs.tag }}" \
-            --notes "${{ steps.changelog.outputs.body }}" \
-            release-assets/*
-
-  # Job 4: Deploy to the gh-pages branch.
-  # 任务 4：部署到 gh-pages 分支。
-  deploy-pages:
-    needs: [build-firmware, build-firmware-pio]
+  deploy-pages-and-release:
+    needs:
+      - plan-firmware-release
+      - build-arduino-firmware
+      - build-platformio-firmware
+    if: >-
+      always() &&
+      needs.plan-firmware-release.result == 'success' &&
+      (needs.build-arduino-firmware.result == 'success' || needs.build-arduino-firmware.result == 'skipped') &&
+      (needs.build-platformio-firmware.result == 'success' || needs.build-platformio-firmware.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           path: source
 
-      - name: Resolve deploy version
-        id: deploy_version
-        run: |
-          version="latest"
-          is_versioned="false"
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            case "${GITHUB_REF_NAME}" in
-              v*)
-                version="${GITHUB_REF_NAME#v}"
-                is_versioned="true"
-                ;;
-            esac
-          fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "is_versioned=$is_versioned" >> "$GITHUB_OUTPUT"
-          echo "Deploy version: $version"
-
-      - name: Download all firmware artifacts
+      - name: Download firmware release plan
         uses: actions/download-artifact@v4
         with:
+          name: release-plan
+          path: source
+
+      - name: Download changed firmware artifacts
+        if: needs.plan-firmware-release.outputs.firmware_changed == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: firmware-*
           path: source/firmware-artifacts
 
       - name: Checkout gh-pages branch
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           mkdir -p pages
           cd pages
           git init
@@ -458,141 +247,43 @@ jobs:
             git switch --orphan gh-pages
           fi
 
-      - name: Prepare GitHub Pages content
-        env:
-          DEPLOY_VERSION: ${{ steps.deploy_version.outputs.version }}
-          IS_VERSIONED_TAG: ${{ steps.deploy_version.outputs.is_versioned }}
+      - name: Prepare Pages content and release assets
+        id: prepare
         run: |
           set -euo pipefail
-
-          copy_part() {
-            source_dir="$1"
-            sketch_name="$2"
-            pattern="$3"
-            target="$4"
-            dest="$5"
-            part=$(find "$source_dir" -maxdepth 1 -name "$pattern" -print -quit)
-            if [ -z "$part" ]; then
-              echo "::error::Missing $pattern for $sketch_name"
-              exit 1
-            fi
-            cp "$part" "$dest/$target"
-          }
-
-          copy_firmware() {
-            source_dir="$1"
-            sketch_name="$2"
-            dest="$3"
-            mkdir -p "$dest"
-            copy_part "$source_dir" "$sketch_name" "*.ino.bootloader.bin" "$sketch_name.ino.bootloader.bin" "$dest"
-            copy_part "$source_dir" "$sketch_name" "*.ino.partitions.bin" "$sketch_name.ino.partitions.bin" "$dest"
-            copy_part "$source_dir" "$sketch_name" "*.ino.bin" "$sketch_name.ino.bin" "$dest"
-            if [ ! -f "$source_dir/boot_app0.bin" ]; then
-              echo "::error::Missing boot_app0.bin for $sketch_name"
-              exit 1
-            fi
-            cp "$source_dir/boot_app0.bin" "$dest/boot_app0.bin"
-          }
-
-          generate_manifest() {
-            sketch_name="$1"
-            version="$2"
-            dest="$3"
-            cat > "$dest/manifest.json" << MANIFEST
-          {
-            "name": "$sketch_name",
-            "version": "$version",
-            "new_install_prompt_erase": true,
-            "builds": [{
-              "chipFamily": "ESP32-S3",
-              "parts": [
-                {"path": "$sketch_name.ino.bootloader.bin", "offset": 0},
-                {"path": "$sketch_name.ino.partitions.bin", "offset": 32768},
-                {"path": "boot_app0.bin", "offset": 57344},
-                {"path": "$sketch_name.ino.bin", "offset": 65536}
-              ]
-            }]
-          }
-          MANIFEST
-          }
-
-          cp source/web/index.html pages/index.html
-          mkdir -p pages/css pages/js
-          cp -R source/web/css/. pages/css/
-          cp -R source/web/js/. pages/js/
-          if [ -d source/web/assets ]; then
-            mkdir -p pages/assets
-            cp -R source/web/assets/. pages/assets/
-          fi
-
-          mkdir -p pages/firmware
-          for sketch_dir in source/firmware-artifacts/firmware-*/; do
-            [ -d "$sketch_dir" ] || continue
-            sketch_name=$(basename "$sketch_dir" | sed 's/^firmware-//')
-
-            latest_dest="pages/firmware/$sketch_name/latest"
-            copy_firmware "$sketch_dir" "$sketch_name" "$latest_dest"
-            generate_manifest "$sketch_name" "latest" "$latest_dest"
-
-            if [ "$IS_VERSIONED_TAG" = "true" ]; then
-              version_dest="pages/firmware/$sketch_name/$DEPLOY_VERSION"
-              copy_firmware "$sketch_dir" "$sketch_name" "$version_dest"
-              generate_manifest "$sketch_name" "$DEPLOY_VERSION" "$version_dest"
-            fi
-          done
-
-          cd pages
-          python3 - <<'PY'
-          import json
-          import re
-          from pathlib import Path
-
-          def version_key(value):
-              return [
-                  (0, int(part)) if part.isdigit() else (1, part)
-                  for part in re.split(r"([0-9]+)", value)
-              ]
-
-          firmware_root = Path("firmware")
-          versions = {}
-          if firmware_root.exists():
-              for sketch_dir in sorted(path for path in firmware_root.iterdir() if path.is_dir()):
-                  entries = []
-                  latest_manifest = sketch_dir / "latest" / "manifest.json"
-                  if latest_manifest.exists():
-                      entries.append("latest")
-                  version_names = [
-                      path.name
-                      for path in sketch_dir.iterdir()
-                      if path.is_dir()
-                      and path.name != "latest"
-                      and (path / "manifest.json").exists()
-                  ]
-                  entries.extend(sorted(version_names, key=version_key))
-                  versions[sketch_dir.name] = entries
-
-          (firmware_root / "versions.json").write_text(
-              json.dumps(versions, indent=2) + "\n",
-              encoding="utf-8",
-          )
-          PY
-
-          echo "=== GitHub Pages content preview ==="
-          find . -type f | sort
+          mkdir -p source/firmware-artifacts release-assets
+          python3 source/.github/scripts/firmware_release.py prepare-pages \
+            --plan-file source/firmware-release-plan.json \
+            --pages-dir pages \
+            --artifacts-dir source/firmware-artifacts \
+            --web-dir source/web \
+            --release-assets-dir release-assets \
+            --release-notes release-notes.md
 
       - name: Commit and push gh-pages
         run: |
+          set -euo pipefail
           cd pages
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html css js assets firmware
+          git add -A
           if git diff --cached --quiet; then
             echo "No Pages changes to commit"
           else
             git commit -m "chore: deploy firmware hub"
+            git push origin gh-pages
           fi
-          git push --force origin gh-pages
+
+      - name: Create full firmware release
+        if: steps.prepare.outputs.firmware_changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "${{ steps.prepare.outputs.release_tag }}" \
+            --title "${{ steps.prepare.outputs.release_title }}" \
+            --notes-file release-notes.md \
+            release-assets/*
 
       - name: GitHub Pages branch source note
-        run: |
-          echo "Configure GitHub Pages to serve from the gh-pages branch in repository settings."
+        run: echo "Configure GitHub Pages to serve from the gh-pages branch in repository settings."
