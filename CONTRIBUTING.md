@@ -7,6 +7,7 @@ Firmware Hub. It covers four scenarios:
 - **[Scenario B](#scenario-b--enable-firmware-for-a-non-base-platform)** — Enable firmware flashing for an existing platform (ESPHome, SquareLine, OpenDisplay)
 - **[Scenario C](#scenario-c--add-a-completely-new-platform)** — Add a completely new platform
 - **[Scenario D](#scenario-d--adapt-a-sketch-for-web-configurable-parameters)** — Adapt a sketch for web-configurable parameters (NVS Config Framework)
+- **[Scenario E](#scenario-e--integrate-a-platformio-project)** — Integrate a PlatformIO project (different build tool, same deployment pipeline)
 
 Follow every step — skipping one will leave the firmware invisible on the web
 page or missing from CI.
@@ -27,6 +28,16 @@ Firmware Hub web page     User selects device → firmware → clicks "Flash"
         |
         v
 esptool-js (browser)      Flashes .bin over USB serial in Chrome / Edge
+
+PlatformIO projects follow the same deployment path:
+
+examples/<Project>/       PlatformIO source code (src/main.cpp + platformio.ini)
+        |
+        v
+GitHub Actions CI         pio run → rename outputs to *.ino.bin format → same artifact structure
+        |
+        v
+(joins the same gh-pages deploy pipeline as Arduino sketches)
 ```
 
 Live site: <https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/>
@@ -941,6 +952,218 @@ stored in NVS, and a `read_float_config` helper for reading IEEE 754 blobs.
 
 ---
 
+# Scenario E — Integrate a PlatformIO project
+
+Use this scenario when the firmware is already a PlatformIO project and should
+join the same Firmware Hub release and deploy flow as Arduino IDE sketches.
+
+### E0. When to use this scenario
+
+- Use Scenario A (Arduino IDE) when you have a simple `.ino` sketch
+- Use Scenario E (PlatformIO) when:
+  - The project has a `platformio.ini` and uses `src/main.cpp` instead of a `.ino` file
+  - The project has custom pre-build scripts, complex `lib_deps`, or multiple build environments
+  - The project was developed in PlatformIO and converting to Arduino IDE format would lose features
+
+### E1. Project structure requirements
+
+Expected directory tree inside `examples/`:
+
+```
+examples/
+  MyProject/
+    platformio.ini
+    src/
+      main.cpp
+      ...
+    include/
+      secrets.example.h  (optional)
+    scripts/             (optional)
+    test/                (optional)
+    data/                (optional)
+```
+
+If the PlatformIO project was its own git repo, the nested `.git` directory
+**MUST** be removed, or moved to `.git-backup` and added to `.gitignore`. The
+parent repo cannot track files inside a nested git repository.
+
+### E2. Adapt firmware for NVS credential injection
+
+Use this pattern when a PlatformIO project needs Wi-Fi, API keys, or other
+credentials provided by the Firmware Hub at flash time.
+
+1. Add a `__has_include` conditional for `secrets.h` with `#ifndef` fallback
+   defaults:
+
+```cpp
+#include <Preferences.h>
+#if __has_include("secrets.h")
+#include "secrets.h"
+#endif
+
+#ifndef MY_WIFI_SSID
+#define MY_WIFI_SSID ""
+#endif
+#ifndef MY_WIFI_PASSWORD
+#define MY_WIFI_PASSWORD ""
+#endif
+#ifndef MY_API_KEY
+#define MY_API_KEY ""
+#endif
+```
+
+2. Read NVS values with the `secrets.h` values as defaults:
+
+```cpp
+static String nvsWifiSsid;
+static String nvsWifiPass;
+static String nvsApiKey;
+
+static void loadNvsCredentials()
+{
+  Preferences prefs;
+  if (!prefs.begin("config", true)) {
+    nvsWifiSsid = MY_WIFI_SSID;
+    nvsWifiPass = MY_WIFI_PASSWORD;
+    nvsApiKey   = MY_API_KEY;
+    return;
+  }
+  nvsWifiSsid = prefs.getString("wifiSsid", MY_WIFI_SSID);
+  nvsWifiPass = prefs.getString("wifiPass", MY_WIFI_PASSWORD);
+  nvsApiKey   = prefs.getString("apiKey", MY_API_KEY);
+  prefs.end();
+}
+```
+
+3. Build the config struct in `setup()`, not at global scope:
+
+```cpp
+static MyApp* app;
+
+void setup()
+{
+  loadNvsCredentials();
+  static MyConfig cfg = buildConfig();
+  static MyApp instance(cfg);
+  app = &instance;
+  app->begin();
+}
+```
+
+Why this pattern is required:
+
+- The Firmware Hub writes NVS at flash time (offset `0x9000`, namespace `"config"`)
+- `__has_include` + `#ifndef` guards let firmware compile **without** `secrets.h` in CI
+- NVS values override compile-time defaults at boot
+- Static `String` variables ensure `.c_str()` pointers remain valid for the program lifetime
+- Users doing local PlatformIO development still use `secrets.h` as before — NVS is a transparent overlay
+
+### E3. Register in the CI workflow — build-firmware-pio job
+
+PlatformIO projects use a separate CI job called `build-firmware-pio`, **not**
+`build-firmware`. This job:
+
+- Installs PlatformIO via `pip`
+- Runs `pio run -e <env>` to compile
+- Renames PlatformIO output files to match the `arduino-cli` naming convention
+- Uploads artifacts with the same `firmware-<name>` pattern
+
+Add one matrix entry for each PlatformIO build environment:
+
+```yaml
+          - name: MyProject_E1001        # unique ID, must match firmwares.js
+            path: examples/MyProject     # path to the PlatformIO project
+            pio_env: my_env_e1001        # PlatformIO environment name from platformio.ini
+```
+
+Binary renaming convention:
+
+- PlatformIO outputs: `firmware.bin`, `bootloader.bin`, `partitions.bin`
+- CI renames to: `<name>.ino.bin`, `<name>.ino.bootloader.bin`, `<name>.ino.partitions.bin`
+- CI also includes `boot_app0.bin` found in PlatformIO's ESP32 packages
+- This makes `copy_firmware()` in `deploy-pages` work identically for both build tools
+
+The `build-firmware-pio` job must be added to the `needs` arrays of both
+`create-release` and `deploy-pages`.
+
+### E4. Register firmware options in firmwares.js
+
+Register PlatformIO firmware in `web/js/firmwares.js` the same way as Scenario A
+Step 3, with these PlatformIO-specific notes:
+
+- Add one firmware option per PlatformIO build environment
+- If the project has credentials, add `configFields` with matching `nvsKey` values
+- The `id` field **MUST** match the `name` field in the CI matrix entry
+- Use category `"Application"` for full applications
+
+Example with Wi-Fi and API key config fields:
+
+```js
+      {
+        id: "MyProject_E1001",
+        name: "My Project (E1001)",
+        description: "Full application built with PlatformIO.",
+        category: "Application",
+        compatible: ["E1001"],
+        configFields: [
+          { id: "cfgWifiSsid", nvsKey: "wifiSsid", nvsType: "string",
+            label: "Wi-Fi SSID", type: "text",
+            defaultValue: "", placeholder: "Your Wi-Fi network name" },
+          { id: "cfgWifiPass", nvsKey: "wifiPass", nvsType: "string",
+            label: "Wi-Fi Password", type: "text",
+            defaultValue: "", placeholder: "Your Wi-Fi password" },
+          { id: "cfgApiKey", nvsKey: "apiKey", nvsType: "string",
+            label: "API Key", type: "text",
+            defaultValue: "", placeholder: "sk-..." },
+        ],
+      },
+```
+
+See Scenario B4 for the full `configFields` schema and supported field types.
+
+### E5. Update README + changelog
+
+Update the same documentation locations as Scenario A Step 4 and Scenario A
+Step 2b:
+
+- Add each PlatformIO firmware to the README firmware table
+- Add each PlatformIO firmware to the CI changelog table
+- Mention `(PlatformIO)` in the README description column to distinguish these
+  entries from Arduino IDE sketches
+
+### E6. Worked example — ePaper-Voice-Memo
+
+The `ePaper-Voice-Memo` project was integrated as a PlatformIO application with
+web-configurable credentials. The complete integration steps were:
+
+1. Removed nested `.git` → `.git-backup`
+2. Modified `main.cpp` for NVS credential reading
+3. Added 4 CI matrix entries (`E1001`, `E1002`, `E1003`, `E1003_ZH`)
+4. Added 4 firmware options in `firmwares.js` with Wi-Fi + API Key `configFields`
+5. Updated README table
+
+NVS key mapping:
+
+| Parameter | NVS key | nvsType | Preferences API | Default |
+|-----------|---------|---------|-----------------|---------|
+| Wi-Fi SSID | `wifiSsid` | string | `getString()` | `""` (empty) |
+| Wi-Fi Password | `wifiPass` | string | `getString()` | `""` (empty) |
+| Groq API Key | `apiKey` | string | `getString()` | `""` (empty) |
+
+### E7. Troubleshooting (PlatformIO-specific)
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| CI build fails: `"pio: command not found"` | PlatformIO not installed in the CI job | Ensure you added the matrix entry to `build-firmware-pio` (NOT `build-firmware`) |
+| CI build fails: `"boot_app0.bin not found"` | PlatformIO ESP32 packages not fully installed | The `find` command searches `~/.platformio` — verify the platform package includes it |
+| Firmware flashes but WiFi doesn't connect | NVS keys don't match between `firmwares.js` and firmware code | Check that `nvsKey` in `configFields` matches the `Preferences` key string exactly |
+| Firmware compiles locally but fails in CI | Missing `secrets.h` in CI environment | Add `__has_include("secrets.h")` conditional + `#ifndef` fallback guards |
+| PlatformIO pre-build script fails in CI | Script dependencies not installed | Add `pip install <dep>` to the CI build step, or use `extra_scripts = pre:scripts/ensure_deps.py` to auto-install |
+| Chinese/special font build fails | `gen_font.py` can't find the TTF file | Ensure `data/` directory with font files is committed to the repo |
+| Parent repo can't track PlatformIO project files | Nested `.git` directory present | Remove or move `.git` to `.git-backup` and add `.git-backup/` to the project's `.gitignore` |
+
+---
+
 # Reference: project file map
 
 A summary of every file that participates in the firmware pipeline:
@@ -948,6 +1171,9 @@ A summary of every file that participates in the firmware pipeline:
 | File | Role | Edited by |
 |------|------|-----------|
 | `examples/<Sketch>/<Sketch>.ino` | Arduino source code | Human |
+| `examples/<Project>/platformio.ini` | PlatformIO build configuration | Human |
+| `examples/<Project>/src/main.cpp` | PlatformIO entry point | Human |
+| `examples/<Project>/include/secrets.example.h` | Credential template for local dev | Human |
 | `.github/workflows/build-and-deploy.yml` | CI: compile, deploy, release | Human |
 | `web/js/firmwares.js` | Device + platform + firmware metadata | Human |
 | `web/js/app.js` | UI logic, serial flash, monitor | Human (rarely) |
