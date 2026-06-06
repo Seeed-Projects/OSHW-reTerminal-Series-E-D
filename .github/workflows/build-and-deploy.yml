@@ -289,12 +289,14 @@ jobs:
           cp "$BUILD_DIR/bootloader.bin"  "$OUT_DIR/${{ matrix.sketch.name }}.ino.bootloader.bin"
           cp "$BUILD_DIR/partitions.bin"  "$OUT_DIR/${{ matrix.sketch.name }}.ino.partitions.bin"
 
-          BOOT_APP0=$(find ~/.platformio -name "boot_app0.bin" -path "*esp32*" -print -quit)
+          BOOT_APP0=$(find ~/.platformio -name "boot_app0.bin" -print -quit)
           if [ -z "$BOOT_APP0" ]; then
-            echo "::error::boot_app0.bin not found in PlatformIO packages"
-            exit 1
+            echo "::warning::boot_app0.bin not found locally, downloading from ESP32 Arduino core"
+            curl -fsSL -o "$OUT_DIR/boot_app0.bin" \
+              https://github.com/espressif/arduino-esp32/raw/refs/heads/master/tools/partitions/boot_app0.bin
+          else
+            cp "$BOOT_APP0" "$OUT_DIR/boot_app0.bin"
           fi
-          cp "$BOOT_APP0" "$OUT_DIR/boot_app0.bin"
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
