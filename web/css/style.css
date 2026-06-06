@@ -975,46 +975,126 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
     rgba(255, 255, 255, .82);
 }
 
+.console-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.monitor-led {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, .9);
+  border-radius: 50%;
+  background: var(--seeed);
+  box-shadow: 0 0 0 1px rgba(143, 195, 31, .42);
+}
+
+.monitor-device {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid rgba(176, 199, 195, .7);
+  border-radius: 12px;
+  padding: 14px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, .9), rgba(239, 248, 245, .78));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .72);
+}
+
+.monitor-device img {
+  width: 92px;
+  height: 66px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .72);
+}
+
+.monitor-device-copy {
+  min-width: 0;
+}
+
+.monitor-device-copy h3 {
+  margin-bottom: 5px;
+  color: var(--ink);
+  font-size: 17px;
+}
+
+.monitor-device-copy p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.monitor-settings {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(176, 199, 195, .7);
+}
+
+.monitor-setting-row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.monitor-setting-row label,
+.monitor-setting-row span {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.monitor-setting-row select,
+.monitor-value {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid rgba(176, 199, 195, .88);
+  border-radius: 9px;
+  padding: 8px 11px;
+  background: rgba(255, 255, 255, .86);
+  color: #243235;
+  font: inherit;
+  font-size: 13px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .74);
+}
+
+.monitor-value:empty::before {
+  content: "";
+}
+
+.monitor-setting-row b {
+  color: #3d8a09;
+  font-size: 13px;
+}
+
+.monitor-setting-row b.state-disconnected {
+  color: #6f7774;
+}
+
+.monitor-setting-row b.state-error {
+  color: #9b4d11;
+}
+
+.monitor-connection-actions {
+  justify-content: flex-start;
+  margin: 0 0 12px;
+}
+
 .monitor-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-top: 12px;
 }
 
-.monitor-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin: -2px 0 12px;
-}
-
-.monitor-summary span {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 2px;
-  border: 1px solid rgba(176, 199, 195, .76);
-  border-radius: 12px;
-  padding: 8px 9px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, .86), rgba(232, 248, 250, .52));
-  color: #425052;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.monitor-summary b {
-  color: #17636b;
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: .13em;
-  text-transform: uppercase;
-}
-
-.monitor-hint { color: var(--muted); font-size: 11.5px; }
 .monitor-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -1207,7 +1287,13 @@ pre#log {
     align-items: flex-start;
     flex-direction: column;
   }
-  .monitor-summary { grid-template-columns: 1fr; }
+  .monitor-setting-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .monitor-device {
+    align-items: flex-start;
+  }
   .device-option {
     grid-template-columns: 90px minmax(0, 1fr);
     min-height: 128px;

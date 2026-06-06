@@ -168,27 +168,61 @@
     <aside class="monitor-col">
       <article class="panel console-panel">
         <div class="console-heading">
-          <div>
-            <p class="eyebrow">Monitor</p>
+          <div class="console-title">
+            <span class="monitor-led" aria-hidden="true"></span>
             <h2>Device log</h2>
           </div>
           <span class="serial-status" id="serialStatus"><i></i><b>Disconnected</b></span>
         </div>
-        <div class="monitor-summary" aria-label="Monitor details">
-          <span><b>Port</b> USB Serial</span>
-          <span><b>Baud</b> 115200</span>
-          <span><b>State</b> Live log</span>
-        </div>
-        <div class="monitor-actions">
-          <span class="monitor-hint">Available throughout setup and flashing.</span>
-          <div class="monitor-buttons">
-            <button class="button button-small" id="connectMonitorButton" type="button">Connect monitor</button>
-            <button class="button button-secondary button-small is-hidden" id="disconnectMonitorButton" type="button">Disconnect</button>
-            <button class="button button-secondary button-small" id="clearLogButton" type="button">Clear output</button>
+
+        <div class="monitor-device">
+          <img id="monitorDeviceImage" src="assets/devices/reterminal-e1001.jpg" alt="Selected reTerminal device">
+          <div class="monitor-device-copy">
+            <h3 id="monitorDeviceName">reTerminal E-Series</h3>
+            <p id="monitorDeviceMeta">Serial monitor</p>
           </div>
         </div>
+
+        <div class="monitor-settings" aria-label="Monitor settings">
+          <div class="monitor-setting-row">
+            <label for="monitorPortValue">Port</label>
+            <output class="monitor-value" id="monitorPortValue"></output>
+          </div>
+          <div class="monitor-setting-row">
+            <label for="baudRateSelect">Baud rate</label>
+            <select id="baudRateSelect">
+              <option value="9600">9600</option>
+              <option value="57600">57600</option>
+              <option value="115200" selected>115200</option>
+              <option value="230400">230400</option>
+              <option value="460800">460800</option>
+              <option value="921600">921600</option>
+            </select>
+          </div>
+          <div class="monitor-setting-row">
+            <span>State</span>
+            <b id="monitorStateText">Disconnected</b>
+          </div>
+        </div>
+
+        <div class="monitor-buttons monitor-connection-actions">
+          <button class="button button-small" id="connectMonitorButton" type="button">Connect monitor</button>
+          <button class="button button-secondary button-small is-hidden" id="disconnectMonitorButton" type="button">Disconnect</button>
+        </div>
+
         <pre id="log" aria-label="Serial output">[system] Serial monitor ready.
 [system] Use "Connect monitor" for debug logs or "Connect and flash" to install firmware.</pre>
+
+        <div class="monitor-actions">
+          <button class="button button-secondary button-small" id="pauseLogButton" type="button">Pause</button>
+          <button class="button button-secondary button-small" id="clearLogButton" type="button">Clear</button>
+          <button class="button button-small" id="saveLogButton" type="button">
+            <svg width="15" height="15" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M7 1v8M7 9L4.5 6.5M7 9l2.5-2.5M2 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Save log
+          </button>
+        </div>
       </article>
     </aside>
 

@@ -6,9 +6,13 @@ let selectedVersion = null;
 let monitorPort = null;
 let monitorReader = null;
 let monitorKeepReading = false;
+let monitorBaudRate = 115200;
+let logPaused = false;
+let logBuffer = [];
 let firmwareVersions = {};
 const monitorDecoder = new TextDecoder();
 const DEFAULT_FIRMWARE_VERSION = "latest";
+const DEFAULT_MONITOR_DEVICE_IMAGE = "assets/devices/reterminal-e1001.jpg";
 
 document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
@@ -227,6 +231,7 @@ function selectPlatformDevice(platformId, deviceId) {
   selectedVersion = getDefaultVersion(selectedPlatform);
 
   renderSelectedRelease();
+  updateMonitorDeviceSummary();
   renderSetupPanel();
   renderConfigArea();
   updateFlashState();
@@ -243,6 +248,7 @@ function clearPlatformSelection() {
   selectedDevice = null;
   selectedFirmwareOption = null;
   selectedVersion = null;
+  updateMonitorDeviceSummary();
   renderPlatformCards();
   renderFlowState();
   resetProgress();
@@ -293,6 +299,24 @@ function renderSelectedRelease() {
       <img src="${selectedDevice.image}" alt="${selectedDevice.imageAlt}">
     </div>
   `;
+}
+
+// Updates the monitor device summary from the selected platform and device.
+// 根据当前选择的平台和设备更新监视器里的设备摘要。
+function updateMonitorDeviceSummary() {
+  const name = document.getElementById("monitorDeviceName");
+  const meta = document.getElementById("monitorDeviceMeta");
+  const image = document.getElementById("monitorDeviceImage");
+
+  if (name) name.textContent = selectedDevice?.name || "reTerminal E-Series";
+  if (meta) meta.textContent = selectedPlatform?.name || "Serial monitor";
+  if (image && selectedDevice?.image) {
+    image.src = selectedDevice.image;
+    image.alt = selectedDevice.imageAlt || `${selectedDevice.name} device`;
+  } else if (image) {
+    image.src = DEFAULT_MONITOR_DEVICE_IMAGE;
+    image.alt = "Selected reTerminal device";
+  }
 }
 
 function renderSetupPanel() {
@@ -656,12 +680,12 @@ async function flashDevice() {
 async function autoConnectMonitor(port) {
   await new Promise((resolve) => setTimeout(resolve, 1500));
   try {
-    await port.open({ baudRate: 115200 });
+    await port.open({ baudRate: monitorBaudRate });
     monitorPort = port;
     monitorKeepReading = true;
     setMonitorControls(true);
     setSerialState("connected", "Monitor connected");
-    appendLog("[monitor] Auto-connected at 115200 baud.");
+    appendLog(`[monitor] Auto-connected at ${monitorBaudRate} baud.`);
     void readMonitorLoop();
   } catch (error) {
     appendLog(`[monitor] Auto-connect failed: ${error.message || "Unknown error"}. Click "Connect monitor" manually.`);
@@ -688,31 +712,61 @@ function hideError() {
 }
 
 function appendLog(message) {
-  const log = document.getElementById("log");
-  if (!log) return;
-  log.textContent += `\n${message}`;
-  log.scrollTop = log.scrollHeight;
+  appendLogText(`${message}\n`, true);
 }
 
 function appendSerialChunk(message) {
+  appendLogText(message, false);
+}
+
+// Stores every log fragment and mirrors it to the visible log when not paused.
+// 保存每一段日志；未暂停时同步显示到可见日志窗口。
+function appendLogText(message, prefixLineBreak) {
+  const log = document.getElementById("log");
+  const currentText = logBuffer.join("");
+  const needsLineBreak = prefixLineBreak && currentText && !currentText.endsWith("\n");
+  const text = `${needsLineBreak ? "\n" : ""}${message}`;
+  logBuffer.push(text);
+  if (!log || logPaused) return;
+  log.textContent += text;
+  log.scrollTop = log.scrollHeight;
+}
+
+function seedLogBuffer() {
   const log = document.getElementById("log");
   if (!log) return;
-  log.textContent += message;
+  logBuffer = [log.textContent || ""];
+}
+
+function refreshLogView() {
+  const log = document.getElementById("log");
+  if (!log) return;
+  log.textContent = logBuffer.join("");
   log.scrollTop = log.scrollHeight;
 }
 
 function setSerialState(state, label) {
   const el = document.getElementById("serialStatus");
-  if (!el) return;
-  el.className = `serial-status state-${state}`;
-  el.innerHTML = `<i></i><b>${label}</b>`;
+  const stateText = document.getElementById("monitorStateText");
+  if (el) {
+    el.className = `serial-status state-${state}`;
+    el.innerHTML = `<i></i><b>${label}</b>`;
+  }
+  if (stateText) {
+    stateText.textContent = state === "connected" ? "Connected" : label;
+    stateText.className = `state-${state}`;
+  }
 }
 
 function setMonitorControls(connected) {
   const connectBtn = document.getElementById("connectMonitorButton");
   const disconnectBtn = document.getElementById("disconnectMonitorButton");
+  const portValue = document.getElementById("monitorPortValue");
+  const baudSelect = document.getElementById("baudRateSelect");
   if (connectBtn) connectBtn.classList.toggle("is-hidden", connected);
   if (disconnectBtn) disconnectBtn.classList.toggle("is-hidden", !connected);
+  if (portValue) portValue.textContent = "";
+  if (baudSelect) baudSelect.disabled = connected;
 }
 
 async function connectMonitor() {
@@ -724,11 +778,11 @@ async function connectMonitor() {
 
   try {
     monitorPort = await navigator.serial.requestPort();
-    await monitorPort.open({ baudRate: 115200 });
+    await monitorPort.open({ baudRate: monitorBaudRate });
     monitorKeepReading = true;
     setMonitorControls(true);
     setSerialState("connected", "Monitor connected");
-    appendLog("[monitor] Connected at 115200 baud.");
+    appendLog(`[monitor] Connected at ${monitorBaudRate} baud.`);
     void readMonitorLoop();
   } catch (error) {
     monitorPort = null;
@@ -797,6 +851,34 @@ async function disconnectMonitor() {
   setSerialState("disconnected", "Disconnected");
 }
 
+function clearLog() {
+  logBuffer = [];
+  refreshLogView();
+}
+
+function toggleLogPaused() {
+  const pauseBtn = document.getElementById("pauseLogButton");
+  logPaused = !logPaused;
+  if (pauseBtn) pauseBtn.textContent = logPaused ? "Resume" : "Pause";
+  if (!logPaused) refreshLogView();
+}
+
+// Downloads the complete in-memory log as a local text file.
+// 将内存中的完整日志下载为本地文本文件。
+function saveLog() {
+  const text = logBuffer.join("");
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  link.href = url;
+  link.download = `device-log-${stamp}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function bindFlowEvents() {
   const changeBtn = document.getElementById("changePlatformButton");
   if (changeBtn) {
@@ -850,6 +932,20 @@ function bindFlowEvents() {
 }
 
 function bindWorkspaceEvents() {
+  seedLogBuffer();
+  updateMonitorDeviceSummary();
+  setMonitorControls(false);
+  setSerialState("disconnected", "Disconnected");
+
+  const baudSelect = document.getElementById("baudRateSelect");
+  if (baudSelect) {
+    monitorBaudRate = Number.parseInt(baudSelect.value, 10) || monitorBaudRate;
+    baudSelect.addEventListener("change", () => {
+      monitorBaudRate = Number.parseInt(baudSelect.value, 10) || 115200;
+      appendLog(`[monitor] Baud rate set to ${monitorBaudRate}.`);
+    });
+  }
+
   const connectBtn = document.getElementById("connectMonitorButton");
   if (connectBtn) {
     connectBtn.addEventListener("click", connectMonitor);
@@ -863,10 +959,17 @@ function bindWorkspaceEvents() {
 
   const clearBtn = document.getElementById("clearLogButton");
   if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      const log = document.getElementById("log");
-      if (log) log.textContent = "";
-    });
+    clearBtn.addEventListener("click", clearLog);
+  }
+
+  const pauseBtn = document.getElementById("pauseLogButton");
+  if (pauseBtn) {
+    pauseBtn.addEventListener("click", toggleLogPaused);
+  }
+
+  const saveBtn = document.getElementById("saveLogButton");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", saveLog);
   }
 
   const flashBtn = document.getElementById("flashButton");

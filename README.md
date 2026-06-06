@@ -67,12 +67,12 @@
 
 The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you flash firmware onto Seeed Studio's reTerminal E-Series ePaper devices in four simple steps:
 
-1. **Select a platform** — choose from Base demos, ESPHome, SquareLine Vision, or OpenDisplay
+1. **Select a platform** — choose from official platforms, Base demos, or community projects
 2. **Review the selected platform** — confirm the device and demo summary
 3. **Pick your firmware and version** — choose a Base demo and available release
 4. **Flash** — click the button and write firmware over USB, right in your browser
 
-A built-in **serial monitor** lets you view real-time device logs without leaving the page.
+A built-in **serial monitor** lets you view real-time device logs, choose the baud rate, pause the visible stream, and save the complete log without leaving the page.
 
 No Arduino IDE, no driver headaches, no command-line compiling — just plug in your device and go.
 
