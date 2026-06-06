@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>reTerminal E-Series Firmware Hub</title>
   <meta name="description" content="Flash ESP32-S3 firmware to your reTerminal E-Series device directly from the browser. No IDE setup required.">
-  <link rel="stylesheet" href="css/style.css?v=20260604-topbar">
+  <link rel="stylesheet" href="css/style.css?v=20260606-ui-refresh">
 </head>
 <body>
+  <div class="page-backdrop" aria-hidden="true"></div>
 
   <!-- Topbar -->
   <header class="topbar">
@@ -21,6 +22,11 @@
           <small>Firmware Hub</small>
         </span>
       </a>
+      <div class="topbar-meta" aria-label="Firmware Hub status">
+        <span><i></i> Web Serial</span>
+        <span>ESP32-S3</span>
+        <span>GitHub Pages</span>
+      </div>
       <div class="topbar-links">
         <a class="topbar-link" href="https://wiki.seeedstudio.com/reterminal_e10xx_main_page/" target="_blank" rel="noopener">
           <svg class="nav-icon" viewBox="0 0 20 20" aria-hidden="true">
@@ -44,6 +50,30 @@
 
     <!-- ============ LEFT: Firmware setup flow ============ -->
     <section class="flow-col">
+      <section class="hero-panel" aria-labelledby="pageTitle">
+        <div class="hero-copy">
+          <p class="eyebrow">Browser firmware console</p>
+          <h1 id="pageTitle">Flash reTerminal E-Series demos without leaving the browser.</h1>
+          <p class="hero-sub">Choose a product path, prepare the matching firmware, and monitor serial output from one focused workspace.</p>
+          <div class="hero-stats" aria-label="Firmware Hub highlights">
+            <span><b>4</b><small>Device sizes</small></span>
+            <span><b>24+</b><small>Base demos</small></span>
+            <span><b>USB</b><small>Direct flash</small></span>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="device-stack">
+            <img class="device-stack-main" src="assets/devices/reterminal-e1003.jpg" alt="">
+            <img class="device-stack-small device-stack-small-a" src="assets/devices/reterminal-e1001.jpg" alt="">
+            <img class="device-stack-small device-stack-small-b" src="assets/devices/reterminal-e1004.jpg" alt="">
+          </div>
+          <div class="signal-card">
+            <span>ready</span>
+            <b>115200 baud</b>
+          </div>
+        </div>
+      </section>
+
       <article class="panel selection-panel" id="selectionPanel">
         <div class="col-head">
           <div class="col-head-titles">
