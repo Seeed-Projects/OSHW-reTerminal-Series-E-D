@@ -12,7 +12,6 @@ let logBuffer = [];
 let firmwareVersions = {};
 const monitorDecoder = new TextDecoder();
 const DEFAULT_FIRMWARE_VERSION = "latest";
-const DEFAULT_MONITOR_DEVICE_IMAGE = "assets/devices/reterminal-e1001.jpg";
 
 document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
@@ -231,7 +230,6 @@ function selectPlatformDevice(platformId, deviceId) {
   selectedVersion = getDefaultVersion(selectedPlatform);
 
   renderSelectedRelease();
-  updateMonitorDeviceSummary();
   renderSetupPanel();
   renderConfigArea();
   updateFlashState();
@@ -248,7 +246,6 @@ function clearPlatformSelection() {
   selectedDevice = null;
   selectedFirmwareOption = null;
   selectedVersion = null;
-  updateMonitorDeviceSummary();
   renderPlatformCards();
   renderFlowState();
   resetProgress();
@@ -299,24 +296,6 @@ function renderSelectedRelease() {
       <img src="${selectedDevice.image}" alt="${selectedDevice.imageAlt}">
     </div>
   `;
-}
-
-// Updates the monitor device summary from the selected platform and device.
-// 根据当前选择的平台和设备更新监视器里的设备摘要。
-function updateMonitorDeviceSummary() {
-  const name = document.getElementById("monitorDeviceName");
-  const meta = document.getElementById("monitorDeviceMeta");
-  const image = document.getElementById("monitorDeviceImage");
-
-  if (name) name.textContent = selectedDevice?.name || "reTerminal E-Series";
-  if (meta) meta.textContent = selectedPlatform?.name || "Serial monitor";
-  if (image && selectedDevice?.image) {
-    image.src = selectedDevice.image;
-    image.alt = selectedDevice.imageAlt || `${selectedDevice.name} device`;
-  } else if (image) {
-    image.src = DEFAULT_MONITOR_DEVICE_IMAGE;
-    image.alt = "Selected reTerminal device";
-  }
 }
 
 function renderSetupPanel() {
@@ -933,7 +912,6 @@ function bindFlowEvents() {
 
 function bindWorkspaceEvents() {
   seedLogBuffer();
-  updateMonitorDeviceSummary();
   setMonitorControls(false);
   setSerialState("disconnected", "Disconnected");
 
