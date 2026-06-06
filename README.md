@@ -199,6 +199,7 @@ Each example lives in the `examples/` directory and can be flashed via the Firmw
 | [`SD_ImagePipeline_E1002`](examples/SD_ImagePipeline_E1002/) | E1002 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
 | [`SD_ImagePipeline_E1003`](examples/SD_ImagePipeline_E1003/) | E1003 | Display a JPEG/PNG from MicroSD in 16-level grayscale |
 | [`SD_ImagePipeline_E1004`](examples/SD_ImagePipeline_E1004/) | E1004 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
+| [`ePaper-Voice-Memo`](examples/ePaper-Voice-Memo/) | E1001 – E1003 | AI voice memo to ePaper reminder list (Groq Whisper + Llama 3.3, PlatformIO) |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -213,7 +214,9 @@ OSHW-reTerminal-Series-E-D/
 │   ├── LowPower_DeepSleep/
 │   ├── MicRecordToSD/
 │   ├── E1003_TouchDraw/
-│   └── E1003_ChineseTextDemo/
+│   ├── E1003_ChineseTextDemo/
+│   ├── ePaper-Voice-Memo/          # PlatformIO: AI voice memo reminder (E1001–E1003)
+│   └── SD_ImagePipeline_E1004/
 ├── web/                        # Static web app (Firmware Hub)
 │   ├── index.html              # Single-page application
 │   ├── css/style.css           # Responsive styles

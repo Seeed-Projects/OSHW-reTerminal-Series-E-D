@@ -237,10 +237,76 @@ jobs:
           path: build/${{ matrix.sketch.name }}/
           retention-days: 30
 
+  build-firmware-pio:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sketch:
+          - name: ePaper_VoiceMemo_E1001
+            path: examples/ePaper-Voice-Memo
+            pio_env: reterminal_e1001
+          - name: ePaper_VoiceMemo_E1002
+            path: examples/ePaper-Voice-Memo
+            pio_env: reterminal_e1002
+          - name: ePaper_VoiceMemo_E1003
+            path: examples/ePaper-Voice-Memo
+            pio_env: reterminal_e1003
+          - name: ePaper_VoiceMemo_E1003_ZH
+            path: examples/ePaper-Voice-Memo
+            pio_env: reterminal_e1003_zh
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache compiled firmware
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ./build/${{ matrix.sketch.name }}/
+          key: firmware-pio-v1-${{ matrix.sketch.name }}-${{ hashFiles(format('{0}/**', matrix.sketch.path)) }}
+
+      - name: Set up Python
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PlatformIO
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install platformio
+
+      - name: Build ${{ matrix.sketch.name }}
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          cd ${{ matrix.sketch.path }}
+          pio run -e ${{ matrix.sketch.pio_env }}
+
+          BUILD_DIR=".pio/build/${{ matrix.sketch.pio_env }}"
+          OUT_DIR="${GITHUB_WORKSPACE}/build/${{ matrix.sketch.name }}"
+          mkdir -p "$OUT_DIR"
+
+          cp "$BUILD_DIR/firmware.bin"    "$OUT_DIR/${{ matrix.sketch.name }}.ino.bin"
+          cp "$BUILD_DIR/bootloader.bin"  "$OUT_DIR/${{ matrix.sketch.name }}.ino.bootloader.bin"
+          cp "$BUILD_DIR/partitions.bin"  "$OUT_DIR/${{ matrix.sketch.name }}.ino.partitions.bin"
+
+          BOOT_APP0=$(find ~/.platformio -name "boot_app0.bin" -path "*esp32*" -print -quit)
+          if [ -z "$BOOT_APP0" ]; then
+            echo "::error::boot_app0.bin not found in PlatformIO packages"
+            exit 1
+          fi
+          cp "$BOOT_APP0" "$OUT_DIR/boot_app0.bin"
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.sketch.name }}
+          path: build/${{ matrix.sketch.name }}/
+          retention-days: 30
+
   # Job 3: Create GitHub Release only when firmware changed on main.
   # 任务 3：仅在 main 分支固件变化时创建 GitHub Release。
   create-release:
-    needs: [detect-changes, build-firmware]
+    needs: [detect-changes, build-firmware, build-firmware-pio]
     if: github.ref == 'refs/heads/main' && needs.detect-changes.outputs.firmware_changed == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -304,6 +370,7 @@ jobs:
             echo "| Seeed_GFX_E1001_Gray4 | E1001 |"
             echo "| GxEPD2_reTerminal_E1003_Gray16 | E1003 |"
             echo "| SHT4x_Sensor | E1001 – E1004 |"
+            echo "| ePaper_VoiceMemo | E1001 – E1003 (per-device build, includes Chinese variant) |"
             echo "| SD_ImagePipeline_E1001_BW | E1001 |"
             echo "| SD_ImagePipeline_E1001_Gray4 | E1001 |"
             echo "| SD_ImagePipeline_E1002 | E1002 |"
@@ -344,7 +411,7 @@ jobs:
   # Job 4: Deploy to the gh-pages branch.
   # 任务 4：部署到 gh-pages 分支。
   deploy-pages:
-    needs: build-firmware
+    needs: [build-firmware, build-firmware-pio]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source repository
