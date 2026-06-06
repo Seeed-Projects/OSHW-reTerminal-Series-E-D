@@ -377,34 +377,6 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   height: 38%;
 }
 
-.signal-card {
-  position: absolute;
-  right: 18px;
-  top: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border: 1px solid rgba(111, 226, 234, .42);
-  border-radius: 12px;
-  padding: 9px 11px;
-  background: rgba(13, 21, 23, .86);
-  color: #dcfff6;
-  box-shadow: 0 16px 36px rgba(13, 21, 23, .18);
-}
-
-.signal-card span {
-  color: #88d9cd;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
-
-.signal-card b {
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 .has-selection .hero-panel {
   grid-template-columns: 1fr;
   min-height: 0;
@@ -986,8 +958,25 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   height: 14px;
   border: 2px solid rgba(255, 255, 255, .9);
   border-radius: 50%;
+  background: #d94b42;
+  box-shadow: 0 0 0 1px rgba(217, 75, 66, .42);
+}
+
+.monitor-led.state-connected,
+.monitor-led.state-success {
   background: var(--seeed);
   box-shadow: 0 0 0 1px rgba(143, 195, 31, .42);
+}
+
+.monitor-led.state-connecting {
+  background: var(--orange);
+  box-shadow: 0 0 0 1px rgba(238, 129, 52, .42);
+}
+
+.monitor-led.state-error,
+.monitor-led.state-disconnected {
+  background: #d94b42;
+  box-shadow: 0 0 0 1px rgba(217, 75, 66, .42);
 }
 
 .monitor-settings {
@@ -1012,8 +1001,7 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   font-weight: 750;
 }
 
-.monitor-setting-row select,
-.monitor-value {
+.monitor-setting-row select {
   display: flex;
   align-items: center;
   width: 100%;
@@ -1028,8 +1016,10 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .74);
 }
 
-.monitor-value:empty::before {
-  content: "";
+.monitor-port-status {
+  color: #6f7774;
+  font-size: 13px;
+  font-weight: 650;
 }
 
 .monitor-setting-row b {

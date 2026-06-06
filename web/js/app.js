@@ -726,10 +726,14 @@ function refreshLogView() {
 
 function setSerialState(state, label) {
   const el = document.getElementById("serialStatus");
+  const led = document.querySelector(".monitor-led");
   const stateText = document.getElementById("monitorStateText");
   if (el) {
     el.className = `serial-status state-${state}`;
     el.innerHTML = `<i></i><b>${label}</b>`;
+  }
+  if (led) {
+    led.className = `monitor-led state-${state}`;
   }
   if (stateText) {
     stateText.textContent = state === "connected" ? "Connected" : label;
@@ -744,7 +748,7 @@ function setMonitorControls(connected) {
   const baudSelect = document.getElementById("baudRateSelect");
   if (connectBtn) connectBtn.classList.toggle("is-hidden", connected);
   if (disconnectBtn) disconnectBtn.classList.toggle("is-hidden", !connected);
-  if (portValue) portValue.textContent = "";
+  if (portValue) portValue.textContent = "Unavailable";
   if (baudSelect) baudSelect.disabled = connected;
 }
 

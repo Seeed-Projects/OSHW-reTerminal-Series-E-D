@@ -62,10 +62,6 @@
             <img class="device-stack-small device-stack-small-a" src="assets/devices/reterminal-e1001.jpg" alt="">
             <img class="device-stack-small device-stack-small-b" src="assets/devices/reterminal-e1004.jpg" alt="">
           </div>
-          <div class="signal-card">
-            <span>ready</span>
-            <b>115200 baud</b>
-          </div>
         </div>
       </section>
 
@@ -170,15 +166,15 @@
         <div class="console-heading">
           <div class="console-title">
             <span class="monitor-led" aria-hidden="true"></span>
-            <h2>Device log</h2>
+            <h2>Device Log</h2>
           </div>
           <span class="serial-status" id="serialStatus"><i></i><b>Disconnected</b></span>
         </div>
 
         <div class="monitor-settings" aria-label="Monitor settings">
           <div class="monitor-setting-row">
-            <label for="monitorPortValue">Port</label>
-            <output class="monitor-value" id="monitorPortValue"></output>
+            <span>Port</span>
+            <span class="monitor-port-status" id="monitorPortValue">Unavailable</span>
           </div>
           <div class="monitor-setting-row">
             <label for="baudRateSelect">Baud rate</label>
