@@ -259,6 +259,43 @@ h1 {
   font-size: 15px;
 }
 
+.hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero-buy-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  gap: 7px;
+  border: 1px solid rgba(176, 199, 195, .86);
+  border-radius: 999px;
+  padding: 8px 11px;
+  background: rgba(255, 255, 255, .76);
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1;
+  box-shadow: 0 10px 24px rgba(17, 44, 49, .08);
+}
+
+.hero-buy-link:hover {
+  border-color: rgba(143, 195, 31, .58);
+  background: rgba(240, 248, 220, .84);
+  color: color-mix(in srgb, var(--brand) 78%, #22353a);
+  text-decoration: none;
+}
+
+.hero-buy-link svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  flex: 0 0 14px;
+}
+
 .hero-steps {
   display: flex;
   flex-wrap: wrap;
@@ -397,6 +434,11 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
 
 .has-selection .hero-sub {
   display: none;
+}
+
+.has-selection .hero-buy-link {
+  padding: 7px 10px;
+  font-size: 11px;
 }
 
 .has-selection .hero-steps {
