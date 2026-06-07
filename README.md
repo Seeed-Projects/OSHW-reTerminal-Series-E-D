@@ -211,14 +211,12 @@ OSHW-reTerminal-Series-E-D/
 │   └── build-and-deploy.yml    # CI: compile firmware + deploy to GitHub Pages
 ├── .github/scripts/
 │   └── firmware_release.py     # CI helper: changed-example planning + release packaging
-├── examples/                   # Arduino sketches for reTerminal E-Series
-│   ├── RTC_PCF8563/
-│   ├── LowPower_DeepSleep/
-│   ├── MicRecordToSD/
-│   ├── E1003_TouchDraw/
-│   ├── E1003_ChineseTextDemo/
-│   ├── ePaper-Voice-Memo/          # PlatformIO: AI voice memo reminder (E1001–E1003)
-│   └── SD_ImagePipeline_E1004/
+├── examples/                   # Firmware examples; legacy flat folders remain supported
+│   ├── base/                    # New Base hardware demos
+│   ├── official/                # New official platform or partner demos
+│   ├── community/               # New community projects
+│   ├── RTC_PCF8563/             # Existing legacy Base demo
+│   └── ePaper-Voice-Memo/       # Existing legacy community PlatformIO project
 ├── web/                        # Static web app (Firmware Hub)
 │   ├── index.html              # Single-page application
 │   ├── css/style.css           # Responsive styles
@@ -277,14 +275,14 @@ Contributions make the open-source community thrive. Any contribution you make i
 
 ### Adding a New Firmware Example
 
-1. Create a new directory under `examples/` with your sketch
+1. Create a new directory under `examples/base/`, `examples/official/`, or `examples/community/`
 2. Make sure it compiles with `arduino-cli` using the XIAO ESP32-S3 FQBN:
    ```
    esp32:esp32:XIAO_ESP32S3:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=opi
    ```
 3. Add a short example README if setup steps are not obvious
 4. Do not edit generated firmware files, the `gh-pages` branch, or GitHub Releases
-5. For standard Arduino examples, GitHub Actions can auto-discover the folder and build only that example; for PlatformIO or multi-device builds, include supported devices and build environment details in the pull request description
+5. For standard Arduino examples, GitHub Actions can auto-discover the grouped folder and build only that example; for PlatformIO or multi-device builds, include supported devices and build environment details in the pull request description
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

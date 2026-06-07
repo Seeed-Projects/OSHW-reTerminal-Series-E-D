@@ -14,9 +14,9 @@ Choose the path that matches your contribution.
 
 | Goal | Allowed? | Main files to touch |
 |---|---:|---|
-| Add a new core hardware demo | Yes | `examples/<Demo>/`, optionally `web/js/firmwares.js` |
-| Add a new official partner/platform demo | Yes | `examples/<Project>/`, `web/js/firmwares.js`, optionally `.github/scripts/firmware_release.py` |
-| Add a new community project | Yes | `examples/<Project>/`, `web/js/firmwares.js`, optionally `.github/scripts/firmware_release.py` |
+| Add a new core hardware demo | Yes | `examples/base/<Demo>/`, optionally `web/js/firmwares.js` |
+| Add a new official partner/platform demo | Yes | `examples/official/<Project>/`, `web/js/firmwares.js`, optionally `.github/scripts/firmware_release.py` |
+| Add a new community project | Yes | `examples/community/<Project>/`, `web/js/firmwares.js`, optionally `.github/scripts/firmware_release.py` |
 | Update an existing example | Yes | Only that example folder, plus matching web metadata if the UI changes |
 | Add a new platform group/category | No | Do not edit `PLATFORM_GROUPS` |
 | Manually create firmware versions or releases | No | Do not edit generated firmware output |
@@ -44,10 +44,31 @@ discussion or issue first.
 | `.github/workflows/build-and-deploy.yml` | Shared GitHub Actions workflow | Do not edit for normal example contributions |
 | `firmware/` on `gh-pages` | Generated firmware versions, manifests, and catalog | Do not edit manually |
 
+## Example folder layout
+
+New examples should use the grouped layout:
+
+```
+examples/
+  base/
+    WiFi_Scanner/
+      WiFi_Scanner.ino
+  official/
+    MyOfficialProject/
+      ...
+  community/
+    MyCommunityProject/
+      ...
+```
+
+Legacy examples that already live directly under `examples/<Name>/` remain
+supported. Do not move existing examples just to reorganize the tree; moving a
+folder counts as a source change and may trigger an unnecessary firmware rebuild.
+
 ## Automation model
 
 ```
-Contributor changes examples/<Example>/
+Contributor changes examples/<group>/<Example>/
         |
         v
 GitHub Actions detects changed example folders
@@ -101,9 +122,10 @@ The folder name and `.ino` filename must match exactly.
 
 ```
 examples/
-  WiFi_Scanner/
-    WiFi_Scanner.ino
-    README.md
+  base/
+    WiFi_Scanner/
+      WiFi_Scanner.ino
+      README.md
 ```
 
 This standard shape can be auto-discovered by GitHub Actions. It builds as one
@@ -112,7 +134,7 @@ and E1004.
 
 ### 2. Add local documentation
 
-Add `examples/WiFi_Scanner/README.md` when setup steps are not obvious. Include:
+Add `examples/base/WiFi_Scanner/README.md` when setup steps are not obvious. Include:
 
 - supported devices,
 - required hardware,
@@ -147,12 +169,12 @@ group, or add firmware options to an existing official platform card.
 
 ### 1. Add the example source
 
-Place source code under `examples/<Project>/`.
+Place source code under `examples/official/<Project>/`.
 
 Arduino:
 
 ```
-examples/MyOfficialDemo/
+examples/official/MyOfficialDemo/
   MyOfficialDemo.ino
   README.md
 ```
@@ -160,7 +182,7 @@ examples/MyOfficialDemo/
 PlatformIO:
 
 ```
-examples/MyOfficialProject/
+examples/official/MyOfficialProject/
   platformio.ini
   src/
     main.cpp
@@ -231,12 +253,12 @@ platform integrations.
 
 ### 1. Add source code
 
-Place source code under `examples/<Project>/`.
+Place source code under `examples/community/<Project>/`.
 
 For a standard Arduino community project, use this exact shape:
 
 ```
-examples/Example/
+examples/community/Example/
   Example.ino
   README.md
 ```
@@ -292,7 +314,7 @@ Before opening a pull request, dry-run the release planner:
 
 ```bash
 python3 .github/scripts/firmware_release.py plan \
-  --changed-file examples/Example/Example.ino \
+  --changed-file examples/community/Example/Example.ino \
   --output-file /tmp/example-plan.json
 ```
 
@@ -452,6 +474,9 @@ Standard Arduino examples can be auto-discovered when they follow this shape:
 
 ```
 examples/<Name>/<Name>.ino
+examples/base/<Name>/<Name>.ino
+examples/official/<Name>/<Name>.ino
+examples/community/<Name>/<Name>.ino
 ```
 
 Use `.github/scripts/firmware_release.py` and add entries to `FIRMWARE_TARGETS`
@@ -580,7 +605,9 @@ Use this checklist before opening a pull request.
 
 ### Source code
 
-- The example lives under `examples/<Project>/`.
+- New examples live under `examples/base/`, `examples/official/`, or
+  `examples/community/`.
+- Legacy examples under `examples/<Project>/` remain supported.
 - The folder name and `.ino` filename match for standard Arduino examples.
 - PlatformIO projects include `platformio.ini`.
 - No secrets or real credentials are committed.
@@ -642,6 +669,6 @@ If you are an AI coding agent:
 
 ```bash
 python3 .github/scripts/firmware_release.py plan \
-  --changed-file examples/MyDemo/MyDemo.ino \
+  --changed-file examples/community/MyDemo/MyDemo.ino \
   --output-file /tmp/firmware-plan.json
 ```

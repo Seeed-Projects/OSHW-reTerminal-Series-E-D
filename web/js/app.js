@@ -86,6 +86,7 @@ function mergeAutoDiscoveredFirmware(catalog) {
   const registeredIds = getRegisteredFirmwareIds();
   const additions = catalog.firmware
     .filter((firmware) => firmware?.autoDiscovered)
+    .filter((firmware) => !firmware.group || firmware.group === "base")
     .filter((firmware) => firmware?.id && !registeredIds.has(firmware.id))
     .filter((firmware) => Array.isArray(firmwareVersions[firmware.id]));
 

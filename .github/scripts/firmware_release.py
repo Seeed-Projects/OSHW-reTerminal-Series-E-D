@@ -19,6 +19,7 @@ from typing import Any
 
 
 DATE_VERSION_RE = re.compile(r"^\d{4}\.\d{2}\.\d{2}(?:\.\d+)?$")
+EXAMPLE_GROUPS = {"base", "official", "community"}
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,7 @@ class FirmwareTarget:
     pio_env: str = ""
     auto_discovered: bool = False
     title: str = ""
+    group: str = ""
 
     def to_matrix(self) -> dict[str, Any]:
         return {
@@ -52,7 +54,7 @@ class FirmwareTarget:
         }
 
     def to_catalog(self) -> dict[str, Any]:
-        return {
+        item = {
             "id": self.id,
             "name": self.title or self.id.replace("_", " "),
             "path": self.path,
@@ -60,6 +62,9 @@ class FirmwareTarget:
             "compatible": list(self.devices),
             "autoDiscovered": self.auto_discovered,
         }
+        if self.group:
+            item["group"] = self.group
+        return item
 
 
 FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
@@ -276,6 +281,37 @@ def is_under(path: str, directory: str) -> bool:
     return normalized == normalize_path(directory) or normalized.startswith(prefix)
 
 
+def parse_conventional_example(path: str) -> tuple[str, str, str] | None:
+    """Return group, folder, and path for conventional Arduino examples.
+
+    返回常规 Arduino 示例的分组、文件夹名和路径。
+    """
+
+    parts = normalize_path(path).split("/")
+    if len(parts) < 3 or parts[0] != "examples":
+        return None
+
+    group = "base"
+    folder_index = 1
+    ino_index = 2
+    if parts[1] in EXAMPLE_GROUPS:
+        if len(parts) < 4:
+            return None
+        group = parts[1]
+        folder_index = 2
+        ino_index = 3
+
+    folder = parts[folder_index]
+    if parts[ino_index] != f"{folder}.ino":
+        return None
+
+    if group == "base" and folder_index == 1:
+        example_path = f"examples/{folder}"
+    else:
+        example_path = f"examples/{group}/{folder}"
+    return group, folder, example_path
+
+
 def discover_default_targets(changed_files: list[str], known_targets: list[FirmwareTarget]) -> list[FirmwareTarget]:
     """Create default Arduino targets for new conventional examples.
 
@@ -283,27 +319,27 @@ def discover_default_targets(changed_files: list[str], known_targets: list[Firmw
     """
 
     known_paths = {normalize_path(target.path) for target in known_targets}
+    known_ids = {target.id for target in known_targets}
     discovered: list[FirmwareTarget] = []
     seen: set[str] = set()
 
     for changed_file in changed_files:
-        parts = normalize_path(changed_file).split("/")
-        if len(parts) < 3 or parts[0] != "examples":
+        parsed = parse_conventional_example(changed_file)
+        if not parsed:
             continue
-        folder = parts[1]
-        example_path = f"examples/{folder}"
-        if example_path in known_paths or folder in seen:
+        group, folder, example_path = parsed
+        if example_path in known_paths or folder in known_ids or folder in seen:
             continue
-        if parts[2] == f"{folder}.ino":
-            discovered.append(
-                FirmwareTarget(
-                    id=folder,
-                    path=example_path,
-                    title=folder.replace("_", " "),
-                    auto_discovered=True,
-                )
+        discovered.append(
+            FirmwareTarget(
+                id=folder,
+                path=example_path,
+                title=folder.replace("_", " "),
+                auto_discovered=True,
+                group=group,
             )
-            seen.add(folder)
+        )
+        seen.add(folder)
 
     return discovered
 
@@ -592,6 +628,7 @@ def load_plan(path: Path) -> ReleasePlan:
                 devices=tuple(item.get("compatible", ["E1001", "E1002", "E1003", "E1004"])),
                 auto_discovered=bool(item.get("autoDiscovered")),
                 title=item.get("name", ""),
+                group=item.get("group", ""),
             )
             for item in data.get("all_firmware", [])
             if item.get("autoDiscovered")
