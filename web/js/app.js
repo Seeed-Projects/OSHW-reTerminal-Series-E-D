@@ -166,11 +166,12 @@ function renderDeviceSpecs(device, className = "") {
   return device.specs.map((spec) => `<span${classAttr}>${spec}</span>`).join("");
 }
 
-function renderCommunityMeta(platform) {
+function renderCommunityMeta(platform, className = "") {
   if (platform.group !== "community" || (!platform.author && !platform.source?.url)) {
     return "";
   }
 
+  const metaClassName = ["community-meta", className].filter(Boolean).join(" ");
   const author = platform.author
     ? `<span class="community-author">By <strong>${platform.author}</strong></span>`
     : "";
@@ -183,7 +184,7 @@ function renderCommunityMeta(platform) {
       </a>`
     : "";
 
-  return `<div class="community-meta">${author}${source}</div>`;
+  return `<div class="${metaClassName}">${author}${source}</div>`;
 }
 
 function renderPlatformCard(platform) {
@@ -363,6 +364,7 @@ function renderSelectedRelease() {
         <span class="tag tag-device">${selectedDevice.name}</span>
       </div>
       <h3>${firmwareName}</h3>
+      ${renderCommunityMeta(selectedPlatform, "community-meta-selected")}
       <p>${firmwareDescription}</p>
       <div class="compat-list">
         ${renderDeviceSpecs(selectedDevice, "compat-badge active")}

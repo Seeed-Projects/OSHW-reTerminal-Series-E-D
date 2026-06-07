@@ -621,6 +621,10 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   fill: currentColor;
   flex: 0 0 13px;
 }
+.community-meta-selected {
+  margin: 2px 0 10px;
+  padding-left: 0;
+}
 
 .platform-card-action {
   border: 1px solid color-mix(in srgb, var(--platform-accent) 25%, var(--line));
