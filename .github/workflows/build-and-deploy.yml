@@ -305,6 +305,7 @@ jobs:
         run: |
           set -euo pipefail
           gh release create "${{ steps.prepare.outputs.release_tag }}" \
+            --repo "${{ github.repository }}" \
             --title "${{ steps.prepare.outputs.release_title }}" \
             --notes-file release-notes.md \
             release-assets/*
