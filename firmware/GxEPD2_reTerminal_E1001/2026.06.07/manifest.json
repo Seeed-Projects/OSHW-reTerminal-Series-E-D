@@ -1,0 +1,28 @@
+{
+  "name": "GxEPD2_reTerminal_E1001",
+  "version": "2026.06.07",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "GxEPD2_reTerminal_E1001.ino.bootloader.bin",
+          "offset": 0
+        },
+        {
+          "path": "GxEPD2_reTerminal_E1001.ino.partitions.bin",
+          "offset": 32768
+        },
+        {
+          "path": "boot_app0.bin",
+          "offset": 57344
+        },
+        {
+          "path": "GxEPD2_reTerminal_E1001.ino.bin",
+          "offset": 65536
+        }
+      ]
+    }
+  ]
+}

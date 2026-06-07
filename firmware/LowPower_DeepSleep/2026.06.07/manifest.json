@@ -1,0 +1,28 @@
+{
+  "name": "LowPower_DeepSleep",
+  "version": "2026.06.07",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "LowPower_DeepSleep.ino.bootloader.bin",
+          "offset": 0
+        },
+        {
+          "path": "LowPower_DeepSleep.ino.partitions.bin",
+          "offset": 32768
+        },
+        {
+          "path": "boot_app0.bin",
+          "offset": 57344
+        },
+        {
+          "path": "LowPower_DeepSleep.ino.bin",
+          "offset": 65536
+        }
+      ]
+    }
+  ]
+}

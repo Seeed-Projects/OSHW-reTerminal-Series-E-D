@@ -1,0 +1,340 @@
+{
+  "firmware": [
+    {
+      "id": "RTC_PCF8563",
+      "name": "RTC PCF8563",
+      "path": "examples/base/RTC_PCF8563",
+      "tool": "arduino",
+      "compatible": [
+        "E1001",
+        "E1002",
+        "E1003",
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "LowPower_DeepSleep",
+      "name": "Low Power Deep Sleep",
+      "path": "examples/base/LowPower_DeepSleep",
+      "tool": "arduino",
+      "compatible": [
+        "E1001",
+        "E1002",
+        "E1003",
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "MicRecordToSD_E1001",
+      "name": "Mic Record to SD for E1001/E1002",
+      "path": "examples/base/MicRecordToSD",
+      "tool": "arduino",
+      "compatible": [
+        "E1001",
+        "E1002"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "MicRecordToSD_E1003",
+      "name": "Mic Record to SD for E1003",
+      "path": "examples/base/MicRecordToSD",
+      "tool": "arduino",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "E1003_TouchDraw",
+      "name": "E1003 Touch Draw",
+      "path": "examples/base/E1003_TouchDraw",
+      "tool": "arduino",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "LED_Control_E1001",
+      "name": "LED Control for E1001/E1002",
+      "path": "examples/base/LED_Control",
+      "tool": "arduino",
+      "compatible": [
+        "E1001",
+        "E1002"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "LED_Control_E1003",
+      "name": "LED Control for E1003",
+      "path": "examples/base/LED_Control",
+      "tool": "arduino",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "LED_Control_E1004",
+      "name": "LED Control for E1004",
+      "path": "examples/base/LED_Control",
+      "tool": "arduino",
+      "compatible": [
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "Buzzer_Control",
+      "name": "Buzzer Control",
+      "path": "examples/base/Buzzer_Control",
+      "tool": "arduino",
+      "compatible": [
+        "E1001",
+        "E1002",
+        "E1003",
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "Buzzer_Music",
+      "name": "Buzzer Music",
+      "path": "examples/base/Buzzer_Music",
+      "tool": "arduino",
+      "compatible": [
+        "E1001",
+        "E1002",
+        "E1003",
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "UserButtons",
+      "name": "User Buttons",
+      "path": "examples/base/UserButtons",
+      "tool": "arduino",
+      "compatible": [
+        "E1001",
+        "E1002",
+        "E1003",
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "Battery_Monitor",
+      "name": "Battery Monitor",
+      "path": "examples/base/Battery_Monitor",
+      "tool": "arduino",
+      "compatible": [
+        "E1001",
+        "E1002",
+        "E1003",
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "MicroSD_ListFiles",
+      "name": "MicroSD List Files",
+      "path": "examples/base/MicroSD_ListFiles",
+      "tool": "arduino",
+      "compatible": [
+        "E1001",
+        "E1002",
+        "E1003",
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "GxEPD2_reTerminal_E1001",
+      "name": "GxEPD2 reTerminal E1001",
+      "path": "examples/base/GxEPD2_reTerminal_E1001",
+      "tool": "arduino",
+      "compatible": [
+        "E1001"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "GxEPD2_reTerminal_E1002",
+      "name": "GxEPD2 reTerminal E1002",
+      "path": "examples/base/GxEPD2_reTerminal_E1002",
+      "tool": "arduino",
+      "compatible": [
+        "E1002"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "GxEPD2_reTerminal_E1003",
+      "name": "GxEPD2 reTerminal E1003",
+      "path": "examples/base/GxEPD2_reTerminal_E1003",
+      "tool": "arduino",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "GxEPD2_reTerminal_E1004",
+      "name": "GxEPD2 reTerminal E1004",
+      "path": "examples/base/GxEPD2_reTerminal_E1004",
+      "tool": "arduino",
+      "compatible": [
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "GxEPD2_reTerminal_E1001_Gray4",
+      "name": "GxEPD2 reTerminal E1001 Gray4",
+      "path": "examples/base/GxEPD2_reTerminal_E1001_Gray4",
+      "tool": "arduino",
+      "compatible": [
+        "E1001"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "Seeed_GFX_E1001_Gray4",
+      "name": "Seeed GFX E1001 Gray4",
+      "path": "examples/base/Seeed_GFX_E1001_Gray4",
+      "tool": "arduino",
+      "compatible": [
+        "E1001"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "GxEPD2_reTerminal_E1003_Gray16",
+      "name": "GxEPD2 reTerminal E1003 Gray16",
+      "path": "examples/base/GxEPD2_reTerminal_E1003_Gray16",
+      "tool": "arduino",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "SHT4x_Sensor",
+      "name": "SHT4x Sensor",
+      "path": "examples/base/SHT4x_Sensor",
+      "tool": "arduino",
+      "compatible": [
+        "E1001",
+        "E1002",
+        "E1003",
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "E1003_ChineseTextDemo",
+      "name": "E1003 Chinese Text Demo",
+      "path": "examples/base/E1003_ChineseTextDemo",
+      "tool": "arduino",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "SD_ImagePipeline_E1001_BW",
+      "name": "SD Image Pipeline E1001 BW",
+      "path": "examples/base/SD_ImagePipeline_E1001_BW",
+      "tool": "arduino",
+      "compatible": [
+        "E1001"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "SD_ImagePipeline_E1001_Gray4",
+      "name": "SD Image Pipeline E1001 Gray4",
+      "path": "examples/base/SD_ImagePipeline_E1001_Gray4",
+      "tool": "arduino",
+      "compatible": [
+        "E1001"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "SD_ImagePipeline_E1002",
+      "name": "SD Image Pipeline E1002",
+      "path": "examples/base/SD_ImagePipeline_E1002",
+      "tool": "arduino",
+      "compatible": [
+        "E1002"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "SD_ImagePipeline_E1003",
+      "name": "SD Image Pipeline E1003",
+      "path": "examples/base/SD_ImagePipeline_E1003",
+      "tool": "arduino",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "SD_ImagePipeline_E1004",
+      "name": "SD Image Pipeline E1004",
+      "path": "examples/base/SD_ImagePipeline_E1004",
+      "tool": "arduino",
+      "compatible": [
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "ePaper_VoiceMemo_E1001",
+      "name": "Voice Memo Reminder for E1001",
+      "path": "examples/community/ePaper-Voice-Memo",
+      "tool": "platformio",
+      "compatible": [
+        "E1001"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "ePaper_VoiceMemo_E1002",
+      "name": "Voice Memo Reminder for E1002",
+      "path": "examples/community/ePaper-Voice-Memo",
+      "tool": "platformio",
+      "compatible": [
+        "E1002"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "ePaper_VoiceMemo_E1003",
+      "name": "Voice Memo Reminder for E1003",
+      "path": "examples/community/ePaper-Voice-Memo",
+      "tool": "platformio",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "ePaper_VoiceMemo_E1003_ZH",
+      "name": "Voice Memo Reminder Chinese for E1003",
+      "path": "examples/community/ePaper-Voice-Memo",
+      "tool": "platformio",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false
+    }
+  ]
+}
