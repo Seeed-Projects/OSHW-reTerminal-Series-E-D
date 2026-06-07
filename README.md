@@ -170,7 +170,7 @@ arduino-cli core install esp32:esp32
 arduino-cli compile \
   --fqbn "esp32:esp32:XIAO_ESP32S3:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=opi" \
   --output-dir ./build/RTC_PCF8563 \
-  ./examples/RTC_PCF8563
+  ./examples/base/RTC_PCF8563
 ```
 
 For sketches that use `Seeed_GFX` (e.g., `E1003_TouchDraw`):
@@ -184,22 +184,23 @@ arduino-cli lib install --git-url https://github.com/Seeed-Studio/Seeed_GFX.git
 
 ## Arduino Examples
 
-Each example lives in the `examples/` directory and can be flashed via the Firmware Hub or compiled manually.
+Each example lives under a grouped `examples/` category and can be flashed via
+the Firmware Hub or compiled manually.
 
 | Example | Compatible Devices | Description |
 |:--------|:-------------------|:------------|
-| [`RTC_PCF8563`](examples/RTC_PCF8563/) | E1001 – E1004 | Read and write the PCF8563 real-time clock over I2C |
-| [`LowPower_DeepSleep`](examples/LowPower_DeepSleep/) | E1001 – E1004 | Enter ESP32-S3 deep sleep (~14 µA), wake on button press |
-| [`MicRecordToSD`](examples/MicRecordToSD/) | E1001 – E1003 | Record PDM microphone audio to WAV files on MicroSD |
-| [`E1003_TouchDraw`](examples/E1003_TouchDraw/) | E1003 | Draw on the 10.3″ ePaper display using touch input |
-| [`E1003_ChineseTextDemo`](examples/E1003_ChineseTextDemo/) | E1003 | Render Chinese text with a TTF font stored in SPIFFS |
-| [`SHT4x_Sensor`](examples/SHT4x_Sensor/) | E1001 – E1004 | Read temperature and humidity from the SHT40 sensor over I2C |
-| [`SD_ImagePipeline_E1001_BW`](examples/SD_ImagePipeline_E1001_BW/) | E1001 | Display a JPEG/PNG from MicroSD with B&W dithering |
-| [`SD_ImagePipeline_E1001_Gray4`](examples/SD_ImagePipeline_E1001_Gray4/) | E1001 | Display a JPEG/PNG from MicroSD in 4-level grayscale |
-| [`SD_ImagePipeline_E1002`](examples/SD_ImagePipeline_E1002/) | E1002 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
-| [`SD_ImagePipeline_E1003`](examples/SD_ImagePipeline_E1003/) | E1003 | Display a JPEG/PNG from MicroSD in 16-level grayscale |
-| [`SD_ImagePipeline_E1004`](examples/SD_ImagePipeline_E1004/) | E1004 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
-| [`ePaper-Voice-Memo`](examples/ePaper-Voice-Memo/) | E1001 – E1003 | AI voice memo to ePaper reminder list (Groq Whisper + Llama 3.3, PlatformIO) |
+| [`RTC_PCF8563`](examples/base/RTC_PCF8563/) | E1001 – E1004 | Read and write the PCF8563 real-time clock over I2C |
+| [`LowPower_DeepSleep`](examples/base/LowPower_DeepSleep/) | E1001 – E1004 | Enter ESP32-S3 deep sleep (~14 µA), wake on button press |
+| [`MicRecordToSD`](examples/base/MicRecordToSD/) | E1001 – E1003 | Record PDM microphone audio to WAV files on MicroSD |
+| [`E1003_TouchDraw`](examples/base/E1003_TouchDraw/) | E1003 | Draw on the 10.3″ ePaper display using touch input |
+| [`E1003_ChineseTextDemo`](examples/base/E1003_ChineseTextDemo/) | E1003 | Render Chinese text with a TTF font stored in SPIFFS |
+| [`SHT4x_Sensor`](examples/base/SHT4x_Sensor/) | E1001 – E1004 | Read temperature and humidity from the SHT40 sensor over I2C |
+| [`SD_ImagePipeline_E1001_BW`](examples/base/SD_ImagePipeline_E1001_BW/) | E1001 | Display a JPEG/PNG from MicroSD with B&W dithering |
+| [`SD_ImagePipeline_E1001_Gray4`](examples/base/SD_ImagePipeline_E1001_Gray4/) | E1001 | Display a JPEG/PNG from MicroSD in 4-level grayscale |
+| [`SD_ImagePipeline_E1002`](examples/base/SD_ImagePipeline_E1002/) | E1002 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
+| [`SD_ImagePipeline_E1003`](examples/base/SD_ImagePipeline_E1003/) | E1003 | Display a JPEG/PNG from MicroSD in 16-level grayscale |
+| [`SD_ImagePipeline_E1004`](examples/base/SD_ImagePipeline_E1004/) | E1004 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
+| [`ePaper-Voice-Memo`](examples/community/ePaper-Voice-Memo/) | E1001 – E1003 | AI voice memo to ePaper reminder list (Groq Whisper + Llama 3.3, PlatformIO) |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -211,12 +212,10 @@ OSHW-reTerminal-Series-E-D/
 │   └── build-and-deploy.yml    # CI: compile firmware + deploy to GitHub Pages
 ├── .github/scripts/
 │   └── firmware_release.py     # CI helper: changed-example planning + release packaging
-├── examples/                   # Firmware examples; legacy flat folders remain supported
-│   ├── base/                    # New Base hardware demos
-│   ├── official/                # New official platform or partner demos
-│   ├── community/               # New community projects
-│   ├── RTC_PCF8563/             # Existing legacy Base demo
-│   └── ePaper-Voice-Memo/       # Existing legacy community PlatformIO project
+├── examples/                   # Firmware examples grouped by product category
+│   ├── base/                    # Base hardware demos
+│   ├── official/                # Official platform or partner demos
+│   └── community/               # Community projects
 ├── web/                        # Static web app (Firmware Hub)
 │   ├── index.html              # Single-page application
 │   ├── css/style.css           # Responsive styles
