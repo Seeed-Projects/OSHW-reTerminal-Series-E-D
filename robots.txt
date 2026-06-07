@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/sitemap.xml
