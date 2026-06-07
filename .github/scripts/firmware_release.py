@@ -421,6 +421,10 @@ def next_date_version(existing_versions: list[str], today: str) -> str:
 def copy_web_assets(web_dir: Path, pages_dir: Path) -> None:
     pages_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(web_dir / "index.html", pages_dir / "index.html")
+    for root_file in ("robots.txt", "sitemap.xml"):
+        src = web_dir / root_file
+        if src.exists():
+            shutil.copy2(src, pages_dir / root_file)
     for folder in ("css", "js", "assets"):
         source = web_dir / folder
         if not source.exists():
