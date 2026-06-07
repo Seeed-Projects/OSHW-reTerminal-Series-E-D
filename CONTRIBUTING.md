@@ -282,6 +282,11 @@ For a full project, add a platform card with:
   group: "community",
   name: "My Community Project",
   tagline: "Short project summary.",
+  author: "github-user-or-team",
+  source: {
+    label: "github-user-or-team/my-community-project",
+    url: "https://github.com/github-user-or-team/my-community-project"
+  },
   description: "What this project does.",
   logo: "assets/brand/reterminal-epaper-icon.svg",
   preview: "assets/devices/reterminal-e1003.jpg",
@@ -302,6 +307,10 @@ For a full project, add a platform card with:
 ```
 
 Then add one or more `firmwareOptions` with IDs that match the build targets.
+
+The `author` and `source` fields are required for Community Projects. They are
+shown on the card to credit the original creator and link back to the upstream
+project.
 
 ### 3. Keep secrets out of code
 
@@ -364,6 +373,8 @@ The web page is driven by `web/js/firmwares.js`.
 | `name` | Yes | Visible platform name |
 | `tagline` | Yes | Short one-line summary |
 | `description` | Yes | Longer explanation shown in the card |
+| `author` | Community only | Creator name shown on Community Projects cards |
+| `source` | Community only | Original project link shown on Community Projects cards |
 | `logo` | Yes | Logo asset path |
 | `preview` | Yes | Preview image asset path |
 | `previewAlt` | Yes | Accessible image description |
@@ -617,6 +628,7 @@ Use this checklist before opening a pull request.
 
 - The project uses only `official`, `base`, or `community`.
 - No new `PLATFORM_GROUPS` entry was added.
+- Community Projects include `author` and `source`.
 - `web/js/firmwares.js` was updated when the project needs a card, polished
   copy, device-specific compatibility, notes, or config fields.
 - Every `firmwareOptions[].id` matches a firmware build ID.

@@ -445,6 +445,11 @@ const PLATFORM_CARDS = [
     group: "community",
     name: "Voice Memo Reminder",
     tagline: "Community AI voice memo project for ePaper reminder lists.",
+    author: "limengdu",
+    source: {
+      label: "limengdu/ePaper-Voice-Memo",
+      url: "https://github.com/limengdu/ePaper-Voice-Memo",
+    },
     description:
       "Voice Memo Reminder records a spoken memo, sends it to Groq Whisper and Llama 3.3, then turns it into a sorted ePaper reminder list.",
     logo: "assets/brand/reterminal-epaper-icon.svg",

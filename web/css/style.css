@@ -577,6 +577,50 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   font-size: 13px;
   line-height: 1.45;
 }
+.community-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  position: relative;
+  z-index: 1;
+  margin: -8px 18px 14px;
+  padding-left: 78px;
+}
+.community-author,
+.community-source {
+  width: fit-content;
+  border: 1px solid rgba(176, 199, 195, .72);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, .72);
+  color: #526266;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+}
+.community-author strong {
+  color: var(--ink);
+  font-size: inherit;
+  font-weight: 760;
+}
+.community-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: color-mix(in srgb, var(--platform-accent) 76%, #25373b);
+}
+.community-source:hover {
+  border-color: color-mix(in srgb, var(--platform-accent) 34%, var(--line));
+  background: rgba(240, 248, 220, .78);
+  text-decoration: none;
+}
+.community-source svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+  flex: 0 0 13px;
+}
 
 .platform-card-action {
   border: 1px solid color-mix(in srgb, var(--platform-accent) 25%, var(--line));
@@ -1227,6 +1271,10 @@ pre#log {
   .platform-logo-wrap {
     width: 54px;
     height: 54px;
+  }
+  .community-meta {
+    margin-top: -8px;
+    padding-left: 68px;
   }
   .platform-card-action { grid-column: 2; width: fit-content; }
   .platform-group-head {
