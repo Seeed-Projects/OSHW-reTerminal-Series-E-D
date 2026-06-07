@@ -79,7 +79,7 @@ arduino-cli board list
 mkdir -p /private/tmp/e1003-chinese-spiffs
 
 /Users/mengdu/Library/Arduino15/packages/esp32/tools/mkspiffs/0.2.3/mkspiffs \
-  -c /Users/mengdu/Desktop/OSHW-reTerminal-Series-E-D/examples/E1003_ChineseTextDemo/data \
+  -c /Users/mengdu/Desktop/OSHW-reTerminal-Series-E-D/examples/base/E1003_ChineseTextDemo/data \
   -p 256 \
   -b 4096 \
   -s 0x4E0000 \

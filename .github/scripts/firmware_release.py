@@ -36,6 +36,9 @@ class FirmwareTarget:
     needs_gfx: bool = False
     needs_gxepd2: bool = False
     needs_sht4x: bool = False
+    needs_open_font_render: bool = False
+    spiffs_image_size: str = ""
+    spiffs_offset: int = 0
     build_flags: str = ""
     pio_env: str = ""
     auto_discovered: bool = False
@@ -49,6 +52,9 @@ class FirmwareTarget:
             "needs_gfx": self.needs_gfx,
             "needs_gxepd2": self.needs_gxepd2,
             "needs_sht4x": self.needs_sht4x,
+            "needs_open_font_render": self.needs_open_font_render,
+            "spiffs_image_size": self.spiffs_image_size,
+            "spiffs_offset": self.spiffs_offset,
             "build_flags": self.build_flags,
             "pio_env": self.pio_env,
         }
@@ -171,6 +177,16 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
         "examples/base/SHT4x_Sensor",
         needs_sht4x=True,
         title="SHT4x Sensor",
+    ),
+    FirmwareTarget(
+        "E1003_ChineseTextDemo",
+        "examples/base/E1003_ChineseTextDemo",
+        devices=("E1003",),
+        needs_gfx=True,
+        needs_open_font_render=True,
+        spiffs_image_size="0x4E0000",
+        spiffs_offset=0x310000,
+        title="E1003 Chinese Text Demo",
     ),
     FirmwareTarget(
         "SD_ImagePipeline_E1001_BW",
@@ -431,8 +447,29 @@ def copy_firmware_artifact(source_dir: Path, firmware_id: str, destination: Path
         raise FileNotFoundError(f"Missing boot_app0.bin for {firmware_id}")
     shutil.copy2(boot_app0, destination / "boot_app0.bin")
 
+    spiffs = source_dir / f"{firmware_id}.spiffs.bin"
+    if spiffs.exists():
+        shutil.copy2(spiffs, destination / f"{firmware_id}.spiffs.bin")
 
-def write_manifest(firmware_id: str, version: str, destination: Path) -> None:
+
+def write_manifest(
+    firmware_id: str,
+    version: str,
+    destination: Path,
+    spiffs_offset: int = 0,
+) -> None:
+    parts = [
+        {"path": f"{firmware_id}.ino.bootloader.bin", "offset": 0},
+        {"path": f"{firmware_id}.ino.partitions.bin", "offset": 32768},
+        {"path": "boot_app0.bin", "offset": 57344},
+        {"path": f"{firmware_id}.ino.bin", "offset": 65536},
+    ]
+    spiffs = destination / f"{firmware_id}.spiffs.bin"
+    if spiffs.exists():
+        if not spiffs_offset:
+            raise ValueError(f"Missing SPIFFS offset for {firmware_id}")
+        parts.append({"path": spiffs.name, "offset": spiffs_offset})
+
     manifest = {
         "name": firmware_id,
         "version": version,
@@ -440,12 +477,7 @@ def write_manifest(firmware_id: str, version: str, destination: Path) -> None:
         "builds": [
             {
                 "chipFamily": "ESP32-S3",
-                "parts": [
-                    {"path": f"{firmware_id}.ino.bootloader.bin", "offset": 0},
-                    {"path": f"{firmware_id}.ino.partitions.bin", "offset": 32768},
-                    {"path": "boot_app0.bin", "offset": 57344},
-                    {"path": f"{firmware_id}.ino.bin", "offset": 65536},
-                ],
+                "parts": parts,
             }
         ],
     }
@@ -600,7 +632,7 @@ def prepare_pages(
         version = next_date_version(date_versions(firmware_dir), today)
         destination = firmware_dir / version
         copy_firmware_artifact(artifact_dir, target.id, destination)
-        write_manifest(target.id, version, destination)
+        write_manifest(target.id, version, destination, target.spiffs_offset)
         changed_versions[target.id] = version
 
     versions = write_versions_json(firmware_root)

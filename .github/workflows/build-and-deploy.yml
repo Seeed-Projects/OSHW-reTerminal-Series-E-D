@@ -37,7 +37,11 @@ jobs:
           before="${{ github.event.before }}"
           after="${{ github.sha }}"
 
-          if [ "$before" = "0000000000000000000000000000000000000000" ]; then
+          git fetch origin gh-pages:refs/remotes/origin/gh-pages --depth=1 || true
+
+          if ! git cat-file -e origin/gh-pages:firmware/versions.json 2>/dev/null; then
+            find examples -type f | sort > changed-files.txt
+          elif [ "$before" = "0000000000000000000000000000000000000000" ]; then
             git diff-tree --no-commit-id --name-only -r "$after" -- examples/ > changed-files.txt || true
           else
             git diff --name-only "$before" "$after" -- examples/ > changed-files.txt || true
@@ -112,6 +116,12 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_sht4x
         run: arduino-cli lib install "Sensirion I2C SHT4x"
 
+      - name: Install OpenFontRender library
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_open_font_render
+        run: |
+          arduino-cli config set library.enable_unsafe_install true
+          arduino-cli lib install --git-url https://github.com/takkaO/OpenFontRender.git
+
       - name: Install Seeed_GxEPD2 and Adafruit_GFX
         if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_gxepd2
         run: |
@@ -132,6 +142,20 @@ jobs:
             ./${{ matrix.sketch.path }}
           cp ~/.arduino15/packages/esp32/hardware/esp32/*/tools/partitions/boot_app0.bin \
             ./build/${{ matrix.sketch.name }}/boot_app0.bin
+
+          if [ -n "${{ matrix.sketch.spiffs_image_size }}" ]; then
+            MKSPIFFS=$(find ~/.arduino15/packages/esp32/tools -path "*/mkspiffs/*/mkspiffs" -print -quit)
+            if [ -z "$MKSPIFFS" ]; then
+              echo "::error::mkspiffs not found"
+              exit 1
+            fi
+            "$MKSPIFFS" \
+              -c ./${{ matrix.sketch.path }}/data \
+              -p 256 \
+              -b 4096 \
+              -s "${{ matrix.sketch.spiffs_image_size }}" \
+              ./build/${{ matrix.sketch.name }}/${{ matrix.sketch.name }}.spiffs.bin
+          fi
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4

@@ -507,6 +507,7 @@ when any of these are true:
 - the firmware needs compile flags,
 - the firmware needs Seeed_GFX, Seeed_GxEPD2, Sensirion SHT4x, or another
   special build dependency,
+- the firmware needs a generated data image such as SPIFFS,
 - the web `firmwareOptions` ID is not the same as the folder name.
 
 Arduino target example:
@@ -546,6 +547,7 @@ The release automation expects every firmware artifact to contain:
 | `<firmware-id>.ino.partitions.bin` | `0x8000` |
 | `boot_app0.bin` | `0xE000` |
 | `<firmware-id>.ino.bin` | `0x10000` |
+| `<firmware-id>.spiffs.bin` | target-specific data offset, when registered |
 
 The script generates `manifest.json` automatically with these offsets.
 
@@ -581,7 +583,7 @@ Arduino compile:
 ```bash
 arduino-cli compile \
   --fqbn "esp32:esp32:XIAO_ESP32S3:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=opi" \
-  ./examples/WiFi_Scanner
+  ./examples/base/RTC_PCF8563
 ```
 
 PlatformIO compile:
