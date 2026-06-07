@@ -452,6 +452,21 @@ def copy_firmware_artifact(source_dir: Path, firmware_id: str, destination: Path
         shutil.copy2(spiffs, destination / f"{firmware_id}.spiffs.bin")
 
 
+def missing_artifact_parts(source_dir: Path, firmware_id: str) -> list[str]:
+    """Return required firmware artifact patterns that are missing.
+
+    返回缺失的必要固件产物模式。
+    """
+
+    missing: list[str] = []
+    for pattern in ("*.ino.bootloader.bin", "*.ino.partitions.bin", "*.ino.bin"):
+        if not sorted(source_dir.glob(pattern)):
+            missing.append(pattern)
+    if not (source_dir / "boot_app0.bin").exists():
+        missing.append("boot_app0.bin")
+    return missing
+
+
 def write_manifest(
     firmware_id: str,
     version: str,
@@ -624,26 +639,39 @@ def prepare_pages(
     migrate_legacy_latest(firmware_root, today)
 
     changed_versions: dict[str, str] = {}
+    skipped_targets: dict[str, str] = {}
     for target in plan.changed_targets:
         artifact_dir = artifacts_dir / f"firmware-{target.id}"
         if not artifact_dir.exists():
-            raise FileNotFoundError(f"Missing artifact directory for {target.id}: {artifact_dir}")
+            skipped_targets[target.id] = "missing artifact directory"
+            continue
+        missing_parts = missing_artifact_parts(artifact_dir, target.id)
+        if missing_parts:
+            skipped_targets[target.id] = f"missing {', '.join(missing_parts)}"
+            continue
         firmware_dir = firmware_root / target.id
         version = next_date_version(date_versions(firmware_dir), today)
         destination = firmware_dir / version
         copy_firmware_artifact(artifact_dir, target.id, destination)
         write_manifest(target.id, version, destination, target.spiffs_offset)
         changed_versions[target.id] = version
+        print(f"Updated firmware: {target.id} -> {version}")
+
+    for firmware_id, reason in sorted(skipped_targets.items()):
+        print(f"Skipped firmware: {firmware_id} ({reason})")
 
     versions = write_versions_json(firmware_root)
     write_catalog_json(firmware_root, plan.all_targets)
     copy_release_assets(firmware_root, versions, release_assets_dir)
     write_release_notes(release_notes, changed_versions, versions)
+    release_ready = bool(plan.changed_targets) and not skipped_targets
 
     return {
         "release_tag": next_release_tag(today),
         "release_title": f"Firmware {today}",
-        "firmware_changed": "true" if plan.changed_targets else "false",
+        "firmware_changed": "true" if changed_versions else "false",
+        "release_ready": "true" if release_ready else "false",
+        "skipped_firmware": ",".join(sorted(skipped_targets)),
     }
 
 
