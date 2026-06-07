@@ -348,6 +348,10 @@ const PLATFORM_CARDS = [
     group: "official",
     name: "ESPHome",
     tagline: "Smart-home firmware with YAML setup and Home Assistant integration.",
+    source: {
+      label: "Official website",
+      url: "https://esphome.io/",
+    },
     description:
       "ESPHome turns microcontroller boards into local smart-home devices using simple YAML configuration, web tools, and Home Assistant workflows.",
     logo: "assets/platforms/esphome-logo-card.png",
@@ -389,6 +393,10 @@ const PLATFORM_CARDS = [
     group: "official",
     name: "SquareLine Vision",
     tagline: "Visual UI workflow for embedded screen experiences.",
+    source: {
+      label: "Official website",
+      url: "https://app.vision.squareline.io/",
+    },
     description:
       "SquareLine Vision focuses on designing embedded interfaces visually, then preparing UI assets and implementation output for screen-based products.",
     logo: "assets/platforms/squareline-logo.png",
@@ -417,6 +425,10 @@ const PLATFORM_CARDS = [
     group: "official",
     name: "OpenDisplay",
     tagline: "Open-source ePaper firmware and protocol for BLE display control.",
+    source: {
+      label: "Official website",
+      url: "https://www.opendisplay.org/",
+    },
     description:
       "OpenDisplay provides firmware and browser tools for low-power ePaper display projects, including BLE control, configuration, and image upload flows.",
     logo: "assets/platforms/opendisplay-logo-card-v2.png",

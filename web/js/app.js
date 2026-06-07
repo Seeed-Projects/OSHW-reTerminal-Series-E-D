@@ -166,20 +166,28 @@ function renderDeviceSpecs(device, className = "") {
   return device.specs.map((spec) => `<span${classAttr}>${spec}</span>`).join("");
 }
 
-function renderCommunityMeta(platform, className = "") {
-  if (platform.group !== "community" || (!platform.author && !platform.source?.url)) {
+function renderPlatformCreditMeta(platform, className = "") {
+  const canShowAuthor = platform.group === "community" && platform.author;
+  const canShowSource =
+    (platform.group === "official" || platform.group === "community") && platform.source?.url;
+  if (!canShowAuthor && !canShowSource) {
     return "";
   }
 
   const metaClassName = ["community-meta", className].filter(Boolean).join(" ");
-  const author = platform.author
+  const author = canShowAuthor
     ? `<span class="community-author">By <strong>${platform.author}</strong></span>`
     : "";
-  const source = platform.source?.url
+  const sourceIcon = platform.source?.url?.includes("github.com")
+    ? `<svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M8 1.3a6.7 6.7 0 0 0-2.1 13c.34.06.46-.15.46-.32v-1.24c-1.88.41-2.28-.8-2.28-.8-.3-.78-.75-.99-.75-.99-.62-.42.05-.41.05-.41.68.05 1.04.7 1.04.7.6 1.03 1.58.73 1.97.56.06-.44.24-.73.43-.9-1.5-.17-3.08-.75-3.08-3.34 0-.74.26-1.34.7-1.82-.07-.17-.3-.86.07-1.8 0 0 .57-.19 1.86.7A6.5 6.5 0 0 1 8 4.4c.57 0 1.14.08 1.68.23 1.29-.89 1.86-.7 1.86-.7.37.94.14 1.63.07 1.8.44.48.7 1.08.7 1.82 0 2.6-1.58 3.16-3.09 3.33.25.22.46.64.46 1.3v1.8c0 .18.12.39.47.32A6.7 6.7 0 0 0 8 1.3Z"/>
+      </svg>`
+    : `<svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M4 3.25A1.75 1.75 0 0 0 2.25 5v7A1.75 1.75 0 0 0 4 13.75h7A1.75 1.75 0 0 0 12.75 12V9.5a.75.75 0 0 0-1.5 0V12a.25.25 0 0 1-.25.25H4a.25.25 0 0 1-.25-.25V5A.25.25 0 0 1 4 4.75h2.5a.75.75 0 0 0 0-1.5H4Zm5.5 0a.75.75 0 0 0 0 1.5h1.19L7.22 8.22a.75.75 0 1 0 1.06 1.06l3.47-3.47V7a.75.75 0 0 0 1.5 0V4a.75.75 0 0 0-.75-.75h-3Z"/>
+      </svg>`;
+  const source = canShowSource
     ? `<a class="community-source" href="${platform.source.url}" target="_blank" rel="noopener">
-        <svg viewBox="0 0 16 16" aria-hidden="true">
-          <path d="M8 1.3a6.7 6.7 0 0 0-2.1 13c.34.06.46-.15.46-.32v-1.24c-1.88.41-2.28-.8-2.28-.8-.3-.78-.75-.99-.75-.99-.62-.42.05-.41.05-.41.68.05 1.04.7 1.04.7.6 1.03 1.58.73 1.97.56.06-.44.24-.73.43-.9-1.5-.17-3.08-.75-3.08-3.34 0-.74.26-1.34.7-1.82-.07-.17-.3-.86.07-1.8 0 0 .57-.19 1.86.7A6.5 6.5 0 0 1 8 4.4c.57 0 1.14.08 1.68.23 1.29-.89 1.86-.7 1.86-.7.37.94.14 1.63.07 1.8.44.48.7 1.08.7 1.82 0 2.6-1.58 3.16-3.09 3.33.25.22.46.64.46 1.3v1.8c0 .18.12.39.47.32A6.7 6.7 0 0 0 8 1.3Z"/>
-        </svg>
+        ${sourceIcon}
         <span>${platform.source.label || "Source"}</span>
       </a>`
     : "";
@@ -223,7 +231,7 @@ function renderPlatformCard(platform) {
         </span>
         <span class="platform-card-action">${isExpanded ? "Expanded" : "View"}</span>
       </button>
-      ${renderCommunityMeta(platform)}
+      ${renderPlatformCreditMeta(platform)}
       <div class="platform-detail">
         <div class="platform-detail-copy">
           <p>${platform.description}</p>
@@ -364,7 +372,7 @@ function renderSelectedRelease() {
         <span class="tag tag-device">${selectedDevice.name}</span>
       </div>
       <h3>${firmwareName}</h3>
-      ${renderCommunityMeta(selectedPlatform, "community-meta-selected")}
+      ${renderPlatformCreditMeta(selectedPlatform, "community-meta-selected")}
       <p>${firmwareDescription}</p>
       <div class="compat-list">
         ${renderDeviceSpecs(selectedDevice, "compat-badge active")}

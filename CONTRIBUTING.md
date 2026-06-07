@@ -201,6 +201,10 @@ For a new official platform card, add an object to `PLATFORM_CARDS` with:
   group: "official",
   name: "My Official Platform",
   tagline: "Short workflow summary.",
+  source: {
+    label: "Official website",
+    url: "https://example.com"
+  },
   description: "What this platform does and when to use it.",
   logo: "assets/platforms/my-official-platform-logo.png",
   preview: "assets/platforms/my-official-platform-preview.png",
@@ -219,6 +223,9 @@ For a new official platform card, add an object to `PLATFORM_CARDS` with:
   firmwareOptions: []
 }
 ```
+
+The `source` field is required for official platform cards. Use it to link to
+the official product or project website.
 
 For a firmware option, add it to the platform card's `firmwareOptions` array:
 
@@ -374,7 +381,7 @@ The web page is driven by `web/js/firmwares.js`.
 | `tagline` | Yes | Short one-line summary |
 | `description` | Yes | Longer explanation shown in the card |
 | `author` | Community only | Creator name shown on Community Projects cards |
-| `source` | Community only | Original project link shown on Community Projects cards |
+| `source` | Official and Community | Official website or original project link shown on cards |
 | `logo` | Yes | Logo asset path |
 | `preview` | Yes | Preview image asset path |
 | `previewAlt` | Yes | Accessible image description |
@@ -628,6 +635,7 @@ Use this checklist before opening a pull request.
 
 - The project uses only `official`, `base`, or `community`.
 - No new `PLATFORM_GROUPS` entry was added.
+- Official platform cards include `source`.
 - Community Projects include `author` and `source`.
 - `web/js/firmwares.js` was updated when the project needs a card, polished
   copy, device-specific compatibility, notes, or config fields.
