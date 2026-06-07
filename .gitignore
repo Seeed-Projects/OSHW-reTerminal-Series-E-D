@@ -18,6 +18,11 @@ compile_commands.json
 # PlatformIO
 .pio/
 
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
 # IDE
 .vscode/
 
