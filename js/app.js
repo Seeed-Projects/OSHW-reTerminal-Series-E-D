@@ -343,6 +343,7 @@ function clearPlatformSelection() {
   selectedVersion = null;
   renderPlatformCards();
   renderFlowState();
+  updateFlashState();
   resetProgress();
 }
 
@@ -353,11 +354,13 @@ function renderFlowState() {
   const versionPanel = document.getElementById("versionPanel");
   const flashPanel = document.getElementById("flashPanel");
 
+  const isTemplate = Boolean(selectedPlatform?.templateMode);
   document.body.classList.toggle("has-selection", hasSelection);
   if (selectionPanel) selectionPanel.classList.toggle("is-collapsed", hasSelection);
   toggleStepPanel(selectedPanel, hasSelection, 0);
   toggleStepPanel(versionPanel, hasSelection, 90);
   toggleStepPanel(flashPanel, hasSelection, 180);
+  if (hasSelection) renderFlashPanelMode(isTemplate);
 }
 
 function toggleStepPanel(panel, visible, delayMs) {
@@ -401,27 +404,56 @@ function renderSetupPanel() {
 
 function renderFirmwareSelect() {
   const field = document.getElementById("firmwareField");
-  const select = document.getElementById("firmwareSelect");
-  if (!field || !select || !selectedPlatform || !selectedDevice) return;
+  if (!field || !selectedPlatform || !selectedDevice) return;
 
-  const options = getAvailableFirmwareOptions(selectedPlatform, selectedDevice.id);
-  const label = field.querySelector("span");
-  if (label) {
-    label.textContent =
-      selectedPlatform.group === "base"
-        ? "Base demo"
-        : selectedPlatform.group === "community"
-          ? "Project firmware"
-          : "Firmware option";
-  }
-
-  field.classList.toggle("is-hidden", options.length === 0);
-  if (!options.length) {
-    select.innerHTML = "";
+  if (selectedPlatform?.templateMode) {
+    const options = selectedPlatform.templateOptions || [];
+    field.classList.toggle("is-hidden", options.length === 0);
+    field.innerHTML = `
+      <span>Template options</span>
+      ${options.map((option) => `
+        <label class="field-block field-block--checkbox" for="${option.id}">
+          <span>
+            ${option.label}
+            <br>
+            <small>${option.description}</small>
+          </span>
+          <input id="${option.id}" name="${option.id}" type="checkbox" ${option.defaultChecked === true ? "checked" : ""}>
+        </label>
+      `).join("")}
+    `;
+    if (!field.dataset.templateListener) {
+      field.addEventListener("change", (e) => {
+        if (e.target?.type === "checkbox") renderTemplatePreview();
+      });
+      field.dataset.templateListener = "true";
+    }
+    renderTemplatePreview();
     return;
   }
 
-  select.innerHTML = options.map((firmware) => {
+  const options = getAvailableFirmwareOptions(selectedPlatform, selectedDevice.id);
+  const labelText =
+    selectedPlatform.group === "base"
+      ? "Base demo"
+      : selectedPlatform.group === "community"
+        ? "Project firmware"
+        : "Firmware option";
+
+  field.innerHTML = `
+    <span>${labelText}</span>
+    <select id="firmwareSelect"></select>
+  `;
+  const nextSelect = document.getElementById("firmwareSelect");
+
+  field.classList.toggle("is-hidden", options.length === 0);
+  if (!options.length) {
+    if (nextSelect) nextSelect.innerHTML = "";
+    return;
+  }
+
+  if (!nextSelect) return;
+  nextSelect.innerHTML = options.map((firmware) => {
     const selectedAttr =
       firmware.id === selectedFirmwareOption?.id ? "selected" : "";
     return `<option value="${firmware.id}" ${selectedAttr}>${firmware.name}</option>`;
@@ -431,6 +463,16 @@ function renderFirmwareSelect() {
 function renderVersionPanel() {
   const versionSelect = document.getElementById("versionSelect");
   if (!versionSelect || !selectedPlatform) return;
+
+  const isTemplate = Boolean(selectedPlatform?.templateMode);
+  const versionField = versionSelect.closest(".field-block");
+  if (versionField) versionField.classList.toggle("is-hidden", isTemplate);
+
+  const versionPanel = document.getElementById("versionPanel");
+  const panelHeading = versionPanel?.querySelector(".panel-heading h2");
+  if (panelHeading) panelHeading.textContent = isTemplate ? "Template setup" : "Version and setup";
+
+  if (isTemplate) return;
 
   const versions = getVersionOptions(selectedPlatform);
   if (!versions.some((item) => item.version === selectedVersion?.version)) {
@@ -540,6 +582,107 @@ function updateFlashState() {
   if (flashBtn) flashBtn.classList.toggle("is-hidden", !ready);
   if (disabledBtn) disabledBtn.classList.toggle("is-hidden", ready);
   if (installNote) installNote.classList.toggle("is-visible", !ready);
+}
+
+// Assembles template output from platform-level header, selected snippets, and footer.
+function buildTemplateContent(platform, selectedOptionIds) {
+  const joiner = platform.templateJoiner || "\n\n";
+  const parts = [];
+  const header = platform.templateHeader || "";
+  const footer = platform.templateFooter || "";
+  if (header) parts.push(header);
+  const snippets = selectedOptionIds
+    .map((id) => {
+      const opt = (platform.templateOptions || []).find((o) => o.id === id);
+      return opt?.snippet;
+    })
+    .filter(Boolean);
+  parts.push(...snippets);
+  if (footer) parts.push(footer);
+  return parts.join(joiner) + "\n";
+}
+
+// Reads checkbox state from the DOM and returns checked option IDs.
+function getCheckedTemplateOptionIds() {
+  if (!selectedPlatform?.templateMode) return [];
+  return (selectedPlatform.templateOptions || [])
+    .filter((option) => {
+      const input = document.getElementById(option.id);
+      return input?.checked;
+    })
+    .map((option) => option.id);
+}
+
+// Updates the Step 3 template code preview with the current checkbox selection.
+function renderTemplatePreview() {
+  const codeEl = document.getElementById("templateCode");
+  if (!codeEl || !selectedPlatform?.templateMode) return;
+  const ids = getCheckedTemplateOptionIds();
+  codeEl.textContent = buildTemplateContent(selectedPlatform, ids);
+}
+
+// Downloads the generated template as a file.
+function generateTemplateFile() {
+  if (!selectedPlatform?.templateMode || !selectedDevice) return;
+  const ids = getCheckedTemplateOptionIds();
+  const content = buildTemplateContent(selectedPlatform, ids);
+  const ext = selectedPlatform.templateFileExtension || "txt";
+  const mime = selectedPlatform.templateFileMimeType || "text/plain";
+  const pattern = selectedPlatform.templateFilePattern || "{platformId}-{deviceId}";
+  const filename = pattern
+    .replace("{platformId}", selectedPlatform.id)
+    .replace("{deviceId}", selectedDevice.id.toLowerCase()) + "." + ext;
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  appendLog(`[system] Downloaded template: ${filename}`);
+}
+
+// Copies the template preview content to clipboard with button feedback.
+function copyTemplateToClipboard() {
+  const codeEl = document.getElementById("templateCode");
+  const btn = document.getElementById("copyTemplateButton");
+  if (!codeEl) return;
+  const text = codeEl.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    if (btn) {
+      const original = btn.innerHTML;
+      btn.textContent = "Copied!";
+      setTimeout(() => { btn.innerHTML = original; }, 1500);
+    }
+    appendLog("[system] Template copied to clipboard.");
+  }).catch(() => {
+    appendLog("[system] Failed to copy - use the download button instead.");
+  });
+}
+
+// Toggles flash-panel child elements between flash mode and template preview mode.
+function renderFlashPanelMode(isTemplate) {
+  const flashPanel = document.getElementById("flashPanel");
+  if (!flashPanel) return;
+  const heading = flashPanel.querySelector(".panel-heading h2");
+  const installMode = flashPanel.querySelector(".install-mode");
+  const installNote = document.getElementById("installNote");
+  const errorAlert = document.getElementById("errorAlert");
+  const progressRow = flashPanel.querySelector(".progress-row");
+  const flashActions = flashPanel.querySelector(".flash-actions");
+  const templatePreview = document.getElementById("templatePreview");
+  const templateExport = document.getElementById("templateExportActions");
+
+  if (heading) heading.textContent = isTemplate ? "Preview and export" : "Flash to device";
+  if (installMode) installMode.classList.toggle("is-hidden", isTemplate);
+  if (progressRow) progressRow.classList.toggle("is-hidden", isTemplate);
+  if (flashActions) flashActions.classList.toggle("is-hidden", isTemplate);
+  if (templatePreview) templatePreview.classList.toggle("is-hidden", !isTemplate);
+  if (templateExport) templateExport.classList.toggle("is-hidden", !isTemplate);
+  if (isTemplate && installNote) installNote.classList.remove("is-visible");
+  if (isTemplate && errorAlert) errorAlert.classList.remove("is-visible");
 }
 
 // Fetches a binary file as the string format expected by esptool-js.
@@ -1012,9 +1155,11 @@ function bindFlowEvents() {
     changeBtn.addEventListener("click", clearPlatformSelection);
   }
 
-  const firmwareSelect = document.getElementById("firmwareSelect");
-  if (firmwareSelect) {
-    firmwareSelect.addEventListener("change", () => {
+  const firmwareField = document.getElementById("firmwareField");
+  if (firmwareField) {
+    firmwareField.addEventListener("change", (event) => {
+      if (event.target?.id !== "firmwareSelect") return;
+      const firmwareSelect = event.target;
       const options = getAvailableFirmwareOptions(selectedPlatform, selectedDevice?.id);
       selectedFirmwareOption =
         options.find((item) => item.id === firmwareSelect.value) || options[0] || null;
@@ -1102,5 +1247,15 @@ function bindWorkspaceEvents() {
   if (flashBtn) {
     flashBtn.addEventListener("click", flashDevice);
     flashBtn.disabled = !("serial" in navigator);
+  }
+
+  const copyBtn = document.getElementById("copyTemplateButton");
+  if (copyBtn) {
+    copyBtn.addEventListener("click", copyTemplateToClipboard);
+  }
+
+  const downloadBtn = document.getElementById("downloadTemplateButton");
+  if (downloadBtn) {
+    downloadBtn.addEventListener("click", generateTemplateFile);
   }
 }
