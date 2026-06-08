@@ -8,13 +8,21 @@ let monitorReader = null;
 let monitorKeepReading = false;
 let monitorBaudRate = 115200;
 let logPaused = false;
-let logBuffer = globalThis.createLogBuffer();
+const LOG_RETAINED_MAX_LENGTH = 256 * 1024;
+const LOG_VISIBLE_MAX_LENGTH = 48 * 1024;
+const LOG_RENDER_INTERVAL_MS = 250;
+const SERIAL_PENDING_MAX_LENGTH = 32 * 1024;
+const SERIAL_READ_YIELD_BYTES = 8192;
+const SERIAL_READ_YIELD_CHUNKS = 32;
+const SERIAL_PENDING_TRIM_NOTICE = "[monitor] Incoming log output was throttled.\n";
+let logBuffer = globalThis.createLogBuffer({ maxLength: LOG_RETAINED_MAX_LENGTH });
 let logRenderTimer = null;
+let pendingSerialText = "";
+let pendingSerialTrimmed = false;
 let firmwareVersions = {};
 let firmwareCatalogLoaded = false;
 const monitorDecoder = new TextDecoder();
 const DEFAULT_FIRMWARE_VERSION = "latest";
-const LOG_RENDER_INTERVAL_MS = 100;
 
 document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
@@ -783,20 +791,43 @@ function appendLog(message) {
 }
 
 function appendSerialChunk(message) {
-  appendLogText(message, false);
+  pendingSerialText += String(message || "");
+  if (pendingSerialText.length > SERIAL_PENDING_MAX_LENGTH) {
+    pendingSerialText = pendingSerialText.slice(-SERIAL_PENDING_MAX_LENGTH);
+    const firstLineBreak = pendingSerialText.indexOf("\n");
+    if (firstLineBreak >= 0 && firstLineBreak < pendingSerialText.length - 1) {
+      pendingSerialText = pendingSerialText.slice(firstLineBreak + 1);
+    }
+    pendingSerialTrimmed = true;
+  }
+  scheduleLogRender();
 }
 
 function scheduleLogRender() {
   if (logRenderTimer !== null) return;
   logRenderTimer = window.setTimeout(() => {
     logRenderTimer = null;
+    flushPendingSerialText();
     if (!logPaused) refreshLogView();
   }, LOG_RENDER_INTERVAL_MS);
+}
+
+function flushPendingSerialText() {
+  if (!pendingSerialText && !pendingSerialTrimmed) return;
+  if (pendingSerialTrimmed) {
+    logBuffer.append(SERIAL_PENDING_TRIM_NOTICE, true);
+    pendingSerialTrimmed = false;
+  }
+  if (pendingSerialText) {
+    logBuffer.append(pendingSerialText, false);
+    pendingSerialText = "";
+  }
 }
 
 // Stores bounded log text and batches visible updates to avoid UI freezes.
 // 保存限长日志，并批量刷新可见窗口，避免界面卡死。
 function appendLogText(message, prefixLineBreak) {
+  flushPendingSerialText();
   logBuffer.append(message, prefixLineBreak);
   if (logPaused) return;
   scheduleLogRender();
@@ -805,13 +836,16 @@ function appendLogText(message, prefixLineBreak) {
 function seedLogBuffer() {
   const log = document.getElementById("log");
   if (!log) return;
+  pendingSerialText = "";
+  pendingSerialTrimmed = false;
   logBuffer.seed(log.textContent || "");
 }
 
 function refreshLogView() {
   const log = document.getElementById("log");
   if (!log) return;
-  log.textContent = logBuffer.text();
+  flushPendingSerialText();
+  log.textContent = logBuffer.view(LOG_VISIBLE_MAX_LENGTH);
   log.scrollTop = log.scrollHeight;
 }
 
@@ -877,12 +911,24 @@ async function readMonitorLoop() {
   while (monitorPort?.readable && monitorKeepReading) {
     const reader = monitorPort.readable.getReader();
     monitorReader = reader;
+    let bytesSinceYield = 0;
+    let chunksSinceYield = 0;
     try {
       while (monitorKeepReading) {
         const { value, done } = await reader.read();
         if (done) break;
         if (value) {
+          bytesSinceYield += value.byteLength;
+          chunksSinceYield += 1;
           appendSerialChunk(monitorDecoder.decode(value, { stream: true }));
+          if (
+            bytesSinceYield >= SERIAL_READ_YIELD_BYTES ||
+            chunksSinceYield >= SERIAL_READ_YIELD_CHUNKS
+          ) {
+            bytesSinceYield = 0;
+            chunksSinceYield = 0;
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
         }
       }
     } catch (error) {
@@ -930,6 +976,8 @@ async function disconnectMonitor() {
 }
 
 function clearLog() {
+  pendingSerialText = "";
+  pendingSerialTrimmed = false;
   logBuffer.clear();
   refreshLogView();
 }
@@ -944,6 +992,7 @@ function toggleLogPaused() {
 // Downloads the retained in-memory log as a local text file.
 // 将内存中保留的日志下载为本地文本文件。
 function saveLog() {
+  flushPendingSerialText();
   const text = logBuffer.text();
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);

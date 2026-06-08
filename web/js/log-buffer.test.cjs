@@ -22,4 +22,14 @@ cappedBuffer.seed("x".repeat(200));
 assert.ok(cappedBuffer.text().length <= 80);
 assert.ok(cappedBuffer.text().startsWith("[trimmed]\n"));
 
+const viewBuffer = createLogBuffer({ maxLength: 1024, viewNotice: "[view]\n" });
+for (let index = 0; index < 300; index += 1) {
+  viewBuffer.append(`visible ${index.toString().padStart(3, "0")}\n`);
+}
+assert.ok(viewBuffer.text().length <= 1024);
+assert.ok(viewBuffer.view(96).length <= 96);
+assert.ok(viewBuffer.view(96).startsWith("[view]\n"));
+assert.ok(viewBuffer.view(96).includes("visible 299"));
+assert.ok(!viewBuffer.view(96).includes("visible 000"));
+
 console.log("log-buffer tests passed");

@@ -1,6 +1,7 @@
 (function () {
   const DEFAULT_MAX_LENGTH = 256 * 1024;
   const DEFAULT_TRIM_NOTICE = "[monitor] Older log output was trimmed.\n";
+  const DEFAULT_VIEW_NOTICE = "[monitor] Showing latest retained log output.\n";
 
   function normalizeNotice(notice) {
     const text = notice || DEFAULT_TRIM_NOTICE;
@@ -14,23 +15,27 @@
       ? options.maxLength
       : DEFAULT_MAX_LENGTH;
     const trimNotice = normalizeNotice(options.trimNotice);
+    const viewNotice = normalizeNotice(options.viewNotice || DEFAULT_VIEW_NOTICE);
     let text = "";
 
-    function trim() {
-      if (text.length <= maxLength) return;
+    function trimText(value, limit, notice) {
+      if (value.length <= limit) return value;
 
-      if (maxLength <= trimNotice.length) {
-        text = trimNotice.slice(0, maxLength);
-        return;
+      if (limit <= notice.length) {
+        return value.slice(-limit);
       }
 
-      const retainedLength = maxLength - trimNotice.length;
-      let retainedText = text.slice(-retainedLength);
+      const retainedLength = limit - notice.length;
+      let retainedText = value.slice(-retainedLength);
       const firstLineBreak = retainedText.indexOf("\n");
       if (firstLineBreak >= 0 && firstLineBreak < retainedText.length - 1) {
         retainedText = retainedText.slice(firstLineBreak + 1);
       }
-      text = `${trimNotice}${retainedText}`;
+      return `${notice}${retainedText}`;
+    }
+
+    function trim() {
+      text = trimText(text, maxLength, trimNotice);
     }
 
     return {
@@ -49,6 +54,10 @@
       },
       text() {
         return text;
+      },
+      view(maxLength) {
+        if (!Number.isInteger(maxLength) || maxLength <= 0) return text;
+        return trimText(text, maxLength, viewNotice);
       },
     };
   }
