@@ -748,7 +748,7 @@ async function autoConnectMonitor(port) {
     await port.open({ baudRate: monitorBaudRate });
     monitorPort = port;
     monitorKeepReading = true;
-    setMonitorControls(true);
+    setMonitorControls(true, port);
     setSerialState("connected", "Monitor connected");
     appendLog(`[monitor] Auto-connected at ${monitorBaudRate} baud.`);
     void readMonitorLoop();
@@ -827,14 +827,18 @@ function setSerialState(state, label) {
   }
 }
 
-function setMonitorControls(connected) {
+function setMonitorControls(connected, port = null) {
   const connectBtn = document.getElementById("connectMonitorButton");
   const disconnectBtn = document.getElementById("disconnectMonitorButton");
   const portValue = document.getElementById("monitorPortValue");
   const baudSelect = document.getElementById("baudRateSelect");
   if (connectBtn) connectBtn.classList.toggle("is-hidden", connected);
   if (disconnectBtn) disconnectBtn.classList.toggle("is-hidden", !connected);
-  if (portValue) portValue.textContent = "Unavailable";
+  if (portValue) {
+    portValue.textContent = connected
+      ? globalThis.formatSerialPortLabel(port)
+      : "Unavailable";
+  }
   if (baudSelect) baudSelect.disabled = connected;
 }
 
@@ -849,7 +853,7 @@ async function connectMonitor() {
     monitorPort = await navigator.serial.requestPort();
     await monitorPort.open({ baudRate: monitorBaudRate });
     monitorKeepReading = true;
-    setMonitorControls(true);
+    setMonitorControls(true, monitorPort);
     setSerialState("connected", "Monitor connected");
     appendLog(`[monitor] Connected at ${monitorBaudRate} baud.`);
     void readMonitorLoop();
