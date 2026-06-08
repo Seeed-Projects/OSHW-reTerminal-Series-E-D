@@ -386,6 +386,14 @@ const PLATFORM_CARDS = [
         placeholder: "Stored locally before flashing",
       },
     ],
+    templateMode: true,
+    templateOptions: [
+      { id: "wifi_ota", label: "Wi-Fi + OTA", defaultChecked: true, description: "Basic Wi-Fi connection and over-the-air updates" },
+      { id: "ha_api", label: "Home Assistant API", defaultChecked: true, description: "Native integration with Home Assistant" },
+      { id: "display_ili9341", label: "Display (ILI9341 / SPI)", defaultChecked: false, description: "SPI display for reTerminal E-Series screen" },
+      { id: "dht22", label: "Temperature & Humidity (DHT22)", defaultChecked: false, description: "DHT22 sensor on a configurable GPIO pin" },
+      { id: "web_server", label: "Web Server (debug)", defaultChecked: false, description: "Built-in HTTP dashboard for debugging" },
+    ],
     firmwareOptions: [],
   },
   {

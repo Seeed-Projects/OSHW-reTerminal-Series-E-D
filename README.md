@@ -69,8 +69,8 @@ The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you f
 
 1. **Select a platform** — choose from official platforms, Base demos, or community projects
 2. **Review the selected platform** — confirm the device and demo summary
-3. **Pick your firmware and version** — choose a Base demo and available release
-4. **Flash** — click the button and write firmware over USB, right in your browser
+3. **Pick firmware, version, or template options** — choose a Base demo release or ESPHome YAML modules
+4. **Flash or generate** — write firmware over USB or download an ESPHome YAML file from the browser
 
 A built-in **serial monitor** lets you view real-time device logs, choose the baud rate, pause the visible stream, and save the retained recent log without leaving the page.
 
@@ -100,7 +100,7 @@ All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support
 | Platform | Status | Devices | Description |
 |:---------|:-------|:--------|:------------|
 | **Base** | ✅ Ready | E1001 – E1004 | Smoke-test demos (RTC, deep sleep, mic recording, touch draw) |
-| **ESPHome** | 🔜 Coming soon | E1001 – E1003 | Smart home integration with Home Assistant |
+| **ESPHome** | ✅ YAML templates | E1001 – E1003 | Smart home integration with Home Assistant |
 | **SquareLine Vision** | 🔜 Coming soon | E1002, E1003 | Visual UI designer for embedded ePaper displays |
 | **OpenDisplay** | 🔜 Coming soon | E1001 – E1003 | BLE-powered ePaper control + browser image upload |
 
@@ -127,8 +127,8 @@ The quickest way to get started — no local setup needed:
 1. Open the **[Firmware Hub](https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/)** in **Chrome** or **Edge** (desktop only)
 2. Connect your reTerminal E-Series device via USB
 3. Select a platform and device
-4. Pick a firmware demo and version, then click **Install**
-5. Choose the serial port when prompted and wait for the flash to complete
+4. Pick a firmware demo and version, then click **Install**; for ESPHome, choose template options and click **Generate YAML**
+5. For flashing, choose the serial port when prompted and wait for the flash to complete
 
 > **Note:** Web Serial requires **HTTPS** or **localhost** and is only available in Chromium-based browsers (Chrome, Edge, Opera). Safari and Firefox are not supported.
 
@@ -252,7 +252,7 @@ Configure GitHub Pages to serve from the `gh-pages` branch. The deployed site is
 - [x] Browser-based flashing via ESP Web Tools
 - [x] Built-in serial monitor
 - [x] CI/CD pipeline for automated builds and deployment
-- [ ] ESPHome integration with Home Assistant
+- [x] ESPHome YAML template generation for Home Assistant workflows
 - [ ] SquareLine Vision UI designer support
 - [ ] OpenDisplay BLE control + image upload
 - [ ] "Erase & flash" mode for full chip erase before flashing

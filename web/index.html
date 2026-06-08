@@ -107,10 +107,10 @@
           </div>
         </div>
         <div class="setup-grid">
-          <label class="field-block is-hidden" id="firmwareField" for="firmwareSelect">
+          <div class="field-block is-hidden" id="firmwareField">
             <span>Base demo</span>
             <select id="firmwareSelect"></select>
-          </label>
+          </div>
           <label class="field-block" for="versionSelect">
             <span>Firmware version</span>
             <select id="versionSelect"></select>
@@ -161,6 +161,7 @@
           <button class="button button-flash is-hidden" id="disabledFlashButton" type="button" disabled>
             Connect &amp; flash
           </button>
+          <button class="button is-hidden" id="generateYamlButton" type="button">Generate YAML</button>
           <span class="flash-hint" id="flashHint">Connect your reTerminal with a USB data cable first.</span>
         </div>
       </article>
