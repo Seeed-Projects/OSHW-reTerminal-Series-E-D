@@ -627,6 +627,7 @@ function updateFlashState() {
   const disabledBtn = document.getElementById("disabledFlashButton");
   const installNote = document.getElementById("installNote");
   const generateYamlBtn = document.getElementById("generateYamlButton");
+  const flashPanel = document.getElementById("flashPanel");
   const templateReady = Boolean(selectedPlatform?.templateMode && selectedDevice);
   const manifest = getInstallManifest();
   const ready = Boolean(selectedPlatform?.installReady && manifest);
@@ -637,6 +638,22 @@ function updateFlashState() {
   if (generateYamlBtn) {
     generateYamlBtn.classList.toggle("is-hidden", !templateReady);
     generateYamlBtn.disabled = !templateReady;
+  }
+
+  // Hide flash-only UI elements in template mode.
+  // 在模板模式下隐藏刷机专用的 UI 元素。
+  if (flashPanel) {
+    const heading = flashPanel.querySelector(".panel-heading h2");
+    const installMode = flashPanel.querySelector(".install-mode");
+    const progressRow = flashPanel.querySelector(".progress-row");
+    const flashHint = document.getElementById("flashHint");
+    const flashStatus = document.getElementById("flashStatus");
+
+    if (heading) heading.textContent = templateReady ? "Generate template" : "Flash to device";
+    if (installMode) installMode.classList.toggle("is-hidden", templateReady);
+    if (progressRow) progressRow.classList.toggle("is-hidden", templateReady);
+    if (flashHint) flashHint.classList.toggle("is-hidden", templateReady);
+    if (flashStatus) flashStatus.classList.toggle("is-hidden", templateReady);
   }
 }
 
