@@ -15,8 +15,8 @@ Choose the path that matches your contribution.
 | Goal | Allowed? | Main files to touch |
 |---|---:|---|
 | Add a new core hardware demo | Yes | `examples/base/<Demo>/`, optionally `web/js/firmwares.js` |
-| Add a new official partner/platform demo | Yes | `examples/official/<Project>/`, `web/js/firmwares.js`, optionally `.github/scripts/firmware_release.py` |
-| Add a new community project | Yes | `examples/community/<Project>/`, `web/js/firmwares.js`, optionally `.github/scripts/firmware_release.py` |
+| Add a new official partner/platform demo | Yes | `examples/official/<Project>/`, `web/js/firmwares.js`, optionally `.github/scripts/firmware_release.py`. First choose: **flash mode** (complete firmware) or **template mode** (example config). |
+| Add a new community project | Yes | `examples/community/<Project>/`, `web/js/firmwares.js`, optionally `.github/scripts/firmware_release.py`. First choose: **flash mode** or **template mode**. |
 | Update an existing example | Yes | Only that example folder, plus matching web metadata if the UI changes |
 | Add a new platform group/category | No | Do not edit `PLATFORM_GROUPS` |
 | Manually create firmware versions or releases | No | Do not edit generated firmware output |
@@ -166,6 +166,30 @@ Use this path for official partner integrations or supported platform workflows.
 Do not create a new group. Add a platform card under the existing `official`
 group, or add firmware options to an existing official platform card.
 
+### 0. Choose a display mode
+
+Before writing any code, decide how users will consume your contribution:
+
+| Question | Answer: Flash mode | Answer: Template mode |
+|---|---|---|
+| Does your project produce a ready-to-run `.bin` firmware? | Yes | No |
+| Can the user flash it directly from the browser without modification? | Yes | No — each user needs to customize the config |
+| What does the user get? | A working firmware on the device | A starter config file to edit and compile elsewhere |
+
+**Flash mode** — set `installReady: true`, provide `firmwareOptions` with build
+IDs, and register build targets in `firmware_release.py`. GitHub Actions builds
+the binary; the Hub flashes it to the device via Web Serial.
+
+**Template mode** — set `installReady: false` and `templateMode: true`, provide
+`templateOptions` with `snippet` fields. No build targets needed. The Hub
+generates a configuration file in the browser for the user to preview, copy, or
+download. See [Template mode platforms](#template-mode-platforms) for the full
+data structure.
+
+Most official platforms that require per-user customization (such as ESPHome,
+where every user's display layout and sensor setup is different) should use
+template mode.
+
 ### 1. Add the example source
 
 Place source code under `examples/official/<Project>/`.
@@ -192,7 +216,9 @@ examples/official/MyOfficialProject/
 
 Open `web/js/firmwares.js`.
 
-For a new official platform card, add an object to `PLATFORM_CARDS` with:
+For a new official platform card, add an object to `PLATFORM_CARDS`.
+
+**Flash mode** (complete firmware, browser-flashable):
 
 ```js
 {
@@ -200,10 +226,7 @@ For a new official platform card, add an object to `PLATFORM_CARDS` with:
   group: "official",
   name: "My Official Platform",
   tagline: "Short workflow summary.",
-  source: {
-    label: "Official website",
-    url: "https://example.com"
-  },
+  source: { label: "Official website", url: "https://example.com" },
   description: "What this platform does and when to use it.",
   logo: "assets/platforms/my-official-platform-logo.png",
   preview: "assets/platforms/my-official-platform-preview.png",
@@ -211,22 +234,52 @@ For a new official platform card, add an object to `PLATFORM_CARDS` with:
   accent: "#004966",
   highlight: "#8FC31F",
   supportedDevices: ["E1001", "E1002"],
-  installReady: true,
-  bullets: [
-    "Key workflow point",
-    "Required setup",
-    "Best-fit use case"
-  ],
+  installReady: true,           // <-- flash mode
+  bullets: ["Key workflow point", "Required setup", "Best-fit use case"],
+  versions: [],
+  configFields: [],
+  firmwareOptions: []           // <-- add firmware options below
+}
+```
+
+**Template mode** (example config, user customizes offline):
+
+```js
+{
+  id: "my-official-platform",
+  group: "official",
+  name: "My Official Platform",
+  tagline: "Short workflow summary.",
+  source: { label: "Official website", url: "https://example.com" },
+  description: "What this platform does and when to use it.",
+  logo: "assets/platforms/my-official-platform-logo.png",
+  preview: "assets/platforms/my-official-platform-preview.png",
+  previewAlt: "My Official Platform preview",
+  accent: "#004966",
+  highlight: "#8FC31F",
+  supportedDevices: ["E1001", "E1002"],
+  installReady: false,          // <-- no browser flashing
+  templateMode: true,           // <-- template mode
+  templateHeader: "...",
+  templateFooter: "...",
+  templateFileExtension: "yaml",
+  templateFileMimeType: "text/yaml",
+  templateFilePattern: "{platformId}-{deviceId}",
+  templateOptions: [],          // <-- add template options with snippets
+  bullets: ["Config file output", "User customization required", "Best-fit use case"],
   versions: [],
   configFields: [],
   firmwareOptions: []
 }
 ```
 
+See [Template mode platforms](#template-mode-platforms) for the full field
+reference and a working example.
+
 The `source` field is required for official platform cards. Use it to link to
 the official product or project website.
 
-For a firmware option, add it to the platform card's `firmwareOptions` array:
+For a flash-mode firmware option, add it to the platform card's `firmwareOptions` array:
 
 ```js
 {
@@ -257,6 +310,24 @@ Do not edit `.github/workflows/build-and-deploy.yml` for this.
 Use this path for contributed applications or demos that are not official
 platform integrations.
 
+### 0. Choose a display mode
+
+Before writing any code, decide how users will consume your contribution:
+
+| Question | Answer: Flash mode | Answer: Template mode |
+|---|---|---|
+| Does your project produce a ready-to-run `.bin` firmware? | Yes | No |
+| Can the user flash it directly from the browser without modification? | Yes | No — each user needs to customize the config |
+| What does the user get? | A working firmware on the device | A starter config file to edit and compile elsewhere |
+
+**Flash mode** — set `installReady: true`, provide `firmwareOptions`, and
+register build targets. The Hub builds and flashes the binary.
+
+**Template mode** — set `installReady: false` and `templateMode: true`, provide
+`templateOptions` with `snippet` fields. The Hub generates a configuration file
+for the user to preview, copy, or download. See
+[Template mode platforms](#template-mode-platforms) for the full reference.
+
 ### 1. Add source code
 
 Place source code under `examples/community/<Project>/`.
@@ -280,7 +351,10 @@ entries in `.github/scripts/firmware_release.py`.
 
 Open `web/js/firmwares.js`.
 
-For a full project, add a platform card with:
+For a full project, add a platform card. Choose the template that matches your
+display mode from Step 0.
+
+**Flash mode** (complete firmware):
 
 ```js
 {
@@ -300,19 +374,53 @@ For a full project, add a platform card with:
   accent: "#004966",
   highlight: "#8FC31F",
   supportedDevices: ["E1001", "E1002", "E1003"],
-  installReady: true,
-  bullets: [
-    "Community project",
-    "Main user value",
-    "Required setup"
-  ],
+  installReady: true,           // <-- flash mode
+  bullets: ["Community project", "Main user value", "Required setup"],
+  versions: [],
+  configFields: [],
+  firmwareOptions: []           // <-- add firmware options below
+}
+```
+
+Then add one or more `firmwareOptions` with IDs that match the build targets.
+
+**Template mode** (example config):
+
+```js
+{
+  id: "my-community-project",
+  group: "community",
+  name: "My Community Project",
+  tagline: "Short project summary.",
+  author: "github-user-or-team",
+  source: {
+    label: "github-user-or-team/my-community-project",
+    url: "https://github.com/github-user-or-team/my-community-project"
+  },
+  description: "What this project does.",
+  logo: "assets/brand/reterminal-epaper-icon.svg",
+  preview: "assets/devices/reterminal-e1003.jpg",
+  previewAlt: "My Community Project preview",
+  accent: "#004966",
+  highlight: "#8FC31F",
+  supportedDevices: ["E1001", "E1002", "E1003"],
+  installReady: false,          // <-- no browser flashing
+  templateMode: true,           // <-- template mode
+  templateHeader: "...",
+  templateFooter: "...",
+  templateFileExtension: "yaml",
+  templateFileMimeType: "text/yaml",
+  templateFilePattern: "{platformId}-{deviceId}",
+  templateOptions: [],          // <-- add template options with snippets
+  bullets: ["Community project", "Config file output", "User customization required"],
   versions: [],
   configFields: [],
   firmwareOptions: []
 }
 ```
 
-Then add one or more `firmwareOptions` with IDs that match the build targets.
+See [Template mode platforms](#template-mode-platforms) for the full field
+reference.
 
 The `author` and `source` fields are required for Community Projects. They are
 shown on the card to credit the original creator and link back to the upstream
