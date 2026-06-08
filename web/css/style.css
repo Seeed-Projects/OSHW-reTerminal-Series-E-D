@@ -953,6 +953,11 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   flex-shrink: 0;
 }
 
+.template-actions {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
 .config-empty {
   display: flex;
   flex-direction: column;

@@ -423,11 +423,12 @@ function renderFlowState() {
   const versionPanel = document.getElementById("versionPanel");
   const flashPanel = document.getElementById("flashPanel");
 
+  const isTemplate = Boolean(selectedPlatform?.templateMode);
   document.body.classList.toggle("has-selection", hasSelection);
   if (selectionPanel) selectionPanel.classList.toggle("is-collapsed", hasSelection);
   toggleStepPanel(selectedPanel, hasSelection, 0);
   toggleStepPanel(versionPanel, hasSelection, 90);
-  toggleStepPanel(flashPanel, hasSelection, 180);
+  toggleStepPanel(flashPanel, hasSelection && !isTemplate, 180);
 }
 
 function toggleStepPanel(panel, visible, delayMs) {
@@ -523,6 +524,16 @@ function renderFirmwareSelect() {
 function renderVersionPanel() {
   const versionSelect = document.getElementById("versionSelect");
   if (!versionSelect || !selectedPlatform) return;
+
+  const isTemplate = Boolean(selectedPlatform?.templateMode);
+  const versionField = versionSelect.closest(".field-block");
+  if (versionField) versionField.classList.toggle("is-hidden", isTemplate);
+
+  const versionPanel = document.getElementById("versionPanel");
+  const panelHeading = versionPanel?.querySelector(".panel-heading h2");
+  if (panelHeading) panelHeading.textContent = isTemplate ? "Template setup" : "Version and setup";
+
+  if (isTemplate) return;
 
   const versions = getVersionOptions(selectedPlatform);
   if (!versions.some((item) => item.version === selectedVersion?.version)) {
@@ -626,35 +637,15 @@ function updateFlashState() {
   const flashBtn = document.getElementById("flashButton");
   const disabledBtn = document.getElementById("disabledFlashButton");
   const installNote = document.getElementById("installNote");
-  const generateYamlBtn = document.getElementById("generateYamlButton");
-  const flashPanel = document.getElementById("flashPanel");
+  const templateActions = document.getElementById("templateActions");
   const templateReady = Boolean(selectedPlatform?.templateMode && selectedDevice);
   const manifest = getInstallManifest();
   const ready = Boolean(selectedPlatform?.installReady && manifest);
 
-  if (flashBtn) flashBtn.classList.toggle("is-hidden", templateReady || !ready);
-  if (disabledBtn) disabledBtn.classList.toggle("is-hidden", templateReady || ready);
-  if (installNote) installNote.classList.toggle("is-visible", !templateReady && !ready);
-  if (generateYamlBtn) {
-    generateYamlBtn.classList.toggle("is-hidden", !templateReady);
-    generateYamlBtn.disabled = !templateReady;
-  }
-
-  // Hide flash-only UI elements in template mode.
-  // 在模板模式下隐藏刷机专用的 UI 元素。
-  if (flashPanel) {
-    const heading = flashPanel.querySelector(".panel-heading h2");
-    const installMode = flashPanel.querySelector(".install-mode");
-    const progressRow = flashPanel.querySelector(".progress-row");
-    const flashHint = document.getElementById("flashHint");
-    const flashStatus = document.getElementById("flashStatus");
-
-    if (heading) heading.textContent = templateReady ? "Generate template" : "Flash to device";
-    if (installMode) installMode.classList.toggle("is-hidden", templateReady);
-    if (progressRow) progressRow.classList.toggle("is-hidden", templateReady);
-    if (flashHint) flashHint.classList.toggle("is-hidden", templateReady);
-    if (flashStatus) flashStatus.classList.toggle("is-hidden", templateReady);
-  }
+  if (flashBtn) flashBtn.classList.toggle("is-hidden", !ready);
+  if (disabledBtn) disabledBtn.classList.toggle("is-hidden", ready);
+  if (installNote) installNote.classList.toggle("is-visible", !ready);
+  if (templateActions) templateActions.classList.toggle("is-hidden", !templateReady);
 }
 
 // Builds an ESPHome YAML file from the selected template checkboxes.
