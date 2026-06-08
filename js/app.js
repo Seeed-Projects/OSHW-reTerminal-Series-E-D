@@ -8,11 +8,13 @@ let monitorReader = null;
 let monitorKeepReading = false;
 let monitorBaudRate = 115200;
 let logPaused = false;
-let logBuffer = [];
+let logBuffer = globalThis.createLogBuffer();
+let logRenderTimer = null;
 let firmwareVersions = {};
 let firmwareCatalogLoaded = false;
 const monitorDecoder = new TextDecoder();
 const DEFAULT_FIRMWARE_VERSION = "latest";
+const LOG_RENDER_INTERVAL_MS = 100;
 
 document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
@@ -784,29 +786,32 @@ function appendSerialChunk(message) {
   appendLogText(message, false);
 }
 
-// Stores every log fragment and mirrors it to the visible log when not paused.
-// 保存每一段日志；未暂停时同步显示到可见日志窗口。
+function scheduleLogRender() {
+  if (logRenderTimer !== null) return;
+  logRenderTimer = window.setTimeout(() => {
+    logRenderTimer = null;
+    if (!logPaused) refreshLogView();
+  }, LOG_RENDER_INTERVAL_MS);
+}
+
+// Stores bounded log text and batches visible updates to avoid UI freezes.
+// 保存限长日志，并批量刷新可见窗口，避免界面卡死。
 function appendLogText(message, prefixLineBreak) {
-  const log = document.getElementById("log");
-  const currentText = logBuffer.join("");
-  const needsLineBreak = prefixLineBreak && currentText && !currentText.endsWith("\n");
-  const text = `${needsLineBreak ? "\n" : ""}${message}`;
-  logBuffer.push(text);
-  if (!log || logPaused) return;
-  log.textContent += text;
-  log.scrollTop = log.scrollHeight;
+  logBuffer.append(message, prefixLineBreak);
+  if (logPaused) return;
+  scheduleLogRender();
 }
 
 function seedLogBuffer() {
   const log = document.getElementById("log");
   if (!log) return;
-  logBuffer = [log.textContent || ""];
+  logBuffer.seed(log.textContent || "");
 }
 
 function refreshLogView() {
   const log = document.getElementById("log");
   if (!log) return;
-  log.textContent = logBuffer.join("");
+  log.textContent = logBuffer.text();
   log.scrollTop = log.scrollHeight;
 }
 
@@ -925,7 +930,7 @@ async function disconnectMonitor() {
 }
 
 function clearLog() {
-  logBuffer = [];
+  logBuffer.clear();
   refreshLogView();
 }
 
@@ -936,10 +941,10 @@ function toggleLogPaused() {
   if (!logPaused) refreshLogView();
 }
 
-// Downloads the complete in-memory log as a local text file.
-// 将内存中的完整日志下载为本地文本文件。
+// Downloads the retained in-memory log as a local text file.
+// 将内存中保留的日志下载为本地文本文件。
 function saveLog() {
-  const text = logBuffer.join("");
+  const text = logBuffer.text();
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
