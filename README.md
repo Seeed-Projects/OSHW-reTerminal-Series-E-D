@@ -70,7 +70,7 @@ The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you f
 1. **Select a platform** — choose from official platforms, Base demos, or community projects
 2. **Review the selected platform** — confirm the device and demo summary
 3. **Pick firmware, version, or template options** — choose a Base demo release or ESPHome YAML modules
-4. **Flash or generate** — write firmware over USB or download an ESPHome YAML file from the browser
+4. **Flash or export** — write firmware over USB or preview, copy, and download an ESPHome YAML file from the browser
 
 A built-in **serial monitor** lets you view real-time device logs, choose the baud rate, pause the visible stream, and save the retained recent log without leaving the page.
 
@@ -127,7 +127,7 @@ The quickest way to get started — no local setup needed:
 1. Open the **[Firmware Hub](https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/)** in **Chrome** or **Edge** (desktop only)
 2. Connect your reTerminal E-Series device via USB
 3. Select a platform and device
-4. Pick a firmware demo and version, then click **Install**; for ESPHome, choose template options and click **Generate YAML**
+4. Pick a firmware demo and version, then click **Install**; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**
 5. For flashing, choose the serial port when prompted and wait for the flash to complete
 
 > **Note:** Web Serial requires **HTTPS** or **localhost** and is only available in Chromium-based browsers (Chrome, Edge, Opera). Safari and Firefox are not supported.

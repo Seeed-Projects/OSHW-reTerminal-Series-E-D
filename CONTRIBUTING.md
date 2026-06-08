@@ -336,6 +336,94 @@ python3 .github/scripts/firmware_release.py plan \
 For PlatformIO, this dry-run only reports firmware changes after the project has
 a matching `FirmwareTarget` entry.
 
+## Template mode platforms
+
+Use template mode when a platform generates a configuration file, such as YAML
+or JSON, instead of flashing firmware directly. Use flash mode when the tool
+installs a compiled firmware binary through Web Serial.
+
+Template mode keeps all template data in `web/js/firmwares.js`. The browser
+assembles the final file from platform-level text plus the snippets selected by
+the user.
+
+### Template mode platform fields
+
+| Field | Required | Default | Description |
+|---|---:|---|---|
+| `templateMode` | Yes | — | Must be `true` |
+| `templateHeader` | No | `""` | Text always prepended to output |
+| `templateFooter` | No | `""` | Text always appended to output |
+| `templateFileExtension` | No | `"txt"` | File extension for download |
+| `templateFileMimeType` | No | `"text/plain"` | MIME type for download |
+| `templateFilePattern` | No | `"{platformId}-{deviceId}"` | Filename pattern |
+| `templateJoiner` | No | `"\n\n"` | Separator between parts |
+| `templateOptions` | Yes | — | Array of feature options |
+
+### Template option fields
+
+| Field | Required | Description |
+|---|---:|---|
+| `id` | Yes | Unique identifier |
+| `label` | Yes | Checkbox label |
+| `description` | Yes | Helper text below label |
+| `defaultChecked` | No | `true` to check by default |
+| `snippet` | Yes | Text content included when checked |
+
+Filename patterns support these tokens:
+
+- `{platformId}` becomes the platform `id` field.
+- `{deviceId}` becomes the selected device ID, lowercased.
+
+Minimal template-mode platform example:
+
+```js
+{
+  id: "example-config",
+  group: "official",
+  name: "Example Config",
+  tagline: "Generate a starter config file.",
+  source: {
+    label: "Example docs",
+    url: "https://example.com/docs"
+  },
+  description: "Creates a local configuration file for the selected device.",
+  logo: "assets/brand/reterminal-epaper-icon.svg",
+  preview: "assets/devices/reterminal-e1003.jpg",
+  previewAlt: "Example Config preview",
+  accent: "#004966",
+  highlight: "#8FC31F",
+  supportedDevices: ["E1003"],
+  installReady: false,
+  bullets: [
+    "Config file output",
+    "Local editing workflow",
+    "No browser flashing"
+  ],
+  versions: [],
+  configFields: [],
+  templateMode: true,
+  templateHeader: "device: {device_name}",
+  templateFooter: "# Save this file before importing.",
+  templateFileExtension: "yaml",
+  templateFileMimeType: "text/yaml",
+  templateFilePattern: "example-config-{deviceId}",
+  templateOptions: [
+    {
+      id: "network",
+      label: "Network",
+      description: "Add network settings",
+      defaultChecked: true,
+      snippet: "network:\\n  enabled: true"
+    }
+  ],
+  firmwareOptions: []
+}
+```
+
+Template mode platforms do not need firmware build targets in
+`.github/scripts/firmware_release.py`, `versions.json` entries, or
+`manifest.json` files. They are purely client-side.
+
 ## Scenario 4: update an existing example
 
 Use this path when changing code that already exists.
@@ -388,6 +476,14 @@ The web page is driven by `web/js/firmwares.js`.
 | `highlight` | Yes | Existing highlight color, usually `#8FC31F` |
 | `supportedDevices` | Yes | Device IDs available in this platform |
 | `installReady` | Yes | `true` only when web flashing is available |
+| `templateMode` | Template only | `true` for configuration file output platforms |
+| `templateHeader` | No | Text always prepended to template output |
+| `templateFooter` | No | Text always appended to template output |
+| `templateFileExtension` | No | Download extension, defaults to `txt` |
+| `templateFileMimeType` | No | Download MIME type, defaults to `text/plain` |
+| `templateFilePattern` | No | Filename pattern, defaults to `{platformId}-{deviceId}` |
+| `templateJoiner` | No | Separator between template parts, defaults to `\n\n` |
+| `templateOptions` | Template only | Feature options used to assemble template output |
 | `bullets` | Yes | Three short workflow highlights |
 | `configFields` | Yes | Platform-level fields shared by all firmware options |
 | `firmwareOptions` | Yes | Flashable firmware choices |
@@ -644,6 +740,10 @@ Use this checklist before opening a pull request.
   copy, device-specific compatibility, notes, or config fields.
 - Every `firmwareOptions[].id` matches a firmware build ID.
 - Every compatible device is listed correctly.
+- Template-mode platforms set `installReady: false` and `templateMode: true`.
+- Every template-mode `templateOptions` entry includes a `snippet` field.
+- Template data, including headers, footers, and snippets, lives in
+  `web/js/firmwares.js`, not in `web/js/app.js`.
 
 ### Configuration
 
