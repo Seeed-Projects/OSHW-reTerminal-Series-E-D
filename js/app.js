@@ -556,6 +556,9 @@ function collectConfigValues() {
     if (field.type === "checkbox") value = el.checked ? 1 : 0;
     else if (field.type === "select" || field.type === "number") value = field.nvsType === "float" ? parseFloat(el.value) : parseInt(el.value, 10);
     else value = el.value || field.defaultValue || "";
+    if (field.nvsKey === "imagePath" && typeof value === "string" && value.length > 0 && value[0] !== "/") {
+      value = "/" + value;
+    }
     let nvsType = field.nvsType;
     let nvsValue = value;
     if (nvsType === "float") {
