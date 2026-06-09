@@ -196,6 +196,9 @@ const PLATFORM_CARDS = [
         description: "Six-screen B&W demo: splash, system info, typography, geometry, patterns, dashboard.",
         category: "Display",
         compatible: ["E1001"],
+        notes: [
+          { type: "warning", text: "If a MicroSD card is inserted, the display may not work due to SPI bus conflict. Please remove the SD card before flashing this firmware." },
+        ],
       },
       {
         id: "GxEPD2_reTerminal_E1002",
@@ -203,6 +206,9 @@ const PLATFORM_CARDS = [
         description: "Six-screen 6-color demo showcasing the full color palette and patterns.",
         category: "Display",
         compatible: ["E1002"],
+        notes: [
+          { type: "warning", text: "If a MicroSD card is inserted, the display may not work due to SPI bus conflict. Please remove the SD card before flashing this firmware." },
+        ],
       },
       {
         id: "GxEPD2_reTerminal_E1003",
@@ -224,6 +230,9 @@ const PLATFORM_CARDS = [
         description: "Four grayscale bands and concentric circles on the E1001 panel. Uses Adafruit_GFX canvas with raw SPI register access.",
         category: "Display",
         compatible: ["E1001"],
+        notes: [
+          { type: "warning", text: "If a MicroSD card is inserted, the display may not work due to SPI bus conflict. Please remove the SD card before flashing this firmware." },
+        ],
       },
       {
         id: "Seeed_GFX_E1001_Gray4",
@@ -231,6 +240,9 @@ const PLATFORM_CARDS = [
         description: "Four horizontal grayscale bands on the E1001 panel using the Seeed_GFX / TFT_eSPI high-level EPaper API.",
         category: "Display",
         compatible: ["E1001"],
+        notes: [
+          { type: "warning", text: "If a MicroSD card is inserted, the display may not work due to SPI bus conflict. Please remove the SD card before flashing this firmware." },
+        ],
       },
       {
         id: "GxEPD2_reTerminal_E1003_Gray16",
