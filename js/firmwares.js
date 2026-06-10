@@ -56,11 +56,6 @@ const PLATFORM_GROUPS = [
     description: "Start from supported ecosystem firmware and product workflows.",
   },
   {
-    id: "base",
-    title: "Base",
-    description: "Use hardware bring-up demos to verify core device behavior first.",
-  },
-  {
     id: "community",
     title: "Community Projects",
     description: "Explore contributed examples that build on the official device stack.",
