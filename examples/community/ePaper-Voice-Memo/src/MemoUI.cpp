@@ -458,9 +458,9 @@ void MemoUI::drawCompactCard(int x, int y, int w, int h,
   }
 
   const int rightEdge = x + w - rightPad;
-  const int chipPad = 5;
-  const int chipH = 18;
-  const int chipSize = 1;
+  const int chipPad = 6;
+  const int chipH = 25;
+  const int chipSize = 2;
   const int chipW = min(rightW, renderer_.measureText(dateChip, chipSize) + chipPad * 2);
   const int chipX = rightEdge - chipW;
   const int chipY = y + 7;

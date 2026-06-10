@@ -227,6 +227,7 @@ void VoiceMemoApp::stopRecording(bool forced)
 #if VM_HAS_TOUCH
   store_.add(entry);
 #else
+  store_.sortByDue(nowEpoch);
   store_.addWithinVisibleLimit(entry, VM_VISIBLE_MEMO_MAX);
 #endif
   ledOff();
