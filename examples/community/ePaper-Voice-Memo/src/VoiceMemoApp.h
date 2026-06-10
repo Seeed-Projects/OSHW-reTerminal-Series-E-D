@@ -70,8 +70,9 @@ class VoiceMemoApp {
   static constexpr int kTouchResetPin  = 48;
   static constexpr int kBuzzerPin      = 45;
 
-  // Battery sense (E1003-specific enable pin; verify against schematic).
-  static constexpr int kBatteryEnablePin = 40;
+  // Battery sense pins are device-specific; see driver.h.
+  // 电池检测引脚按设备型号区分，见 driver.h。
+  static constexpr int kBatteryEnablePin = VM_BATTERY_ENABLE_PIN;
   static constexpr int kBatteryAdcPin    = 1;
 
   static constexpr unsigned long kDebounceDelayMs = 35;
