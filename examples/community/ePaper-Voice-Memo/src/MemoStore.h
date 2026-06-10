@@ -6,9 +6,9 @@
 // because it is mirrored into the ESP32 non-volatile storage (NVS) under
 // namespace "vmm", key "items".
 //
-// The list works like a fixed-size rolling window. When add() is called
-// past kMax, the store first tries to evict an entry the user already
-// checked off; if none exists, the oldest entry is dropped.
+// The list works like a fixed-size rolling window. E1003 can keep all kMax
+// entries; smaller non-touch panels can use addWithinVisibleLimit() so the
+// page replaces the earliest visible due item once the visible page is full.
 //
 // Persistence format (versioned so future changes stay forward compatible):
 //
@@ -54,6 +54,11 @@ class MemoStore {
   // whose done flag is true (so completed work makes room for new work);
   // otherwise drop the oldest. Persists the list to NVS at the end.
   bool add(const MemoEntry& entry);
+
+  // Appends inside the current one-page visible capacity. If that visible
+  // page is already full, replace the entry with the earliest due time.
+  // 在当前单页显示容量内追加；如果这一页已满，则覆盖提醒时间最早的条目。
+  bool addWithinVisibleLimit(const MemoEntry& entry, size_t visibleMax);
 
   // Reorders the list in place so undone-upcoming come first (asc by due),
   // then undone-overdue (desc by due), then done items at the bottom (desc

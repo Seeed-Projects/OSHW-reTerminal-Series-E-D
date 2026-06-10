@@ -26,9 +26,9 @@ VoiceMemoReminder is not just a recorder. It turns natural speech into reminders
 
 Reminders are not left in recording order. The list is sorted by event time: the soonest upcoming reminder stays at the top, later reminders move down, overdue items are labeled clearly, and completed items sink to the bottom.
 
-### 8 Reminders Per Page
+### Card UI On All Supported Panels
 
-The E1003 card UI shows up to 8 reminders on one page. Each card includes:
+The reminder list uses the same card-style UI across E1001, E1002, and E1003. E1003 shows up to 8 reminders on one page; E1001 and E1002 use a compact 4-card page with smaller text and spacing. Each card includes:
 
 - a checkbox on the left
 - the reminder text in the middle
@@ -39,7 +39,7 @@ The E1003 card UI shows up to 8 reminders on one page. Each card includes:
 
 ![Completed reminder concept](docs/assets/readme/feature-done.png)
 
-Tap the checkbox to mark a reminder done. Completed cards turn gray and move to the bottom, keeping active reminders visually front and center. When the list is full, new reminders evict completed items first.
+Tap the checkbox on E1003 to mark a reminder done. Completed cards turn gray and move to the bottom, keeping active reminders visually front and center. E1001 and E1002 do not have touch input; when their 4-card page is full, the next recording replaces the visible reminder with the earliest due time.
 
 ### 5-Minute Clock Refresh + Daily Quote
 
@@ -62,9 +62,9 @@ Reminders are stored in ESP32-S3 NVS. A reboot or power cycle restores the list 
 The UI supports English and Simplified Chinese as separate build-time firmware targets:
 
 - English builds: `reterminal_e1001`, `reterminal_e1002`, `reterminal_e1003`
-- Chinese build: `reterminal_e1003_zh`
+- Chinese builds: `reterminal_e1001_zh`, `reterminal_e1002_zh`, `reterminal_e1003_zh`
 
-The Chinese build renders UI text through OpenFontRender and asks the LLM to return Chinese reminder text.
+The Chinese builds render UI text through OpenFontRender and send a Chinese speech-language hint to Whisper.
 
 ### Free API Friendly
 
@@ -91,10 +91,10 @@ For more daily headroom, you can switch the chat model to a lighter one such as 
 
 | Device | Status | Notes |
 | --- | --- | --- |
-| reTerminal E1001 | Supported | 4-level gray UI |
-| reTerminal E1002 | Supported | 6-color UI |
-| reTerminal E1003 | Supported | 16-level gray card UI |
-| reTerminal E1003 Chinese firmware | Supported | OpenFontRender + embedded Chinese font |
+| reTerminal E1001 | Supported | Compact 4-card gray UI, no touch |
+| reTerminal E1002 | Supported | Compact 4-card color UI, no touch |
+| reTerminal E1003 | Supported | 8-card gray UI with touch checkboxes |
+| Chinese firmware | Supported | E1001 / E1002 / E1003, OpenFontRender + embedded Chinese font |
 | reTerminal E1004 | Not included | No onboard microphone |
 
 ## Quick Start
@@ -132,6 +132,12 @@ pio run -e reterminal_e1002 --target upload
 
 # reTerminal E1003 English
 pio run -e reterminal_e1003 --target upload
+
+# reTerminal E1001 Simplified Chinese
+pio run -e reterminal_e1001_zh --target upload
+
+# reTerminal E1002 Simplified Chinese
+pio run -e reterminal_e1002_zh --target upload
 
 # reTerminal E1003 Simplified Chinese
 pio run -e reterminal_e1003_zh --target upload

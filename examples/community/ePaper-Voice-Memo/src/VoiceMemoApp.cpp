@@ -141,8 +141,10 @@ void VoiceMemoApp::begin()
     while (true) delay(1000);
   }
 
+#if VM_HAS_TOUCH
   touch_.begin(kTouchIntPin, kTouchResetPin,
                ui_.displayWidth(), ui_.displayHeight());
+#endif
 
   store_.begin();
   stt_.configure(config_.speech, config_.httpTimeoutMs);
@@ -222,7 +224,11 @@ void VoiceMemoApp::stopRecording(bool forced)
                  entry.text.c_str(), static_cast<long long>(entry.dueEpoch),
                  entry.fuzzyLabel.c_str());
 
+#if VM_HAS_TOUCH
   store_.add(entry);
+#else
+  store_.addWithinVisibleLimit(entry, VM_VISIBLE_MEMO_MAX);
+#endif
   ledOff();
 
   const String hint = forced
@@ -270,6 +276,9 @@ void VoiceMemoApp::pollButton()
 
 void VoiceMemoApp::pollTouch()
 {
+#if !VM_HAS_TOUCH
+  return;
+#else
   // Ignore touches during recording / network calls so a stray finger does
   // not interrupt the current operation.
   if (recording_ || busy_) return;
@@ -284,6 +293,7 @@ void VoiceMemoApp::pollTouch()
   Serial1.printf("[touch] toggle row %d\n", idx);
   store_.toggleDone(static_cast<size_t>(idx));
   drawTodoList(uiStr(UiStringId::kHintAdd), false, false);
+#endif
 }
 
 void VoiceMemoApp::pollScheduledRefresh()

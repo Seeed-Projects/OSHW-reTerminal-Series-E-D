@@ -26,6 +26,7 @@
 #if __has_include("secrets.h")
 #include "secrets.h"
 #endif
+#include "UiLang.h"
 #include "VoiceMemoApp.h"
 
 #ifndef VM_WIFI_SSID
@@ -68,7 +69,7 @@ static VoiceMemoConfig buildConfig()
       .url      = "https://api.groq.com/openai/v1/audio/transcriptions",
       .apiKey   = nvsApiKey.c_str(),
       .model    = "whisper-large-v3-turbo",
-      .language = "",
+      .language = VM_LANG_ZH ? "zh" : "",
     },
 
     .memo = {

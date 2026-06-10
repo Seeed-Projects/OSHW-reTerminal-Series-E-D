@@ -414,6 +414,79 @@ void MemoUI::drawCard(int x, int y, int w, int h,
   }
 }
 
+void MemoUI::drawCompactCard(int x, int y, int w, int h,
+                             const MemoEntry& entry, time_t nowEpoch,
+                             HitRect& outHit)
+{
+  uint16_t fill;
+  uint16_t fg;
+  if (entry.done) {
+    fill = kUiCardDone;
+    fg   = kUiMuted;
+  } else if (entry.hasDue && nowEpoch > 0 && entry.dueEpoch < nowEpoch) {
+    fill = kUiCardDark;
+    fg   = kUiTextInv;
+  } else {
+    fill = kUiCard;
+    fg   = kUiText;
+  }
+  const bool overdue = (fill == kUiCardDark);
+
+  display_.fillRoundRect(x, y, w, h, 6, fill);
+
+  const int boxSize = 22;
+  const int boxCx = x + 12 + boxSize / 2;
+  const int boxCy = y + h / 2;
+  drawCheckbox(boxCx, boxCy, boxSize, entry.done, fg);
+
+  // Small panels have no touch layer; keep the visual checkbox only.
+  // 小屏设备没有触摸层；这里只保留视觉上的复选框。
+  outHit.valid = false;
+
+  const int memoX = x + 12 + boxSize + 10;
+  const int rightPad = 10;
+  const int rightW = 122;
+  const int memoMaxW = max(80, (x + w - rightPad - rightW) - memoX);
+
+  String dateChip, timeBig;
+  bool over = false;
+  formatDueLabel(nowEpoch, entry, dateChip, timeBig, over);
+  if (entry.fuzzyLabel == "NONE") {
+    timeBig = "";
+  } else if (entry.fuzzyLabel.length() > 0) {
+    timeBig = entry.fuzzyLabel;
+  }
+
+  const int rightEdge = x + w - rightPad;
+  const int chipPad = 5;
+  const int chipH = 18;
+  const int chipSize = 1;
+  const int chipW = min(rightW, renderer_.measureText(dateChip, chipSize) + chipPad * 2);
+  const int chipX = rightEdge - chipW;
+  const int chipY = y + 7;
+  const uint16_t chipFill = overdue ? kUiCardDark
+                             : (entry.done ? kUiMuted : kUiBadge);
+  display_.fillRoundRect(chipX, chipY, chipW, chipH, 4, chipFill);
+  renderer_.drawText(dateChip, chipX + chipW / 2, chipY + chipH / 2,
+                     chipSize, TextAlign::MiddleCenter, kUiTextInv, chipFill);
+
+  if (timeBig.length() > 0) {
+    renderer_.drawText(timeBig, rightEdge, y + h - 8, 2,
+                       TextAlign::BottomRight, fg, fill);
+  }
+
+  const int memoSize = 2;
+  const int memoLineH = 18;
+  const int oneLineW = renderer_.measureText(entry.text, memoSize);
+  if (oneLineW <= memoMaxW) {
+    renderer_.drawText(entry.text, memoX, y + h / 2 - 8, memoSize,
+                       TextAlign::TopLeft, fg, fill);
+  } else {
+    drawWrapped(entry.text, memoX, y + 12, memoMaxW, memoLineH,
+                memoSize, fg, 2);
+  }
+}
+
 void MemoUI::drawHeader(RtcClock& rtc, const UiStatus& st)
 {
   const int w = display_.width();
@@ -456,12 +529,56 @@ void MemoUI::drawHeader(RtcClock& rtc, const UiStatus& st)
   }
 }
 
+void MemoUI::drawCompactHeader(RtcClock& rtc, const UiStatus& st)
+{
+  const int w = display_.width();
+  const int margin = 16;
+  const int topY = 10;
+
+  const int logoSize = 28;
+  drawClipboardLogo(margin, topY, logoSize, kUiText);
+  renderer_.drawText(uiStr(UiStringId::kAppName), margin + logoSize + 8, topY, 2,
+                     TextAlign::TopLeft, kUiText, kUiBg);
+  renderer_.drawText(VM_DEVICE_NAME, margin + logoSize + 8, topY + 23, 1,
+                     TextAlign::TopLeft, kUiMuted, kUiBg);
+
+  renderer_.drawText(rtc.nowTimeLabel(), w / 2, topY - 1, 4,
+                     TextAlign::TopCenter, kUiText, kUiBg);
+  renderer_.drawText(rtc.nowHeaderDateLabel(), w / 2, topY + 39, 2,
+                     TextAlign::TopCenter, kUiText, kUiBg);
+
+  if (st.processing) {
+    renderer_.drawText(uiStr(UiStringId::kProcessing), w - margin, topY + 18, 2,
+                       TextAlign::MiddleRight, kUiText, kUiBg);
+    return;
+  }
+
+  const int battW = 32;
+  const int battH = 14;
+  const int battX = w - margin - battW - 3;
+  const int battY = topY + 4;
+  drawBatteryIcon(battX, battY, battW, battH, st.batteryPercent, kUiText);
+  char pbuf[8];
+  snprintf(pbuf, sizeof(pbuf), "%d%%", st.batteryPercent < 0 ? 0 : st.batteryPercent);
+  renderer_.drawText(pbuf, battX - 5, battY + battH / 2, 1,
+                     TextAlign::MiddleRight, kUiText, kUiBg);
+
+  drawWifiIcon(w - margin - 24, topY + 29, 24, 18,
+               st.wifiConnected, kUiText);
+}
+
 void MemoUI::drawBoot(RtcClock& rtc, const String& statusText, const UiStatus& st)
 {
   display_.fillSprite(kUiBg);
+#if VM_SCREEN_MODE == VM_SCREEN_GRAY16
   drawHeader(rtc, st);
-  renderer_.drawText(statusText, display_.width() / 2, display_.height() / 2, 4,
-                     TextAlign::MiddleCenter, kUiText, kUiBg);
+  const int statusSize = 4;
+#else
+  drawCompactHeader(rtc, st);
+  const int statusSize = 2;
+#endif
+  renderer_.drawText(statusText, display_.width() / 2, display_.height() / 2,
+                     statusSize, TextAlign::MiddleCenter, kUiText, kUiBg);
   display_.update();
 }
 
@@ -519,36 +636,42 @@ void MemoUI::drawTodoList(MemoStore& store, RtcClock& rtc,
   }
   display_.update();
 #else
-  // Smaller panels stay on the wrapped text fallback. Touch toggling is
-  // disabled there because there is no touch hardware on E1001 / E1002.
-  String body;
+  const int w = display_.width();
+  const int h = display_.height();
+  const int margin = 16;
+  const int headerH = 74;
+  const int footerH = 34;
+  const int listTop = headerH + 8;
+  const int listBottom = h - footerH;
+  const int visibleMax = min(static_cast<int>(VM_VISIBLE_MEMO_MAX),
+                             static_cast<int>(MemoStore::kMax));
+  const int rowH = max(1, (listBottom - listTop) / visibleMax);
+  const int gap = 5;
+  const int cardH = max(44, rowH - gap);
+  const int cardW = w - margin * 2;
+
+  display_.fillSprite(kUiBg);
+  drawCompactHeader(rtc, status);
+
   if (store.count() == 0) {
-    body = uiStr(UiStringId::kEmptyList);
+    renderer_.drawText(uiStr(UiStringId::kEmptyList), w / 2,
+                       listTop + (listBottom - listTop) / 2, 2,
+                       TextAlign::MiddleCenter, kUiMuted, kUiBg);
   } else {
-    for (size_t i = 0; i < store.count(); i++) {
-      String chip, big;
-      bool over = false;
-      const MemoEntry& e = store.at(i);
-      body += e.done ? "[x] " : "[ ] ";
-      if (e.fuzzyLabel.length() > 0) {
-        body += "[";
-        body += e.fuzzyLabel;
-        body += "]  ";
-      } else {
-        formatDueLabel(nowEpoch, e, chip, big, over);
-        body += "[";
-        body += chip;
-        body += " ";
-        body += big;
-        body += "]  ";
-      }
-      body += e.text;
-      if (i + 1 < store.count()) body += "\n";
+    const size_t renderCount = min(store.count(), static_cast<size_t>(visibleMax));
+    for (size_t i = 0; i < renderCount; i++) {
+      const int cardY = listTop + static_cast<int>(i) * rowH + gap / 2;
+      drawCompactCard(margin, cardY, cardW, cardH, store.at(i), nowEpoch,
+                      checkboxHits_[i]);
     }
   }
-  const char* badge = status.processing ? uiStr(UiStringId::kProcessing)
-                                         : uiStr(UiStringId::kReminders);
-  drawStatus(badge, uiStr(UiStringId::kReminders), body, hint, false, 0.0f);
+
+  renderer_.drawText(hint, margin, h - 8, 1,
+                     TextAlign::BottomLeft, kUiMuted, kUiBg);
+  if (quote.length() > 0) {
+    drawWrappedRight(quote, w - margin, h - 8, w / 2, 16, 1, kUiMuted, 1);
+  }
+  display_.update();
 #endif
 }
 

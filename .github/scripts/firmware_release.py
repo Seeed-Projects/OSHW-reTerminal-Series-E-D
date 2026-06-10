@@ -278,6 +278,22 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
         title="Voice Memo Reminder for E1003",
     ),
     FirmwareTarget(
+        "ePaper_VoiceMemo_E1001_ZH",
+        "examples/community/ePaper-Voice-Memo",
+        tool="platformio",
+        devices=("E1001",),
+        pio_env="reterminal_e1001_zh",
+        title="Voice Memo Reminder Chinese for E1001",
+    ),
+    FirmwareTarget(
+        "ePaper_VoiceMemo_E1002_ZH",
+        "examples/community/ePaper-Voice-Memo",
+        tool="platformio",
+        devices=("E1002",),
+        pio_env="reterminal_e1002_zh",
+        title="Voice Memo Reminder Chinese for E1002",
+    ),
+    FirmwareTarget(
         "ePaper_VoiceMemo_E1003_ZH",
         "examples/community/ePaper-Voice-Memo",
         tool="platformio",

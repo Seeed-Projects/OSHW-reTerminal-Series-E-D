@@ -3,6 +3,7 @@
 #include <Preferences.h>
 
 #include "DisplayText.h"
+#include "MemoReplacePolicy.h"
 #include "UiLang.h"
 
 namespace {
@@ -204,6 +205,35 @@ bool MemoStore::add(const MemoEntry& entry)
     items_[i] = items_[i + 1];
   }
   items_[kMax - 1] = clean;
+  return save();
+}
+
+bool MemoStore::addWithinVisibleLimit(const MemoEntry& entry, size_t visibleMax)
+{
+  MemoEntry clean = entry;
+  clean.text = vmSanitizeDisplayText(clean.text);
+  clean.fuzzyLabel = vmSanitizeDisplayText(clean.fuzzyLabel);
+
+  if (visibleMax == 0) visibleMax = 1;
+  if (visibleMax > kMax) visibleMax = kMax;
+
+  if (count_ < visibleMax) {
+    items_[count_++] = clean;
+    return save();
+  }
+
+  const size_t windowCount = visibleMax;
+  time_t dueEpochs[MemoStore::kMax] = {};
+  bool hasDue[MemoStore::kMax] = {};
+  for (size_t i = 0; i < windowCount; i++) {
+    dueEpochs[i] = items_[i].dueEpoch;
+    hasDue[i] = items_[i].hasDue;
+  }
+
+  const size_t replaceIdx =
+      vmFindEarliestDueIndex(dueEpochs, hasDue, windowCount);
+  items_[replaceIdx] = clean;
+  count_ = visibleMax;
   return save();
 }
 

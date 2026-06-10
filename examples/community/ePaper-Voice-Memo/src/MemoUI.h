@@ -3,8 +3,8 @@
 // Responsibilities:
 //   - Initialize the EPaper sprite at boot and choose a 4 / 6 / 16 level
 //     palette that matches the device defined in driver.h.
-//   - Render the main reminder list as cards (E1003) or as a wrapped text
-//     block (E1001 / E1002 where horizontal space is tight).
+//   - Render the main reminder list as cards. E1003 uses the full-size layout;
+//     E1001 / E1002 use the same visual idea with smaller metrics.
 //   - Render the boot / recording / processing / error status screens.
 //   - Format a MemoEntry's due time into a short, human label such as
 //     "Today 18:00" or "Overdue".
@@ -85,10 +85,13 @@ class MemoUI {
   TextRenderer renderer_;
   HitRect checkboxHits_[MemoStore::kMax];
 
-  // Card layout (E1003).
+  // Card layouts.
   void drawCard(int x, int y, int w, int h,
                 const MemoEntry& entry, time_t nowEpoch,
                 HitRect& outHit);
+  void drawCompactCard(int x, int y, int w, int h,
+                       const MemoEntry& entry, time_t nowEpoch,
+                       HitRect& outHit);
   void drawCheckbox(int cx, int cy, int size, bool done, uint16_t fg);
 
   // Shared text helpers.
@@ -102,6 +105,7 @@ class MemoUI {
   void drawWifiIcon(int x, int y, int w, int h, bool connected, uint16_t color);
 
   void drawHeader(RtcClock& rtc, const UiStatus& status);
+  void drawCompactHeader(RtcClock& rtc, const UiStatus& status);
 };
 
 #endif  // VOICE_MEMO_MEMO_UI_H
