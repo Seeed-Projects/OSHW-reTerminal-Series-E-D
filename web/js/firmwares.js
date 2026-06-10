@@ -247,6 +247,16 @@ const PLATFORM_CARDS = [
         compatible: ["E1003"],
       },
       {
+        id: "E1003_ChineseTextDemo",
+        name: "Chinese Text Demo",
+        description: "Load a TrueType font from SPIFFS and render UTF-8 Chinese text on the E1003 ePaper display via OpenFontRender.",
+        category: "Display",
+        compatible: ["E1003"],
+        notes: [
+          { type: "info", text: "The embedded Chinese font (~2.2 MB) is flashed to a SPIFFS partition together with the firmware. Test strings appear on screen; check Serial1 (GPIO43 TX, 115200 baud) for status." },
+        ],
+      },
+      {
         id: "SHT4x_Sensor",
         name: "Temperature & Humidity Sensor",
         description: "Read temperature and humidity from the SHT40 sensor via I2C every 5 seconds.",
