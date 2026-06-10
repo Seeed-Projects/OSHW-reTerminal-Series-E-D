@@ -425,7 +425,7 @@ void MemoUI::drawCompactCard(int x, int y, int w, int h,
     fg   = kUiMuted;
   } else if (entry.hasDue && nowEpoch > 0 && entry.dueEpoch < nowEpoch) {
     fill = kUiCardDark;
-    fg   = kUiTextInv;
+    fg   = kUiText;
   } else {
     fill = kUiCard;
     fg   = kUiText;
@@ -468,7 +468,7 @@ void MemoUI::drawCompactCard(int x, int y, int w, int h,
                              : (entry.done ? kUiMuted : kUiBadge);
   display_.fillRoundRect(chipX, chipY, chipW, chipH, 4, chipFill);
   renderer_.drawText(dateChip, chipX + chipW / 2, chipY + chipH / 2,
-                     chipSize, TextAlign::MiddleCenter, kUiTextInv, chipFill);
+                     chipSize, TextAlign::MiddleCenter, kUiText, chipFill);
 
   if (timeBig.length() > 0) {
     renderer_.drawText(timeBig, rightEdge, y + h - 8, 2,
