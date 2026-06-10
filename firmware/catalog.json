@@ -237,12 +237,42 @@
       "autoDiscovered": false
     },
     {
+      "id": "E1001_ChineseTextDemo",
+      "name": "E1001 Chinese Text Demo",
+      "path": "examples/base/E1001_ChineseTextDemo",
+      "tool": "arduino",
+      "compatible": [
+        "E1001"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "E1002_ChineseTextDemo",
+      "name": "E1002 Chinese Text Demo",
+      "path": "examples/base/E1002_ChineseTextDemo",
+      "tool": "arduino",
+      "compatible": [
+        "E1002"
+      ],
+      "autoDiscovered": false
+    },
+    {
       "id": "E1003_ChineseTextDemo",
       "name": "E1003 Chinese Text Demo",
       "path": "examples/base/E1003_ChineseTextDemo",
       "tool": "arduino",
       "compatible": [
         "E1003"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "E1004_ChineseTextDemo",
+      "name": "E1004 Chinese Text Demo",
+      "path": "examples/base/E1004_ChineseTextDemo",
+      "tool": "arduino",
+      "compatible": [
+        "E1004"
       ],
       "autoDiscovered": false
     },
