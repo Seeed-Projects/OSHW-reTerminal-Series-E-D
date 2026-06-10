@@ -160,6 +160,13 @@ Edit `web/js/firmwares.js` instead when you need any of these:
 - configuration fields,
 - multiple firmware options for the same source folder.
 
+### 4. Update the root README example list
+
+When adding, renaming, or removing any Base, Official, or Community example,
+update the root `README.md` `Arduino Examples` table with the matching row
+change, including the example path, compatible devices, and a one-line
+description.
+
 ## Scenario 2: add a demo to an official platform
 
 Use this path for official partner integrations or supported platform workflows.
@@ -835,6 +842,7 @@ Use this checklist before opening a pull request.
 - Do not add new flat `examples/<Project>/` folders.
 - The folder name and `.ino` filename match for standard Arduino examples.
 - PlatformIO projects include `platformio.ini`.
+- Root `README.md` `Arduino Examples` table matches added, renamed, or removed examples.
 - No secrets or real credentials are committed.
 - The example README explains setup when setup is not obvious.
 

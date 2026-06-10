@@ -193,7 +193,10 @@ the Firmware Hub or compiled manually.
 | [`LowPower_DeepSleep`](examples/base/LowPower_DeepSleep/) | E1001 – E1004 | Enter ESP32-S3 deep sleep (~14 µA), wake on button press |
 | [`MicRecordToSD`](examples/base/MicRecordToSD/) | E1001 – E1003 | Record PDM microphone audio to WAV files on MicroSD |
 | [`E1003_TouchDraw`](examples/base/E1003_TouchDraw/) | E1003 | Draw on the 10.3″ ePaper display using touch input |
+| [`E1001_ChineseTextDemo`](examples/base/E1001_ChineseTextDemo/) | E1001 | Render Chinese text with a TTF font stored in SPIFFS |
+| [`E1002_ChineseTextDemo`](examples/base/E1002_ChineseTextDemo/) | E1002 | Render Chinese text with a TTF font stored in SPIFFS |
 | [`E1003_ChineseTextDemo`](examples/base/E1003_ChineseTextDemo/) | E1003 | Render Chinese text with a TTF font stored in SPIFFS |
+| [`E1004_ChineseTextDemo`](examples/base/E1004_ChineseTextDemo/) | E1004 | Render Chinese text with a TTF font stored in SPIFFS |
 | [`SHT4x_Sensor`](examples/base/SHT4x_Sensor/) | E1001 – E1004 | Read temperature and humidity from the SHT40 sensor over I2C |
 | [`SD_ImagePipeline_E1001_BW`](examples/base/SD_ImagePipeline_E1001_BW/) | E1001 | Display a JPEG/PNG from MicroSD with B&W dithering |
 | [`SD_ImagePipeline_E1001_Gray4`](examples/base/SD_ImagePipeline_E1001_Gray4/) | E1001 | Display a JPEG/PNG from MicroSD in 4-level grayscale |
