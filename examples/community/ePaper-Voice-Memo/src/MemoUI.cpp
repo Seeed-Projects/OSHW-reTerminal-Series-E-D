@@ -587,7 +587,9 @@ void MemoUI::drawTodoList(MemoStore& store, RtcClock& rtc,
                           const String& quote)
 {
   const time_t nowEpoch = rtc.nowEpoch();
+#if VM_SCREEN_MODE == VM_SCREEN_GRAY16
   store.sortByDue(nowEpoch);
+#endif
 
   // Reset hit cache. Cards that get drawn refill their slot.
   for (size_t i = 0; i < MemoStore::kMax; i++) checkboxHits_[i].valid = false;
