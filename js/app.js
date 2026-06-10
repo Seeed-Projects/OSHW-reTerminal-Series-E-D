@@ -60,6 +60,44 @@ function getAvailableFirmwareOptions(platform, deviceId) {
   );
 }
 
+function getFirmwareVariantGroup(firmware) {
+  return firmware?.variantGroup || firmware?.id || "";
+}
+
+function getFirmwareLanguage(firmware) {
+  return firmware?.language || "";
+}
+
+function getFirmwareBaseOptions(platform, deviceId) {
+  const options = getAvailableFirmwareOptions(platform, deviceId);
+  const seen = new Set();
+  const baseOptions = [];
+  options.forEach((firmware) => {
+    const group = getFirmwareVariantGroup(firmware);
+    if (seen.has(group)) return;
+    seen.add(group);
+    baseOptions.push(firmware);
+  });
+  return baseOptions;
+}
+
+function getLanguageVariantsForFirmware(platform, deviceId, firmware) {
+  const group = getFirmwareVariantGroup(firmware);
+  return getAvailableFirmwareOptions(platform, deviceId)
+    .filter((item) => getFirmwareVariantGroup(item) === group);
+}
+
+function chooseFirmwareOption(options, preferredGroup = "", preferredLanguage = "") {
+  if (!options.length) return null;
+  const groupOptions = preferredGroup
+    ? options.filter((item) => getFirmwareVariantGroup(item) === preferredGroup)
+    : options;
+  const candidates = groupOptions.length ? groupOptions : options;
+  return candidates.find((item) => getFirmwareLanguage(item) === preferredLanguage)
+      || candidates.find((item) => getFirmwareLanguage(item) === "en")
+      || candidates[0];
+}
+
 function getInstallManifest() {
   if (!selectedPlatform?.installReady || !selectedFirmwareOption) return "";
   const version = selectedVersion?.version || DEFAULT_FIRMWARE_VERSION;
@@ -146,6 +184,7 @@ async function loadFirmwareVersions() {
 
   if (selectedPlatform) {
     selectedVersion = getDefaultVersion(selectedPlatform);
+    renderLanguageSelect();
     renderVersionPanel();
     updateFlashState();
   }
@@ -406,7 +445,7 @@ function selectPlatformDevice(platformId, deviceId) {
     PLATFORM_CARDS.find((platform) => platform.id === platformId) || null;
   selectedDevice = getDevice(deviceId);
   const availableOptions = getAvailableFirmwareOptions(selectedPlatform, deviceId);
-  selectedFirmwareOption = availableOptions[0] || null;
+  selectedFirmwareOption = chooseFirmwareOption(availableOptions);
   selectedVersion = getDefaultVersion(selectedPlatform);
 
   renderSelectedRelease();
@@ -489,6 +528,7 @@ function renderSelectedRelease() {
 
 function renderSetupPanel() {
   renderFirmwareSelect();
+  renderLanguageSelect();
   renderVersionPanel();
 }
 
@@ -522,7 +562,7 @@ function renderFirmwareSelect() {
     return;
   }
 
-  const options = getAvailableFirmwareOptions(selectedPlatform, selectedDevice.id);
+  const options = getFirmwareBaseOptions(selectedPlatform, selectedDevice.id);
   const labelText =
     selectedPlatform.group === "base"
       ? "Base demo"
@@ -544,9 +584,34 @@ function renderFirmwareSelect() {
 
   if (!nextSelect) return;
   nextSelect.innerHTML = options.map((firmware) => {
+    const group = getFirmwareVariantGroup(firmware);
     const selectedAttr =
-      firmware.id === selectedFirmwareOption?.id ? "selected" : "";
-    return `<option value="${firmware.id}" ${selectedAttr}>${firmware.name}</option>`;
+      group === getFirmwareVariantGroup(selectedFirmwareOption) ? "selected" : "";
+    return `<option value="${group}" ${selectedAttr}>${firmware.baseName || firmware.name}</option>`;
+  }).join("");
+}
+
+function renderLanguageSelect() {
+  const field = document.getElementById("languageField");
+  if (!field || !selectedPlatform || !selectedDevice || !selectedFirmwareOption) return;
+
+  const variants = getLanguageVariantsForFirmware(
+    selectedPlatform,
+    selectedDevice.id,
+    selectedFirmwareOption
+  );
+  field.classList.toggle("is-hidden", variants.length <= 1);
+  const select = document.getElementById("languageSelect");
+  if (!select) return;
+
+  if (variants.length <= 1) {
+    select.innerHTML = "";
+    return;
+  }
+
+  select.innerHTML = variants.map((firmware) => {
+    const selectedAttr = firmware.id === selectedFirmwareOption?.id ? "selected" : "";
+    return `<option value="${firmware.id}" ${selectedAttr}>${firmware.languageLabel || firmware.name}</option>`;
   }).join("");
 }
 
@@ -1259,15 +1324,40 @@ function bindFlowEvents() {
       if (event.target?.id !== "firmwareSelect") return;
       const firmwareSelect = event.target;
       const options = getAvailableFirmwareOptions(selectedPlatform, selectedDevice?.id);
+      const previousLanguage = getFirmwareLanguage(selectedFirmwareOption);
       selectedFirmwareOption =
-        options.find((item) => item.id === firmwareSelect.value) || options[0] || null;
+        chooseFirmwareOption(options, firmwareSelect.value, previousLanguage);
+      selectedVersion = getDefaultVersion(selectedPlatform);
+      renderSelectedRelease();
+      renderLanguageSelect();
+      renderVersionPanel();
+      renderConfigArea();
+      updateFlashState();
+      resetProgress();
+      appendLog(`[system] Selected demo: ${selectedFirmwareOption?.name || "None"}`);
+    });
+  }
+
+  const languageField = document.getElementById("languageField");
+  if (languageField) {
+    languageField.addEventListener("change", (event) => {
+      if (event.target?.id !== "languageSelect") return;
+      const languageSelect = event.target;
+      const variants = getLanguageVariantsForFirmware(
+        selectedPlatform,
+        selectedDevice?.id,
+        selectedFirmwareOption
+      );
+      selectedFirmwareOption =
+        variants.find((item) => item.id === languageSelect.value) ||
+        selectedFirmwareOption;
       selectedVersion = getDefaultVersion(selectedPlatform);
       renderSelectedRelease();
       renderVersionPanel();
       renderConfigArea();
       updateFlashState();
       resetProgress();
-      appendLog(`[system] Selected demo: ${selectedFirmwareOption?.name || "None"}`);
+      appendLog(`[system] Selected language: ${selectedFirmwareOption?.languageLabel || "None"}`);
     });
   }
 

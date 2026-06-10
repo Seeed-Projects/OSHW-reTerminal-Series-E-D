@@ -357,6 +357,26 @@
       "autoDiscovered": false
     },
     {
+      "id": "ePaper_VoiceMemo_E1001_ZH",
+      "name": "Voice Memo Reminder Chinese for E1001",
+      "path": "examples/community/ePaper-Voice-Memo",
+      "tool": "platformio",
+      "compatible": [
+        "E1001"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "ePaper_VoiceMemo_E1002_ZH",
+      "name": "Voice Memo Reminder Chinese for E1002",
+      "path": "examples/community/ePaper-Voice-Memo",
+      "tool": "platformio",
+      "compatible": [
+        "E1002"
+      ],
+      "autoDiscovered": false
+    },
+    {
       "id": "ePaper_VoiceMemo_E1003_ZH",
       "name": "Voice Memo Reminder Chinese for E1003",
       "path": "examples/community/ePaper-Voice-Memo",
