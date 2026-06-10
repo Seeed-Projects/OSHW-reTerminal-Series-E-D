@@ -20,6 +20,7 @@ from typing import Any
 
 DATE_VERSION_RE = re.compile(r"^\d{4}\.\d{2}\.\d{2}(?:\.\d+)?$")
 EXAMPLE_GROUPS = {"base", "official", "community"}
+SOURCE_REPO_DIR = Path(__file__).resolve().parents[2]
 
 
 @dataclass(frozen=True)
@@ -621,18 +622,38 @@ def copy_release_assets(firmware_root: Path, versions: dict[str, list[str]], rel
             shutil.copy2(artifact, destination)
 
 
-def next_release_tag(today: str) -> str:
+def matching_release_tags(base: str, repo_dir: Path) -> set[str]:
+    tags: set[str] = set()
+    # Read both local and remote tags so CI can reserve the next same-day release.
+    # 同时读取本地和远端 tag，用于在 CI 中生成同一天的下一个发布号。
+    commands = [
+        ["git", "-C", str(repo_dir), "tag", "-l", f"{base}*"],
+        ["git", "-C", str(repo_dir), "ls-remote", "--tags", "origin", f"refs/tags/{base}*"],
+    ]
+    for command in commands:
+        try:
+            completed = subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            continue
+        for line in completed.stdout.splitlines():
+            value = line.strip()
+            if not value:
+                continue
+            if "\t" in value:
+                value = value.rsplit("\t", 1)[1]
+            value = value.removeprefix("refs/tags/").removesuffix("^{}")
+            tags.add(value)
+    return tags
+
+
+def next_release_tag(today: str, repo_dir: Path = SOURCE_REPO_DIR) -> str:
     base = f"fw-{today}"
-    try:
-        completed = subprocess.run(
-            ["git", "tag", "-l", f"{base}*"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return base
-    existing = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
+    existing = matching_release_tags(base, repo_dir)
     if base not in existing:
         return base
     suffixes = [0]
@@ -642,6 +663,10 @@ def next_release_tag(today: str) -> str:
             if suffix.isdigit():
                 suffixes.append(int(suffix))
     return f"{base}.{max(suffixes) + 1}"
+
+
+def release_title_from_tag(release_tag: str) -> str:
+    return f"Firmware {release_tag.removeprefix('fw-')}"
 
 
 def write_release_notes(
@@ -716,9 +741,10 @@ def prepare_pages(
     write_release_notes(release_notes, changed_versions, versions)
     release_ready = bool(plan.changed_targets) and not skipped_targets
 
+    release_tag = next_release_tag(today)
     return {
-        "release_tag": next_release_tag(today),
-        "release_title": f"Firmware {today}",
+        "release_tag": release_tag,
+        "release_title": release_title_from_tag(release_tag),
         "firmware_changed": "true" if changed_versions else "false",
         "release_ready": "true" if release_ready else "false",
         "skipped_firmware": ",".join(sorted(skipped_targets)),
