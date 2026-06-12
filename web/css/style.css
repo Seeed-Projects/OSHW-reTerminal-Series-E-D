@@ -980,12 +980,38 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   flex-shrink: 0;
 }
 
+.field-block--template-options {
+  grid-column: 1 / -1;
+}
+
+.template-options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.template-options-grid .field-block--checkbox {
+  min-height: 36px;
+  padding: 6px 10px;
+}
+
+.template-options-grid .field-block--checkbox span {
+  line-height: 1.25;
+}
+
+.template-options-grid .field-block--checkbox small {
+  color: #6f7976;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
 .template-preview {
   margin: 0 0 16px;
 }
 .template-code {
-  min-height: 180px;
-  max-height: 420px;
+  min-height: min(320px, 54vh);
+  max-height: min(72vh, 680px);
   overflow: auto;
   margin: 0;
   border: 1px solid rgba(176, 199, 195, .82);
@@ -1415,6 +1441,9 @@ pre#log {
   .platform-detail,
   .device-choice,
   .setup-grid {
+    grid-template-columns: 1fr;
+  }
+  .template-options-grid {
     grid-template-columns: 1fr;
   }
   h1 { font-size: clamp(31px, 9vw, 44px); }
