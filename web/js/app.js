@@ -743,7 +743,14 @@ function updateFlashState() {
 }
 
 // Assembles template output from platform-level header, selected snippets, and footer.
-function buildTemplateContent(platform, selectedOptionIds) {
+function buildTemplateContent(platform, selectedOptionIds, deviceId = selectedDevice?.id) {
+  if (platform?.templateMode && typeof globalThis.buildEsphomeTemplateContent === "function") {
+    const hasStructuredOptions = (platform.templateOptions || []).some((option) => option.contributes);
+    if (hasStructuredOptions) {
+      return globalThis.buildEsphomeTemplateContent(platform, selectedOptionIds, deviceId);
+    }
+  }
+
   const joiner = platform.templateJoiner || "\n\n";
   const parts = [];
   const header = platform.templateHeader || "";
@@ -776,14 +783,14 @@ function renderTemplatePreview() {
   const codeEl = document.getElementById("templateCode");
   if (!codeEl || !selectedPlatform?.templateMode) return;
   const ids = getCheckedTemplateOptionIds();
-  codeEl.textContent = buildTemplateContent(selectedPlatform, ids);
+  codeEl.textContent = buildTemplateContent(selectedPlatform, ids, selectedDevice?.id);
 }
 
 // Downloads the generated template as a file.
 function generateTemplateFile() {
   if (!selectedPlatform?.templateMode || !selectedDevice) return;
   const ids = getCheckedTemplateOptionIds();
-  const content = buildTemplateContent(selectedPlatform, ids);
+  const content = buildTemplateContent(selectedPlatform, ids, selectedDevice.id);
   const ext = selectedPlatform.templateFileExtension || "txt";
   const mime = selectedPlatform.templateFileMimeType || "text/plain";
   const pattern = selectedPlatform.templateFilePattern || "{platformId}-{deviceId}";

@@ -100,7 +100,7 @@ All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support
 | Platform | Status | Devices | Description |
 |:---------|:-------|:--------|:------------|
 | **Base** | ✅ Ready | E1001 – E1004 | Smoke-test demos (RTC, deep sleep, mic recording, touch draw) |
-| **ESPHome** | ✅ YAML templates | E1001 – E1003 | Smart home integration with Home Assistant |
+| **ESPHome** | ✅ YAML templates | E1001 – E1002 | Smart home integration with Home Assistant |
 | **SquareLine Vision** | 🔜 Coming soon | E1002, E1003 | Visual UI designer for embedded ePaper displays |
 | **OpenDisplay** | 🔜 Coming soon | E1001 – E1003 | BLE-powered ePaper control + browser image upload |
 
