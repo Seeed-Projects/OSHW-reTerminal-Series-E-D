@@ -538,19 +538,22 @@ function renderFirmwareSelect() {
 
   if (selectedPlatform?.templateMode) {
     const options = selectedPlatform.templateOptions || [];
+    field.classList.add("field-block--template-options");
     field.classList.toggle("is-hidden", options.length === 0);
     field.innerHTML = `
       <span>Template options</span>
-      ${options.map((option) => `
-        <label class="field-block field-block--checkbox" for="${option.id}">
-          <span>
-            ${option.label}
-            <br>
-            <small>${option.description}</small>
-          </span>
-          <input id="${option.id}" name="${option.id}" type="checkbox" ${option.defaultChecked === true ? "checked" : ""}>
-        </label>
-      `).join("")}
+      <div class="template-options-grid">
+        ${options.map((option) => `
+          <label class="field-block field-block--checkbox" for="${option.id}">
+            <span>
+              ${option.label}
+              <br>
+              <small>${option.description}</small>
+            </span>
+            <input id="${option.id}" name="${option.id}" type="checkbox" ${option.defaultChecked === true ? "checked" : ""}>
+          </label>
+        `).join("")}
+      </div>
     `;
     if (!field.dataset.templateListener) {
       field.addEventListener("change", (e) => {
@@ -562,6 +565,7 @@ function renderFirmwareSelect() {
     return;
   }
 
+  field.classList.remove("field-block--template-options");
   const options = getFirmwareBaseOptions(selectedPlatform, selectedDevice.id);
   const labelText =
     selectedPlatform.group === "base"
