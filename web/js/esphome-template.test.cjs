@@ -55,8 +55,32 @@ assert.match(e1001All, /it\.printf\(30, 120, id\(font_large\), "Temp: %\.1f C"/)
 assert.match(e1001All, /ESPHome 不能像 Arduino 那样直接操作 SD 卡文件系统/);
 assert.match(e1001All, /# --- SHT4x temperature & humidity \(I2C\) ---/);
 assert.match(e1001All, /# Turn on SD card power rail \/ 打开 SD 卡供电\n      - output\.turn_on: bsp_sd_enable/);
+assert.match(e1001All, /^  ssid: !secret wifi_ssid$/m);
+assert.match(e1001All, /^  password: !secret wifi_password$/m);
 assert.doesNotMatch(e1001All, /id\(font_large\), RED, "Temp:/);
 assertNoDuplicateTopLevelKeys(e1001All);
+
+const e1001AllWithWifiValues = buildEsphomeTemplateContent(
+  esphome,
+  allOptionIds,
+  "E1001",
+  { wifiSsid: "Office WiFi", wifiPassword: "p@ss:word #1" }
+);
+assert.match(e1001AllWithWifiValues, /^  ssid: "Office WiFi"$/m);
+assert.match(e1001AllWithWifiValues, /^  password: "p@ss:word #1"$/m);
+assert.doesNotMatch(e1001AllWithWifiValues, /^  ssid: !secret wifi_ssid$/m);
+assert.doesNotMatch(e1001AllWithWifiValues, /^  password: !secret wifi_password$/m);
+assertNoDuplicateTopLevelKeys(e1001AllWithWifiValues);
+
+const e1001AllWithEmptyWifiValues = buildEsphomeTemplateContent(
+  esphome,
+  allOptionIds,
+  "E1001",
+  { wifiSsid: "", wifiPassword: "" }
+);
+assert.match(e1001AllWithEmptyWifiValues, /^  ssid: !secret wifi_ssid$/m);
+assert.match(e1001AllWithEmptyWifiValues, /^  password: !secret wifi_password$/m);
+assertNoDuplicateTopLevelKeys(e1001AllWithEmptyWifiValues);
 
 const e1002All = buildEsphomeTemplateContent(esphome, allOptionIds, "E1002");
 assert.match(e1002All, /platform: epaper_spi/);

@@ -595,8 +595,8 @@ ota:
   - platform: esphome
     password: !secret ota_password`, `# Wi-Fi settings / Wi-Fi 设置
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+  ssid: {{wifiSsidValue}}
+  password: {{wifiPasswordValue}}
   ap:
     ssid: "{{apSsid}}"
     password: "ChangeMe123"`, `captive_portal:`],

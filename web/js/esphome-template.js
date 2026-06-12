@@ -45,6 +45,26 @@
     );
   }
 
+  function yamlQuote(value) {
+    return JSON.stringify(String(value));
+  }
+
+  function buildWifiValueTokens(userValues = {}) {
+    const values = userValues || {};
+    const wifiSsid = values.wifiSsid;
+    const wifiPassword = values.wifiPassword;
+    return {
+      wifiSsidValue:
+        wifiSsid !== undefined && String(wifiSsid).length
+          ? yamlQuote(wifiSsid)
+          : "!secret wifi_ssid",
+      wifiPasswordValue:
+        wifiPassword !== undefined && String(wifiPassword).length
+          ? yamlQuote(wifiPassword)
+          : "!secret wifi_password",
+    };
+  }
+
   function getOptionMap(platform) {
     const map = new Map();
     (platform.templateOptions || []).forEach((option) => {
@@ -203,8 +223,12 @@
     return { expandedIds, selected, tokens, sections };
   }
 
-  function buildEsphomeTemplateContent(platform, selectedOptionIds, deviceId) {
+  function buildEsphomeTemplateContent(platform, selectedOptionIds, deviceId, userValues = {}) {
     const { tokens, sections } = collectTemplateParts(platform, selectedOptionIds, deviceId);
+    const templateTokens = {
+      ...tokens,
+      ...buildWifiValueTokens(userValues),
+    };
     const sectionOrder = platform.templateSectionOrder || {};
     const parts = [];
     const sortedOnBoot = sortOnBootActions(
@@ -212,7 +236,7 @@
       sectionOrder.onBoot || []
     );
     const header = replaceTokens(platform.templateHeader || "", {
-      ...tokens,
+      ...templateTokens,
       onBootActions: buildOnBootBlock(sortedOnBoot),
     });
     if (header) parts.push(header);
@@ -246,7 +270,7 @@
         const bIndex = blockOrder.has(b.key) ? blockOrder.get(b.key) : Number.MAX_SAFE_INTEGER;
         return aIndex - bIndex;
       })
-      .forEach(({ block }) => parts.push(replaceTokens(block, tokens)));
+      .forEach(({ block }) => parts.push(replaceTokens(block, templateTokens)));
 
     if (sections.display) {
       const displayOrder = new Map((sectionOrder.displayLambda || []).map((id, index) => [id, index]));
@@ -258,11 +282,11 @@
         })
         .map((fragment) => fragment.value)
         .join("\n\n");
-      parts.push(replaceTokens(sections.display, { ...tokens, displayLambda }));
+      parts.push(replaceTokens(sections.display, { ...templateTokens, displayLambda }));
     }
 
     if (sections.deepSleep) {
-      parts.push(replaceTokens(sections.deepSleep, tokens));
+      parts.push(replaceTokens(sections.deepSleep, templateTokens));
     }
 
     if (platform.templateFooter) parts.push(platform.templateFooter);
@@ -277,6 +301,7 @@
       buildEsphomeTemplateContent,
       expandEsphomeTemplateOptionIds,
       collectTemplateParts,
+      yamlQuote,
     };
   }
 })();

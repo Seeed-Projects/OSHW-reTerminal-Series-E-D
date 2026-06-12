@@ -685,6 +685,8 @@ function renderConfigArea() {
       const maxAttr = field.max !== undefined ? ` max="${field.max}"` : "";
       const stepAttr = field.step !== undefined ? ` step="${field.step}"` : "";
       control = `<input id="${field.id}" type="number" value="${field.defaultValue}"${minAttr}${maxAttr}${stepAttr}>`;
+    } else if (field.type === "password") {
+      control = `<input id="${field.id}" type="password" value="${field.defaultValue || ""}" placeholder="${field.placeholder || ""}">`;
     } else {
       control = `<input id="${field.id}" type="text" value="${field.defaultValue || ""}" placeholder="${field.placeholder || ""}">`;
     }
@@ -697,6 +699,16 @@ function renderConfigArea() {
       </label>
     `;
   }).join("");
+
+  if (!container.dataset.templateInputListener) {
+    container.addEventListener("input", (e) => {
+      if (!selectedPlatform?.templateMode) return;
+      const fieldId = e.target?.id;
+      const field = (selectedPlatform.configFields || []).find((item) => item.id === fieldId);
+      if (field && (field.type === "text" || field.type === "password")) renderTemplatePreview();
+    });
+    container.dataset.templateInputListener = "true";
+  }
 }
 
 function collectConfigValues() {
@@ -726,6 +738,17 @@ function collectConfigValues() {
   }).filter(Boolean);
 }
 
+// Reads template field values from the platform-level setup inputs.
+function getTemplateFieldValues() {
+  const values = {};
+  (selectedPlatform?.configFields || []).forEach((field) => {
+    const el = document.getElementById(field.id);
+    if (!el) return;
+    values[field.id] = field.type === "checkbox" ? el.checked : el.value || "";
+  });
+  return values;
+}
+
 let eraseBeforeFlash = false;
 let isFlashing = false;
 let lastFlashedPort = null;
@@ -743,11 +766,16 @@ function updateFlashState() {
 }
 
 // Assembles template output from platform-level header, selected snippets, and footer.
-function buildTemplateContent(platform, selectedOptionIds, deviceId = selectedDevice?.id) {
+function buildTemplateContent(
+  platform,
+  selectedOptionIds,
+  deviceId = selectedDevice?.id,
+  userValues = getTemplateFieldValues()
+) {
   if (platform?.templateMode && typeof globalThis.buildEsphomeTemplateContent === "function") {
     const hasStructuredOptions = (platform.templateOptions || []).some((option) => option.contributes);
     if (hasStructuredOptions) {
-      return globalThis.buildEsphomeTemplateContent(platform, selectedOptionIds, deviceId);
+      return globalThis.buildEsphomeTemplateContent(platform, selectedOptionIds, deviceId, userValues);
     }
   }
 
@@ -783,14 +811,16 @@ function renderTemplatePreview() {
   const codeEl = document.getElementById("templateCode");
   if (!codeEl || !selectedPlatform?.templateMode) return;
   const ids = getCheckedTemplateOptionIds();
-  codeEl.textContent = buildTemplateContent(selectedPlatform, ids, selectedDevice?.id);
+  const userValues = getTemplateFieldValues();
+  codeEl.textContent = buildTemplateContent(selectedPlatform, ids, selectedDevice?.id, userValues);
 }
 
 // Downloads the generated template as a file.
 function generateTemplateFile() {
   if (!selectedPlatform?.templateMode || !selectedDevice) return;
   const ids = getCheckedTemplateOptionIds();
-  const content = buildTemplateContent(selectedPlatform, ids, selectedDevice.id);
+  const userValues = getTemplateFieldValues();
+  const content = buildTemplateContent(selectedPlatform, ids, selectedDevice.id, userValues);
   const ext = selectedPlatform.templateFileExtension || "txt";
   const mime = selectedPlatform.templateFileMimeType || "text/plain";
   const pattern = selectedPlatform.templateFilePattern || "{platformId}-{deviceId}";
