@@ -99,13 +99,48 @@
     });
   }
 
+  function extractTopLevelBlockKey(block) {
+    const keyMatch = String(block).match(/^(?!\s*#)([A-Za-z0-9_]+):/m);
+    return keyMatch ? keyMatch[1] : String(block).split(":")[0];
+  }
+
   function splitOnBootActions(snippets) {
-    return snippets.flatMap((snippet) =>
+    return snippets.flatMap((snippet) => {
+      const actions = [];
+      const pendingComments = [];
+      let currentAction = [];
+
       String(snippet)
-        .split(/\n(?=\s*- )/)
-        .map((item) => item.trimEnd())
-        .filter(Boolean)
-    );
+        .split("\n")
+        .forEach((line) => {
+          if (/^\s*#/.test(line)) {
+            if (currentAction.length) {
+              actions.push(currentAction.join("\n").trimEnd());
+              currentAction = [];
+            }
+            pendingComments.push(line);
+            return;
+          }
+
+          if (/^\s*-\s/.test(line)) {
+            if (currentAction.length) {
+              actions.push(currentAction.join("\n").trimEnd());
+            }
+            currentAction = [...pendingComments, line];
+            pendingComments.length = 0;
+            return;
+          }
+
+          if (currentAction.length) {
+            currentAction.push(line);
+          } else if (line.trim()) {
+            pendingComments.push(line);
+          }
+        });
+
+      if (currentAction.length) actions.push(currentAction.join("\n").trimEnd());
+      return actions.filter(Boolean);
+    });
   }
 
   function sortOnBootActions(actions, order = []) {
@@ -205,7 +240,7 @@
 
     const blockOrder = new Map((sectionOrder.blocks || []).map((id, index) => [id, index]));
     sections.blocks
-      .map((block) => ({ block, key: String(block).split(":")[0] }))
+      .map((block) => ({ block, key: extractTopLevelBlockKey(block) }))
       .sort((a, b) => {
         const aIndex = blockOrder.has(a.key) ? blockOrder.get(a.key) : Number.MAX_SAFE_INTEGER;
         const bIndex = blockOrder.has(b.key) ? blockOrder.get(b.key) : Number.MAX_SAFE_INTEGER;

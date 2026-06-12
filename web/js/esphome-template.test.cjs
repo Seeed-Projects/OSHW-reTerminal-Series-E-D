@@ -52,6 +52,9 @@ assert.match(e1001All, /platform: waveshare_epaper/);
 assert.match(e1001All, /model: 7\.50inv2/);
 assert.match(e1001All, /run_duration: 30s/);
 assert.match(e1001All, /it\.printf\(30, 120, id\(font_large\), "Temp: %\.1f C"/);
+assert.match(e1001All, /ESPHome 不能像 Arduino 那样直接操作 SD 卡文件系统/);
+assert.match(e1001All, /# --- SHT4x temperature & humidity \(I2C\) ---/);
+assert.match(e1001All, /# Turn on SD card power rail \/ 打开 SD 卡供电\n      - output\.turn_on: bsp_sd_enable/);
 assert.doesNotMatch(e1001All, /id\(font_large\), RED, "Temp:/);
 assertNoDuplicateTopLevelKeys(e1001All);
 
@@ -62,6 +65,8 @@ assert.match(e1002All, /run_duration: 150s/);
 assert.match(e1002All, /const auto RED\s+= Color/);
 assert.match(e1002All, /id\(font_large\), RED, "Temp: %\.1f C"/);
 assert.match(e1002All, /it\.line\(20, 55, 780, 55, BLACK\)/);
+assert.match(e1002All, /需要 ESPHome >= 2025\.11\.1 才能使用 epaper_spi 平台/);
+assert.match(e1002All, /\/\/ ---- Title \(BLUE\) \/ 标题（蓝色）----/);
 assertNoDuplicateTopLevelKeys(e1002All);
 
 const buttonClosure = expandEsphomeTemplateOptionIds(esphome, ["buttons"]);
@@ -70,6 +75,7 @@ const buttonsOnly = buildEsphomeTemplateContent(esphome, ["buttons"], "E1001");
 assert.match(buttonsOnly, /id: onboard_led/);
 assert.match(buttonsOnly, /id: buzzer/);
 assert.match(buttonsOnly, /id: buzzer_pwm/);
+assert.doesNotMatch(buttonsOnly, /ESPHome 中 SD 卡的限制/);
 assertNoDuplicateTopLevelKeys(buttonsOnly);
 
 const tempWithoutDisplay = buildEsphomeTemplateContent(esphome, ["temp_humidity"], "E1001");
