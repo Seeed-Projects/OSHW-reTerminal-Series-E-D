@@ -1,0 +1,32 @@
+{
+  "name": "TRMNL_reTerminal_E1003",
+  "version": "1.8.7",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "TRMNL_reTerminal_E1003.ino.bootloader.bin",
+          "offset": 0
+        },
+        {
+          "path": "TRMNL_reTerminal_E1003.ino.partitions.bin",
+          "offset": 32768
+        },
+        {
+          "path": "boot_app0.bin",
+          "offset": 77824
+        },
+        {
+          "path": "TRMNL_reTerminal_E1003.ino.bin",
+          "offset": 131072
+        },
+        {
+          "path": "TRMNL_reTerminal_E1003.spiffs.bin",
+          "offset": 6422528
+        }
+      ]
+    }
+  ]
+}
