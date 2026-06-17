@@ -1,6 +1,7 @@
 {
   "name": "TRMNL_reTerminal_E1002",
   "version": "1.8.7",
+  "flashSize": "keep",
   "new_install_prompt_erase": true,
   "builds": [
     {

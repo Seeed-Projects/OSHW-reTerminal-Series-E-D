@@ -1039,9 +1039,10 @@ async function flashDevice() {
     setProgress("flash", 30, "Writing firmware to device");
 
     let totalWritten = 0;
+    const flashSize = manifestData.flashSize || build.flashSize || "keep";
     await esploader.writeFlash({
       fileArray,
-      flashSize: "keep",
+      flashSize,
       flashMode: "keep",
       flashFreq: "keep",
       eraseAll: false,
