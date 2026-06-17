@@ -1162,7 +1162,7 @@ deep_sleep:
     description:
       "TRMNL provides ready-to-run dashboard firmware for publishing calendar, task, metric, and plugin-based content to reTerminal ePaper displays.",
     logo: "assets/platforms/trmnl-logo.svg",
-    preview: "assets/platforms/trmnl-preview.jpg",
+    preview: "assets/platforms/trmnl-preview.png",
     previewAlt: "TRMNL dashboard firmware preview",
     accent: "#3D3D3E",
     highlight: "#F8654B",
