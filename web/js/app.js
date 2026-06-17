@@ -195,7 +195,7 @@ function getFirmwareVersionValues(firmwareOption) {
   const versions = firmwareVersions[firmwareOption.id];
   return Array.isArray(versions) && versions.length
     ? versions
-    : [DEFAULT_FIRMWARE_VERSION];
+    : [firmwareOption.defaultVersion || DEFAULT_FIRMWARE_VERSION];
 }
 
 function getVersionOptions(platform = selectedPlatform) {

@@ -101,6 +101,7 @@ All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support
 |:---------|:-------|:--------|:------------|
 | **Base** | ✅ Ready | E1001 – E1004 | Smoke-test demos (RTC, deep sleep, mic recording, touch draw) |
 | **ESPHome** | ✅ YAML templates | E1001 – E1002 | Smart home integration with Home Assistant |
+| **TRMNL** | ✅ Ready | E1001 – E1003 | Official TRMNL dashboard firmware for always-on ePaper panels |
 | **SquareLine Vision** | 🔜 Coming soon | E1002, E1003 | Visual UI designer for embedded ePaper displays |
 | **OpenDisplay** | 🔜 Coming soon | E1001 – E1003 | BLE-powered ePaper control + browser image upload |
 
@@ -241,7 +242,7 @@ The GitHub Actions workflow ([`build-and-deploy.yml`](.github/workflows/build-an
 
 1. **Plan** — detects which `examples/` folders changed during the push
 2. **Build** — compiles only the firmware targets mapped to changed examples
-3. **Version** — writes changed firmware to `firmware/{id}/{YYYY.MM.DD}/`, or `YYYY.MM.DD.n` for repeated builds on the same date
+3. **Version** — writes changed firmware to `firmware/{id}/{YYYY.MM.DD}/`, or `YYYY.MM.DD.n` for repeated builds on the same date; official external firmware targets may use their upstream version, such as TRMNL `1.8.7`
 4. **Deploy** — updates the static site, `firmware/versions.json`, `firmware/catalog.json`, and generated firmware manifests on the `gh-pages` branch
 5. **Release** — when firmware changed, creates a GitHub Release containing a full latest firmware package for all examples; unchanged firmware is reused from its previous latest published version
 

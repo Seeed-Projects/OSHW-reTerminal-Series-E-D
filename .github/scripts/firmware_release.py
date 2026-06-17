@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 
-DATE_VERSION_RE = re.compile(r"^\d{4}\.\d{2}\.\d{2}(?:\.\d+)?$")
+FIRMWARE_VERSION_RE = re.compile(r"^(?:\d{4}\.\d{2}\.\d{2}(?:\.\d+)?|\d+\.\d+\.\d+)$")
 EXAMPLE_GROUPS = {"base", "official", "community"}
 SOURCE_REPO_DIR = Path(__file__).resolve().parents[2]
 
@@ -40,6 +40,9 @@ class FirmwareTarget:
     needs_open_font_render: bool = False
     spiffs_image_size: str = ""
     spiffs_offset: int = 0
+    boot_app0_offset: int = 0xE000
+    app_offset: int = 0x10000
+    fixed_version: str = ""
     build_flags: str = ""
     pio_env: str = ""
     auto_discovered: bool = False
@@ -56,6 +59,7 @@ class FirmwareTarget:
             "needs_open_font_render": self.needs_open_font_render,
             "spiffs_image_size": self.spiffs_image_size,
             "spiffs_offset": self.spiffs_offset,
+            "fixed_version": self.fixed_version,
             "build_flags": self.build_flags,
             "pio_env": self.pio_env,
         }
@@ -255,6 +259,38 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
         title="SD Image Pipeline E1004",
     ),
     FirmwareTarget(
+        "TRMNL_reTerminal_E1001",
+        "examples/official/TRMNL",
+        tool="platformio",
+        devices=("E1001",),
+        pio_env="seeed_reTerminal_E1001",
+        fixed_version="1.8.7",
+        title="TRMNL for reTerminal E1001",
+        group="official",
+    ),
+    FirmwareTarget(
+        "TRMNL_reTerminal_E1002",
+        "examples/official/TRMNL",
+        tool="platformio",
+        devices=("E1002",),
+        pio_env="seeed_reTerminal_E1002",
+        fixed_version="1.8.7",
+        title="TRMNL for reTerminal E1002",
+        group="official",
+    ),
+    FirmwareTarget(
+        "TRMNL_reTerminal_E1003",
+        "examples/official/TRMNL",
+        tool="platformio",
+        devices=("E1003",),
+        pio_env="TRMNL_X_E1003",
+        boot_app0_offset=0x13000,
+        app_offset=0x20000,
+        fixed_version="1.8.7",
+        title="TRMNL for reTerminal E1003",
+        group="official",
+    ),
+    FirmwareTarget(
         "ePaper_VoiceMemo_E1001",
         "examples/community/ePaper-Voice-Memo",
         tool="platformio",
@@ -445,7 +481,7 @@ def date_versions(firmware_dir: Path) -> list[str]:
         entry.name
         for entry in firmware_dir.iterdir()
         if entry.is_dir()
-        and DATE_VERSION_RE.match(entry.name)
+        and FIRMWARE_VERSION_RE.match(entry.name)
         and (entry / "manifest.json").exists()
     ]
     return sorted(versions, key=version_sort_key, reverse=True)
@@ -523,12 +559,14 @@ def write_manifest(
     version: str,
     destination: Path,
     spiffs_offset: int = 0,
+    boot_app0_offset: int = 0xE000,
+    app_offset: int = 0x10000,
 ) -> None:
     parts = [
         {"path": f"{firmware_id}.ino.bootloader.bin", "offset": 0},
         {"path": f"{firmware_id}.ino.partitions.bin", "offset": 32768},
-        {"path": "boot_app0.bin", "offset": 57344},
-        {"path": f"{firmware_id}.ino.bin", "offset": 65536},
+        {"path": "boot_app0.bin", "offset": boot_app0_offset},
+        {"path": f"{firmware_id}.ino.bin", "offset": app_offset},
     ]
     spiffs = destination / f"{firmware_id}.spiffs.bin"
     if spiffs.exists():
@@ -725,10 +763,17 @@ def prepare_pages(
             skipped_targets[target.id] = f"missing {', '.join(missing_parts)}"
             continue
         firmware_dir = firmware_root / target.id
-        version = next_date_version(date_versions(firmware_dir), today)
+        version = target.fixed_version or next_date_version(date_versions(firmware_dir), today)
         destination = firmware_dir / version
         copy_firmware_artifact(artifact_dir, target.id, destination)
-        write_manifest(target.id, version, destination, target.spiffs_offset)
+        write_manifest(
+            target.id,
+            version,
+            destination,
+            target.spiffs_offset,
+            target.boot_app0_offset,
+            target.app_offset,
+        )
         changed_versions[target.id] = version
         print(f"Updated firmware: {target.id} -> {version}")
 

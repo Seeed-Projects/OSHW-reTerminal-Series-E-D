@@ -103,6 +103,7 @@ firmware/RTC_PCF8563/2026.06.07/
 
 - 某个固件在某一天的第一次构建使用 `YYYY.MM.DD`。
 - 如果同一个固件在同一天再次重建，下一个版本是 `YYYY.MM.DD.1`，然后是 `YYYY.MM.DD.2`，以此类推。
+- 官方外部平台固件如果必须让网页版本号匹配上游固件版本，可以在 `.github/scripts/firmware_release.py` 中设置 `fixed_version`。
 - 网页会读取 `firmware/versions.json`，并默认选择最新版本。
 - 新构建不会创建单独的 `latest` 文件夹。
 - 旧的 `latest` 固件可能会被复制一次到日期版本中，这样旧的已发布固件无需重建也能继续可用。
@@ -687,6 +688,8 @@ FirmwareTarget(
 
 不要把构建元数据放进 `.github/workflows/build-and-deploy.yml`。
 
+只有当上游固件需要非日期版本号或非默认 flash 布局时，才使用 `fixed_version`、`boot_app0_offset` 或 `app_offset`。
+
 ## 固件打包和烧录分区
 
 发布自动化期望每个固件 artifact（通俗解释：构建出来准备发布的文件包）包含：
@@ -699,7 +702,7 @@ FirmwareTarget(
 | `<firmware-id>.ino.bin` | `0x10000` |
 | `<firmware-id>.spiffs.bin` | target-specific data offset, when registered |
 
-脚本会使用这些 offset 自动生成 `manifest.json`。
+脚本会使用这些 offset 自动生成 `manifest.json`。非默认布局的目标可以在 `.github/scripts/firmware_release.py` 中覆盖 `boot_app0_offset` 和 `app_offset`。
 
 Arduino 构建会通过 `arduino-cli` 产出预期文件。
 

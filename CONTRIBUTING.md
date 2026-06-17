@@ -105,6 +105,9 @@ Rules:
 - The first build of a firmware on a date uses `YYYY.MM.DD`.
 - If the same firmware is rebuilt again on the same date, the next version is
   `YYYY.MM.DD.1`, then `YYYY.MM.DD.2`, and so on.
+- Official external platform firmware may set `fixed_version` in
+  `.github/scripts/firmware_release.py` when the user-facing version must match
+  the upstream firmware version.
 - The web page reads `firmware/versions.json` and selects the newest version by
   default.
 - New builds do not create a separate `latest` folder.
@@ -748,6 +751,9 @@ FirmwareTarget(
 
 Do not put build metadata in `.github/workflows/build-and-deploy.yml`.
 
+Use `fixed_version`, `boot_app0_offset`, or `app_offset` only for targets whose
+upstream firmware requires a non-date version or a non-default flash layout.
+
 ## Firmware packaging and flash partitions
 
 The release automation expects every firmware artifact to contain:
@@ -760,7 +766,9 @@ The release automation expects every firmware artifact to contain:
 | `<firmware-id>.ino.bin` | `0x10000` |
 | `<firmware-id>.spiffs.bin` | target-specific data offset, when registered |
 
-The script generates `manifest.json` automatically with these offsets.
+The script generates `manifest.json` automatically with these offsets. Targets
+with non-default layouts can override `boot_app0_offset` and `app_offset` in
+`.github/scripts/firmware_release.py`.
 
 Arduino builds produce the expected files through `arduino-cli`.
 

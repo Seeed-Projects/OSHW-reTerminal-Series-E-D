@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -55,6 +57,59 @@ class ReleaseTagTest(unittest.TestCase):
             firmware_release.release_title_from_tag("fw-2026.06.10.1"),
             "Firmware 2026.06.10.1",
         )
+
+
+class TrmnlTargetTest(unittest.TestCase):
+    def test_trmnl_source_change_builds_supported_platformio_targets(self) -> None:
+        plan = firmware_release.build_plan(["examples/official/TRMNL/src/main.cpp"])
+        target_ids = {target.id for target in plan.changed_targets}
+
+        self.assertIn("TRMNL_reTerminal_E1001", target_ids)
+        self.assertIn("TRMNL_reTerminal_E1002", target_ids)
+        self.assertIn("TRMNL_reTerminal_E1003", target_ids)
+        self.assertNotIn("TRMNL_reTerminal_E1004", target_ids)
+        self.assertTrue(all(target.tool == "platformio" for target in plan.changed_targets))
+
+    def test_trmnl_targets_use_fixed_version_and_expected_devices(self) -> None:
+        targets = {
+            target.id: target
+            for target in firmware_release.FIRMWARE_TARGETS
+            if target.id.startswith("TRMNL_")
+        }
+
+        self.assertEqual(targets["TRMNL_reTerminal_E1001"].devices, ("E1001",))
+        self.assertEqual(targets["TRMNL_reTerminal_E1002"].devices, ("E1002",))
+        self.assertEqual(targets["TRMNL_reTerminal_E1003"].devices, ("E1003",))
+        self.assertTrue(all(target.fixed_version == "1.8.7" for target in targets.values()))
+        self.assertEqual(targets["TRMNL_reTerminal_E1003"].app_offset, 0x20000)
+
+    def test_semver_firmware_version_is_listed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            firmware_dir = Path(temp_dir) / "TRMNL_reTerminal_E1001" / "1.8.7"
+            firmware_dir.mkdir(parents=True)
+            (firmware_dir / "manifest.json").write_text("{}\n", encoding="utf-8")
+
+            self.assertEqual(
+                firmware_release.date_versions(Path(temp_dir) / "TRMNL_reTerminal_E1001"),
+                ["1.8.7"],
+            )
+
+    def test_manifest_can_use_trmnl_e1003_offsets(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            firmware_release.write_manifest(
+                "TRMNL_reTerminal_E1003",
+                "1.8.7",
+                Path(temp_dir),
+                boot_app0_offset=0x13000,
+                app_offset=0x20000,
+            )
+
+            manifest = json.loads((Path(temp_dir) / "manifest.json").read_text(encoding="utf-8"))
+            parts = manifest["builds"][0]["parts"]
+            offsets = {part["path"]: part["offset"] for part in parts}
+
+            self.assertEqual(offsets["boot_app0.bin"], 0x13000)
+            self.assertEqual(offsets["TRMNL_reTerminal_E1003.ino.bin"], 0x20000)
 
 
 if __name__ == "__main__":
