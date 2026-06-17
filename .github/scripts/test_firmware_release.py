@@ -131,10 +131,8 @@ class TrmnlTargetTest(unittest.TestCase):
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].devices, ("E1003",))
         self.assertTrue(all(target.fixed_version == "1.8.7" for target in targets.values()))
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].app_offset, 0x20000)
-        self.assertEqual(
-            targets["TRMNL_reTerminal_E1003"].filesystem_image_url,
-            "https://trmnl-fw.s3.us-east-2.amazonaws.com/littlefs.bin",
-        )
+        self.assertFalse(targets["TRMNL_reTerminal_E1003"].include_filesystem)
+        self.assertEqual(targets["TRMNL_reTerminal_E1003"].flash_size, "detect")
 
     def test_trmnl_platformio_targets_enable_serial_logging(self) -> None:
         targets = [
@@ -165,20 +163,26 @@ class TrmnlTargetTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             firmware_dir = Path(temp_dir)
             create_manifest_artifacts(firmware_dir, "TRMNL_reTerminal_E1003")
+            (firmware_dir / "TRMNL_reTerminal_E1003.spiffs.bin").write_bytes(b"littlefs")
             firmware_release.write_manifest(
                 "TRMNL_reTerminal_E1003",
                 "1.8.7",
                 firmware_dir,
                 boot_app0_offset=0x13000,
                 app_offset=0x20000,
+                flash_size="detect",
+                include_filesystem=False,
             )
 
             manifest = json.loads((firmware_dir / "manifest.json").read_text(encoding="utf-8"))
             parts = manifest["builds"][0]["parts"]
             offsets = {path_without_query(part["path"]): part["offset"] for part in parts}
 
+            self.assertEqual(manifest["flashSize"], "detect")
+            self.assertEqual(len(parts), 4)
             self.assertEqual(offsets["boot_app0.bin"], 0x13000)
             self.assertEqual(offsets["TRMNL_reTerminal_E1003.ino.bin"], 0x20000)
+            self.assertNotIn("TRMNL_reTerminal_E1003.spiffs.bin", offsets)
 
     def test_manifest_adds_file_hash_queries(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

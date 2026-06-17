@@ -53,8 +53,10 @@ class FirmwareTarget:
     spiffs_image_size: str = ""
     spiffs_offset: int = 0
     filesystem_image_url: str = ""
+    include_filesystem: bool = True
     boot_app0_offset: int = 0xE000
     app_offset: int = 0x10000
+    flash_size: str = "keep"
     fixed_version: str = ""
     build_flags: str = ""
     pio_env: str = ""
@@ -74,6 +76,7 @@ class FirmwareTarget:
             "spiffs_image_size": self.spiffs_image_size,
             "spiffs_offset": self.spiffs_offset,
             "filesystem_image_url": self.filesystem_image_url,
+            "include_filesystem": self.include_filesystem,
             "fixed_version": self.fixed_version,
             "build_flags": self.build_flags,
             "pio_env": self.pio_env,
@@ -315,6 +318,8 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
         app_offset=0x20000,
         spiffs_offset=0x620000,
         filesystem_image_url="https://trmnl-fw.s3.us-east-2.amazonaws.com/littlefs.bin",
+        include_filesystem=False,
+        flash_size="detect",
         fixed_version="1.8.7",
         title="TRMNL for reTerminal E1003",
         group="official",
@@ -600,6 +605,8 @@ def write_manifest(
     spiffs_offset: int = 0,
     boot_app0_offset: int = 0xE000,
     app_offset: int = 0x10000,
+    flash_size: str = "keep",
+    include_filesystem: bool = True,
 ) -> None:
     def part(file_name: str, offset: int) -> dict[str, Any]:
         return {
@@ -614,7 +621,7 @@ def write_manifest(
         part(f"{firmware_id}.ino.bin", app_offset),
     ]
     spiffs = destination / f"{firmware_id}.spiffs.bin"
-    if spiffs.exists():
+    if include_filesystem and spiffs.exists():
         if not spiffs_offset:
             raise ValueError(f"Missing SPIFFS offset for {firmware_id}")
         parts.append(part(spiffs.name, spiffs_offset))
@@ -622,6 +629,7 @@ def write_manifest(
     manifest = {
         "name": firmware_id,
         "version": version,
+        "flashSize": flash_size,
         "new_install_prompt_erase": True,
         "builds": [
             {
@@ -806,7 +814,7 @@ def prepare_pages(
         missing_parts = missing_artifact_parts(
             artifact_dir,
             target.id,
-            bool(target.spiffs_offset),
+            target.include_filesystem and bool(target.spiffs_offset),
         )
         if missing_parts:
             skipped_targets[target.id] = f"missing {', '.join(missing_parts)}"
@@ -822,6 +830,8 @@ def prepare_pages(
             target.spiffs_offset,
             target.boot_app0_offset,
             target.app_offset,
+            target.flash_size,
+            target.include_filesystem,
         )
         changed_versions[target.id] = version
         print(f"Updated firmware: {target.id} -> {version}")
