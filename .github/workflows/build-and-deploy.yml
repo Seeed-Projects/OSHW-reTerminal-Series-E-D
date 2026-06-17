@@ -217,6 +217,12 @@ jobs:
             cp "$BUILD_DIR/littlefs.bin" "$OUT_DIR/${{ matrix.sketch.name }}.spiffs.bin"
           elif [ -f "$BUILD_DIR/spiffs.bin" ]; then
             cp "$BUILD_DIR/spiffs.bin" "$OUT_DIR/${{ matrix.sketch.name }}.spiffs.bin"
+          elif [ -n "${{ matrix.sketch.filesystem_image_url }}" ]; then
+            curl -fsSL -o "$OUT_DIR/${{ matrix.sketch.name }}.spiffs.bin" \
+              "${{ matrix.sketch.filesystem_image_url }}"
+          elif [ "${{ matrix.sketch.spiffs_offset }}" != "0" ]; then
+            echo "::error::Missing filesystem image for ${{ matrix.sketch.name }}"
+            exit 1
           fi
 
           BOOT_APP0=$(find ~/.platformio -name "boot_app0.bin" -print -quit)

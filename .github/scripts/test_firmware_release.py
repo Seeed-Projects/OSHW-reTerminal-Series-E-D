@@ -100,6 +100,10 @@ class TrmnlTargetTest(unittest.TestCase):
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].devices, ("E1003",))
         self.assertTrue(all(target.fixed_version == "1.8.7" for target in targets.values()))
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].app_offset, 0x20000)
+        self.assertEqual(
+            targets["TRMNL_reTerminal_E1003"].filesystem_image_url,
+            "https://trmnl-fw.s3.us-east-2.amazonaws.com/littlefs.bin",
+        )
 
     def test_semver_firmware_version_is_listed(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

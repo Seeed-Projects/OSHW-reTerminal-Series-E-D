@@ -40,6 +40,7 @@ class FirmwareTarget:
     needs_open_font_render: bool = False
     spiffs_image_size: str = ""
     spiffs_offset: int = 0
+    filesystem_image_url: str = ""
     boot_app0_offset: int = 0xE000
     app_offset: int = 0x10000
     fixed_version: str = ""
@@ -60,6 +61,7 @@ class FirmwareTarget:
             "needs_open_font_render": self.needs_open_font_render,
             "spiffs_image_size": self.spiffs_image_size,
             "spiffs_offset": self.spiffs_offset,
+            "filesystem_image_url": self.filesystem_image_url,
             "fixed_version": self.fixed_version,
             "build_flags": self.build_flags,
             "pio_env": self.pio_env,
@@ -300,6 +302,7 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
         boot_app0_offset=0x13000,
         app_offset=0x20000,
         spiffs_offset=0x620000,
+        filesystem_image_url="https://trmnl-fw.s3.us-east-2.amazonaws.com/littlefs.bin",
         fixed_version="1.8.7",
         title="TRMNL for reTerminal E1003",
         group="official",
