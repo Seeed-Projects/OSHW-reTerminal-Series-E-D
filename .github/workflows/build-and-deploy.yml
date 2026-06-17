@@ -42,9 +42,15 @@ jobs:
           if ! git cat-file -e origin/gh-pages:firmware/versions.json 2>/dev/null; then
             find examples -type f | sort > changed-files.txt
           elif [ "$before" = "0000000000000000000000000000000000000000" ]; then
-            git diff-tree --no-commit-id --name-only -r "$after" -- examples/ > changed-files.txt || true
+            git diff-tree --no-commit-id --name-only -r "$after" -- \
+              examples/ \
+              .github/scripts/firmware_release.py \
+              .github/workflows/build-and-deploy.yml > changed-files.txt || true
           else
-            git diff --name-only "$before" "$after" -- examples/ > changed-files.txt || true
+            git diff --name-only "$before" "$after" -- \
+              examples/ \
+              .github/scripts/firmware_release.py \
+              .github/workflows/build-and-deploy.yml > changed-files.txt || true
           fi
 
           echo "Changed example files:"
