@@ -70,6 +70,15 @@ class TrmnlTargetTest(unittest.TestCase):
         self.assertNotIn("TRMNL_reTerminal_E1004", target_ids)
         self.assertTrue(all(target.tool == "platformio" for target in plan.changed_targets))
 
+    def test_trmnl_packaging_change_rebuilds_supported_platformio_targets(self) -> None:
+        plan = firmware_release.build_plan([".github/scripts/firmware_release.py"])
+        target_ids = {target.id for target in plan.changed_targets}
+
+        self.assertIn("TRMNL_reTerminal_E1001", target_ids)
+        self.assertIn("TRMNL_reTerminal_E1002", target_ids)
+        self.assertIn("TRMNL_reTerminal_E1003", target_ids)
+        self.assertNotIn("TRMNL_reTerminal_E1004", target_ids)
+
     def test_trmnl_targets_use_fixed_version_and_expected_devices(self) -> None:
         targets = {
             target.id: target

@@ -45,6 +45,7 @@ class FirmwareTarget:
     fixed_version: str = ""
     build_flags: str = ""
     pio_env: str = ""
+    rebuild_triggers: tuple[str, ...] = ()
     auto_discovered: bool = False
     title: str = ""
     group: str = ""
@@ -264,6 +265,10 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
         tool="platformio",
         devices=("E1001",),
         pio_env="seeed_reTerminal_E1001",
+        rebuild_triggers=(
+            ".github/scripts/firmware_release.py",
+            ".github/workflows/build-and-deploy.yml",
+        ),
         fixed_version="1.8.7",
         title="TRMNL for reTerminal E1001",
         group="official",
@@ -274,6 +279,10 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
         tool="platformio",
         devices=("E1002",),
         pio_env="seeed_reTerminal_E1002",
+        rebuild_triggers=(
+            ".github/scripts/firmware_release.py",
+            ".github/workflows/build-and-deploy.yml",
+        ),
         fixed_version="1.8.7",
         title="TRMNL for reTerminal E1002",
         group="official",
@@ -284,6 +293,10 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
         tool="platformio",
         devices=("E1003",),
         pio_env="TRMNL_X_E1003",
+        rebuild_triggers=(
+            ".github/scripts/firmware_release.py",
+            ".github/workflows/build-and-deploy.yml",
+        ),
         boot_app0_offset=0x13000,
         app_offset=0x20000,
         spiffs_offset=0x620000,
@@ -450,7 +463,11 @@ def build_plan(changed_files: list[str]) -> ReleasePlan:
     changed_targets = [
         target
         for target in all_targets
-        if any(is_under(changed_file, target.path) for changed_file in changed_files)
+        if any(
+            is_under(changed_file, target.path)
+            or any(is_under(changed_file, trigger) for trigger in target.rebuild_triggers)
+            for changed_file in changed_files
+        )
     ]
     return ReleasePlan(
         changed_files=changed_files,
