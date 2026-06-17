@@ -111,6 +111,49 @@ class TrmnlTargetTest(unittest.TestCase):
             self.assertEqual(offsets["boot_app0.bin"], 0x13000)
             self.assertEqual(offsets["TRMNL_reTerminal_E1003.ino.bin"], 0x20000)
 
+    def test_trmnl_e1003_manifest_includes_filesystem_image(self) -> None:
+        target = next(
+            target
+            for target in firmware_release.FIRMWARE_TARGETS
+            if target.id == "TRMNL_reTerminal_E1003"
+        )
+        self.assertEqual(target.spiffs_offset, 0x620000)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            firmware_dir = Path(temp_dir)
+            (firmware_dir / "TRMNL_reTerminal_E1003.spiffs.bin").write_bytes(b"littlefs")
+            firmware_release.write_manifest(
+                target.id,
+                "1.8.7",
+                firmware_dir,
+                target.spiffs_offset,
+                target.boot_app0_offset,
+                target.app_offset,
+            )
+
+            manifest = json.loads((firmware_dir / "manifest.json").read_text(encoding="utf-8"))
+            parts = manifest["builds"][0]["parts"]
+            offsets = {part["path"]: part["offset"] for part in parts}
+
+            self.assertEqual(offsets["TRMNL_reTerminal_E1003.spiffs.bin"], 0x620000)
+
+    def test_missing_artifact_parts_requires_filesystem_image(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            artifact_dir = Path(temp_dir)
+            firmware_id = "TRMNL_reTerminal_E1003"
+            (artifact_dir / f"{firmware_id}.ino.bootloader.bin").write_bytes(b"bootloader")
+            (artifact_dir / f"{firmware_id}.ino.partitions.bin").write_bytes(b"partitions")
+            (artifact_dir / f"{firmware_id}.ino.bin").write_bytes(b"app")
+            (artifact_dir / "boot_app0.bin").write_bytes(b"boot_app0")
+
+            missing = firmware_release.missing_artifact_parts(
+                artifact_dir,
+                firmware_id,
+                require_spiffs=True,
+            )
+
+            self.assertEqual(missing, [f"{firmware_id}.spiffs.bin"])
+
 
 if __name__ == "__main__":
     unittest.main()

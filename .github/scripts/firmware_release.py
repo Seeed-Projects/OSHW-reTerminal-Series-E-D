@@ -286,6 +286,7 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
         pio_env="TRMNL_X_E1003",
         boot_app0_offset=0x13000,
         app_offset=0x20000,
+        spiffs_offset=0x620000,
         fixed_version="1.8.7",
         title="TRMNL for reTerminal E1003",
         group="official",
@@ -539,7 +540,11 @@ def copy_firmware_artifact(source_dir: Path, firmware_id: str, destination: Path
         shutil.copy2(spiffs, destination / f"{firmware_id}.spiffs.bin")
 
 
-def missing_artifact_parts(source_dir: Path, firmware_id: str) -> list[str]:
+def missing_artifact_parts(
+    source_dir: Path,
+    firmware_id: str,
+    require_spiffs: bool = False,
+) -> list[str]:
     """Return required firmware artifact patterns that are missing.
 
     返回缺失的必要固件产物模式。
@@ -551,6 +556,8 @@ def missing_artifact_parts(source_dir: Path, firmware_id: str) -> list[str]:
             missing.append(pattern)
     if not (source_dir / "boot_app0.bin").exists():
         missing.append("boot_app0.bin")
+    if require_spiffs and not (source_dir / f"{firmware_id}.spiffs.bin").exists():
+        missing.append(f"{firmware_id}.spiffs.bin")
     return missing
 
 
@@ -758,7 +765,11 @@ def prepare_pages(
         if not artifact_dir.exists():
             skipped_targets[target.id] = "missing artifact directory"
             continue
-        missing_parts = missing_artifact_parts(artifact_dir, target.id)
+        missing_parts = missing_artifact_parts(
+            artifact_dir,
+            target.id,
+            bool(target.spiffs_offset),
+        )
         if missing_parts:
             skipped_targets[target.id] = f"missing {', '.join(missing_parts)}"
             continue

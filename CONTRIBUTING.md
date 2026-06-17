@@ -767,8 +767,8 @@ The release automation expects every firmware artifact to contain:
 | `<firmware-id>.spiffs.bin` | target-specific data offset, when registered |
 
 The script generates `manifest.json` automatically with these offsets. Targets
-with non-default layouts can override `boot_app0_offset` and `app_offset` in
-`.github/scripts/firmware_release.py`.
+with non-default layouts can override `boot_app0_offset`, `app_offset`, and
+`spiffs_offset` in `.github/scripts/firmware_release.py`.
 
 Arduino builds produce the expected files through `arduino-cli`.
 
@@ -779,6 +779,7 @@ PlatformIO builds are renamed by the workflow:
 | `firmware.bin` | `<firmware-id>.ino.bin` |
 | `bootloader.bin` | `<firmware-id>.ino.bootloader.bin` |
 | `partitions.bin` | `<firmware-id>.ino.partitions.bin` |
+| `littlefs.bin` or `spiffs.bin` | `<firmware-id>.spiffs.bin` |
 | `boot_app0.bin` | `boot_app0.bin` |
 
 Do not edit generated manifests by hand.
