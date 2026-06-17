@@ -319,7 +319,6 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
         spiffs_offset=0x620000,
         filesystem_image_url="https://trmnl-fw.s3.us-east-2.amazonaws.com/littlefs.bin",
         include_filesystem=False,
-        flash_size="detect",
         fixed_version="1.8.7",
         title="TRMNL for reTerminal E1003",
         group="official",

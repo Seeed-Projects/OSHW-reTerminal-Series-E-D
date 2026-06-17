@@ -132,7 +132,7 @@ class TrmnlTargetTest(unittest.TestCase):
         self.assertTrue(all(target.fixed_version == "1.8.7" for target in targets.values()))
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].app_offset, 0x20000)
         self.assertFalse(targets["TRMNL_reTerminal_E1003"].include_filesystem)
-        self.assertEqual(targets["TRMNL_reTerminal_E1003"].flash_size, "detect")
+        self.assertEqual(targets["TRMNL_reTerminal_E1003"].flash_size, "keep")
 
     def test_trmnl_platformio_targets_enable_serial_logging(self) -> None:
         targets = [
@@ -170,7 +170,6 @@ class TrmnlTargetTest(unittest.TestCase):
                 firmware_dir,
                 boot_app0_offset=0x13000,
                 app_offset=0x20000,
-                flash_size="detect",
                 include_filesystem=False,
             )
 
@@ -178,7 +177,7 @@ class TrmnlTargetTest(unittest.TestCase):
             parts = manifest["builds"][0]["parts"]
             offsets = {path_without_query(part["path"]): part["offset"] for part in parts}
 
-            self.assertEqual(manifest["flashSize"], "detect")
+            self.assertEqual(manifest["flashSize"], "keep")
             self.assertEqual(len(parts), 4)
             self.assertEqual(offsets["boot_app0.bin"], 0x13000)
             self.assertEqual(offsets["TRMNL_reTerminal_E1003.ino.bin"], 0x20000)
