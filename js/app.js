@@ -24,6 +24,7 @@ let firmwareVersions = {};
 let firmwareCatalogLoaded = false;
 const monitorDecoder = new TextDecoder();
 const DEFAULT_FIRMWARE_VERSION = "latest";
+const FIRMWARE_CACHE_BUSTER = String(Date.now());
 
 document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
@@ -101,7 +102,12 @@ function chooseFirmwareOption(options, preferredGroup = "", preferredLanguage = 
 function getInstallManifest() {
   if (!selectedPlatform?.installReady || !selectedFirmwareOption) return "";
   const version = selectedVersion?.version || DEFAULT_FIRMWARE_VERSION;
-  return `firmware/${selectedFirmwareOption.id}/${version}/manifest.json`;
+  return withFirmwareCacheBuster(`firmware/${selectedFirmwareOption.id}/${version}/manifest.json`);
+}
+
+function withFirmwareCacheBuster(path) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}cb=${encodeURIComponent(FIRMWARE_CACHE_BUSTER)}`;
 }
 
 function normalizeFirmwareVersions(data) {
@@ -159,7 +165,7 @@ async function loadFirmwareCatalog() {
   firmwareCatalogLoaded = true;
 
   try {
-    const response = await fetch("firmware/catalog.json");
+    const response = await fetch(withFirmwareCacheBuster("firmware/catalog.json"));
     if (!response.ok) throw new Error(`Firmware catalog fetch failed: ${response.status}`);
     mergeAutoDiscoveredFirmware(await response.json());
   } catch (_) {
@@ -170,7 +176,7 @@ async function loadFirmwareCatalog() {
 
 async function loadFirmwareVersions() {
   try {
-    const response = await fetch("firmware/versions.json");
+    const response = await fetch(withFirmwareCacheBuster("firmware/versions.json"));
     if (!response.ok) throw new Error(`Version manifest fetch failed: ${response.status}`);
     firmwareVersions = normalizeFirmwareVersions(await response.json());
   } catch (_) {
