@@ -13,12 +13,32 @@ from unittest.mock import patch
 
 
 SCRIPT_PATH = Path(__file__).with_name("firmware_release.py")
+REPO_ROOT = SCRIPT_PATH.parents[2]
 SPEC = importlib.util.spec_from_file_location("firmware_release", SCRIPT_PATH)
 assert SPEC is not None
 firmware_release = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 sys.modules[SPEC.name] = firmware_release
 SPEC.loader.exec_module(firmware_release)
+
+
+def platformio_section_flags(env_name: str) -> list[str]:
+    platformio_ini = REPO_ROOT / "examples" / "official" / "TRMNL" / "platformio.ini"
+    lines = platformio_ini.read_text(encoding="utf-8").splitlines()
+    in_section = False
+    flags: list[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_section = stripped == f"[env:{env_name}]"
+            continue
+        if not in_section:
+            continue
+        if stripped.startswith("-D"):
+            flags.append(stripped)
+
+    return flags
 
 
 class ReleaseTagTest(unittest.TestCase):
@@ -104,6 +124,20 @@ class TrmnlTargetTest(unittest.TestCase):
             targets["TRMNL_reTerminal_E1003"].filesystem_image_url,
             "https://trmnl-fw.s3.us-east-2.amazonaws.com/littlefs.bin",
         )
+
+    def test_trmnl_platformio_targets_enable_serial_logging(self) -> None:
+        targets = [
+            target
+            for target in firmware_release.FIRMWARE_TARGETS
+            if target.id.startswith("TRMNL_reTerminal_E100")
+            and target.pio_env
+            and "E1004" not in target.devices
+        ]
+
+        for target in targets:
+            with self.subTest(target=target.id):
+                flags = platformio_section_flags(target.pio_env)
+                self.assertIn("-D DEV_FIRMWARE=1", flags)
 
     def test_semver_firmware_version_is_listed(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
