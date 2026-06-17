@@ -327,6 +327,39 @@
       "autoDiscovered": false
     },
     {
+      "id": "TRMNL_reTerminal_E1001",
+      "name": "TRMNL for reTerminal E1001",
+      "path": "examples/official/TRMNL",
+      "tool": "platformio",
+      "compatible": [
+        "E1001"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "TRMNL_reTerminal_E1002",
+      "name": "TRMNL for reTerminal E1002",
+      "path": "examples/official/TRMNL",
+      "tool": "platformio",
+      "compatible": [
+        "E1002"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "TRMNL_reTerminal_E1003",
+      "name": "TRMNL for reTerminal E1003",
+      "path": "examples/official/TRMNL",
+      "tool": "platformio",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
       "id": "ePaper_VoiceMemo_E1001",
       "name": "Voice Memo Reminder for E1001",
       "path": "examples/community/ePaper-Voice-Memo",

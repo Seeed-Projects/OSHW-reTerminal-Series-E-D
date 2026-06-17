@@ -1151,6 +1151,72 @@ deep_sleep:
     firmwareOptions: [],
   },
   {
+    id: "trmnl",
+    group: "official",
+    name: "TRMNL",
+    tagline: "Cloud-connected ePaper dashboard firmware for always-on information panels.",
+    source: {
+      label: "Official website",
+      url: "https://trmnl.com/",
+    },
+    description:
+      "TRMNL provides ready-to-run dashboard firmware for publishing calendar, task, metric, and plugin-based content to reTerminal ePaper displays.",
+    logo: "assets/platforms/trmnl-logo.svg",
+    preview: "assets/platforms/trmnl-preview.png",
+    previewAlt: "TRMNL dashboard firmware preview",
+    accent: "#3D3D3E",
+    highlight: "#F8654B",
+    supportedDevices: ["E1001", "E1002", "E1003"],
+    installReady: true,
+    bullets: [
+      "Official TRMNL firmware workflow",
+      "Web-flashable device builds",
+      "Available for E1001, E1002, and E1003",
+    ],
+    versions: [
+      {
+        version: "1.8.7",
+        label: "Stable",
+      },
+    ],
+    configFields: [],
+    firmwareOptions: [
+      {
+        id: "TRMNL_reTerminal_E1001",
+        name: "TRMNL Firmware",
+        description: "Install TRMNL dashboard firmware for reTerminal E1001.",
+        category: "Dashboard",
+        compatible: ["E1001"],
+        defaultVersion: "1.8.7",
+        notes: [
+          { type: "info", text: "After flashing, follow the TRMNL setup flow to connect Wi-Fi and pair the device with your TRMNL account." },
+        ],
+      },
+      {
+        id: "TRMNL_reTerminal_E1002",
+        name: "TRMNL Firmware",
+        description: "Install TRMNL dashboard firmware for reTerminal E1002.",
+        category: "Dashboard",
+        compatible: ["E1002"],
+        defaultVersion: "1.8.7",
+        notes: [
+          { type: "info", text: "After flashing, follow the TRMNL setup flow to connect Wi-Fi and pair the device with your TRMNL account." },
+        ],
+      },
+      {
+        id: "TRMNL_reTerminal_E1003",
+        name: "TRMNL Firmware",
+        description: "Install TRMNL dashboard firmware for reTerminal E1003.",
+        category: "Dashboard",
+        compatible: ["E1003"],
+        defaultVersion: "1.8.7",
+        notes: [
+          { type: "info", text: "After flashing, follow the TRMNL setup flow to connect Wi-Fi and pair the device with your TRMNL account." },
+        ],
+      },
+    ],
+  },
+  {
     id: "squareline",
     group: "official",
     name: "SquareLine Vision",
