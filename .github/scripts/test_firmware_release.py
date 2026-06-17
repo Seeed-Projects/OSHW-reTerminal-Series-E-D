@@ -41,6 +41,17 @@ def platformio_section_flags(env_name: str) -> list[str]:
     return flags
 
 
+def create_manifest_artifacts(firmware_dir: Path, firmware_id: str) -> None:
+    (firmware_dir / f"{firmware_id}.ino.bootloader.bin").write_bytes(b"bootloader")
+    (firmware_dir / f"{firmware_id}.ino.partitions.bin").write_bytes(b"partitions")
+    (firmware_dir / f"{firmware_id}.ino.bin").write_bytes(b"app")
+    (firmware_dir / "boot_app0.bin").write_bytes(b"boot_app0")
+
+
+def path_without_query(path: str) -> str:
+    return path.split("?", 1)[0]
+
+
 class ReleaseTagTest(unittest.TestCase):
     def test_next_release_tag_uses_first_same_day_suffix(self) -> None:
         def fake_run(command, check, capture_output, text):
@@ -152,20 +163,37 @@ class TrmnlTargetTest(unittest.TestCase):
 
     def test_manifest_can_use_trmnl_e1003_offsets(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
+            firmware_dir = Path(temp_dir)
+            create_manifest_artifacts(firmware_dir, "TRMNL_reTerminal_E1003")
             firmware_release.write_manifest(
                 "TRMNL_reTerminal_E1003",
                 "1.8.7",
-                Path(temp_dir),
+                firmware_dir,
                 boot_app0_offset=0x13000,
                 app_offset=0x20000,
             )
 
-            manifest = json.loads((Path(temp_dir) / "manifest.json").read_text(encoding="utf-8"))
+            manifest = json.loads((firmware_dir / "manifest.json").read_text(encoding="utf-8"))
             parts = manifest["builds"][0]["parts"]
-            offsets = {part["path"]: part["offset"] for part in parts}
+            offsets = {path_without_query(part["path"]): part["offset"] for part in parts}
 
             self.assertEqual(offsets["boot_app0.bin"], 0x13000)
             self.assertEqual(offsets["TRMNL_reTerminal_E1003.ino.bin"], 0x20000)
+
+    def test_manifest_adds_file_hash_queries(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            firmware_dir = Path(temp_dir)
+            firmware_id = "TRMNL_reTerminal_E1003"
+            create_manifest_artifacts(firmware_dir, firmware_id)
+            firmware_release.write_manifest(firmware_id, "1.8.7", firmware_dir)
+
+            manifest = json.loads((firmware_dir / "manifest.json").read_text(encoding="utf-8"))
+            parts = manifest["builds"][0]["parts"]
+
+            self.assertTrue(all("?sha256=" in part["path"] for part in parts))
+            self.assertTrue(
+                any(part["path"].startswith(f"{firmware_id}.ino.bin?sha256=") for part in parts)
+            )
 
     def test_trmnl_e1003_manifest_includes_filesystem_image(self) -> None:
         target = next(
@@ -177,6 +205,7 @@ class TrmnlTargetTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temp_dir:
             firmware_dir = Path(temp_dir)
+            create_manifest_artifacts(firmware_dir, target.id)
             (firmware_dir / "TRMNL_reTerminal_E1003.spiffs.bin").write_bytes(b"littlefs")
             firmware_release.write_manifest(
                 target.id,
@@ -189,7 +218,7 @@ class TrmnlTargetTest(unittest.TestCase):
 
             manifest = json.loads((firmware_dir / "manifest.json").read_text(encoding="utf-8"))
             parts = manifest["builds"][0]["parts"]
-            offsets = {part["path"]: part["offset"] for part in parts}
+            offsets = {path_without_query(part["path"]): part["offset"] for part in parts}
 
             self.assertEqual(offsets["TRMNL_reTerminal_E1003.spiffs.bin"], 0x620000)
 

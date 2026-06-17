@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -21,6 +22,17 @@ from typing import Any
 FIRMWARE_VERSION_RE = re.compile(r"^(?:\d{4}\.\d{2}\.\d{2}(?:\.\d+)?|\d+\.\d+\.\d+)$")
 EXAMPLE_GROUPS = {"base", "official", "community"}
 SOURCE_REPO_DIR = Path(__file__).resolve().parents[2]
+
+
+def cache_busted_path(path: Path, display_name: str | None = None) -> str:
+    """Return a relative firmware path with a content hash query.
+
+    返回带内容哈希查询参数的相对固件路径。
+    """
+
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+    name = display_name or path.name
+    return f"{name}?sha256={digest}"
 
 
 @dataclass(frozen=True)
@@ -589,17 +601,23 @@ def write_manifest(
     boot_app0_offset: int = 0xE000,
     app_offset: int = 0x10000,
 ) -> None:
+    def part(file_name: str, offset: int) -> dict[str, Any]:
+        return {
+            "path": cache_busted_path(destination / file_name, file_name),
+            "offset": offset,
+        }
+
     parts = [
-        {"path": f"{firmware_id}.ino.bootloader.bin", "offset": 0},
-        {"path": f"{firmware_id}.ino.partitions.bin", "offset": 32768},
-        {"path": "boot_app0.bin", "offset": boot_app0_offset},
-        {"path": f"{firmware_id}.ino.bin", "offset": app_offset},
+        part(f"{firmware_id}.ino.bootloader.bin", 0),
+        part(f"{firmware_id}.ino.partitions.bin", 32768),
+        part("boot_app0.bin", boot_app0_offset),
+        part(f"{firmware_id}.ino.bin", app_offset),
     ]
     spiffs = destination / f"{firmware_id}.spiffs.bin"
     if spiffs.exists():
         if not spiffs_offset:
             raise ValueError(f"Missing SPIFFS offset for {firmware_id}")
-        parts.append({"path": spiffs.name, "offset": spiffs_offset})
+        parts.append(part(spiffs.name, spiffs_offset))
 
     manifest = {
         "name": firmware_id,
