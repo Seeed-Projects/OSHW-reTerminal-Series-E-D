@@ -187,7 +187,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ./build/${{ matrix.sketch.name }}/
-          key: firmware-pio-v3-${{ matrix.sketch.name }}-${{ hashFiles(format('{0}/**', matrix.sketch.path)) }}
+          key: firmware-pio-v4-${{ matrix.sketch.name }}-${{ hashFiles(format('{0}/**', matrix.sketch.path), '.github/scripts/firmware_release.py', '.github/workflows/build-and-deploy.yml') }}
 
       - name: Set up Python
         if: steps.cache.outputs.cache-hit != 'true'
