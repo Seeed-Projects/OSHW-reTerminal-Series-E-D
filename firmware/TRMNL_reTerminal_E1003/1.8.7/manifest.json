@@ -8,7 +8,7 @@
       "chipFamily": "ESP32-S3",
       "parts": [
         {
-          "path": "TRMNL_reTerminal_E1003.ino.bootloader.bin?sha256=af1d854310352440",
+          "path": "TRMNL_reTerminal_E1003.ino.bootloader.bin?sha256=a9997a0f0ce2f09b",
           "offset": 0
         },
         {
@@ -20,7 +20,7 @@
           "offset": 77824
         },
         {
-          "path": "TRMNL_reTerminal_E1003.ino.bin?sha256=7b4260ba6787263e",
+          "path": "TRMNL_reTerminal_E1003.ino.bin?sha256=4f9685382b746f1a",
           "offset": 131072
         },
         {
