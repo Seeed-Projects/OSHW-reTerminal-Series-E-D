@@ -131,7 +131,7 @@ class TrmnlTargetTest(unittest.TestCase):
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].devices, ("E1003",))
         self.assertTrue(all(target.fixed_version == "1.8.7" for target in targets.values()))
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].app_offset, 0x20000)
-        self.assertFalse(targets["TRMNL_reTerminal_E1003"].include_filesystem)
+        self.assertTrue(targets["TRMNL_reTerminal_E1003"].include_filesystem)
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].flash_size, "keep")
 
     def test_trmnl_platformio_targets_enable_serial_logging(self) -> None:
@@ -168,9 +168,9 @@ class TrmnlTargetTest(unittest.TestCase):
                 "TRMNL_reTerminal_E1003",
                 "1.8.7",
                 firmware_dir,
+                spiffs_offset=0x620000,
                 boot_app0_offset=0x13000,
                 app_offset=0x20000,
-                include_filesystem=False,
             )
 
             manifest = json.loads((firmware_dir / "manifest.json").read_text(encoding="utf-8"))
@@ -178,10 +178,10 @@ class TrmnlTargetTest(unittest.TestCase):
             offsets = {path_without_query(part["path"]): part["offset"] for part in parts}
 
             self.assertEqual(manifest["flashSize"], "keep")
-            self.assertEqual(len(parts), 4)
+            self.assertEqual(len(parts), 5)
             self.assertEqual(offsets["boot_app0.bin"], 0x13000)
             self.assertEqual(offsets["TRMNL_reTerminal_E1003.ino.bin"], 0x20000)
-            self.assertNotIn("TRMNL_reTerminal_E1003.spiffs.bin", offsets)
+            self.assertEqual(offsets["TRMNL_reTerminal_E1003.spiffs.bin"], 0x620000)
 
     def test_manifest_adds_file_hash_queries(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
