@@ -10,5 +10,6 @@
 .vscode/settings.json
 sdkconfig.*
 !sdkconfig.defaults
+!sdkconfig.TRMNL_X_E1003
 managed_components/
 test/integration/test_config.h
