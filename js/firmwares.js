@@ -1217,6 +1217,53 @@ deep_sleep:
     ],
   },
   {
+    id: "eezstudio",
+    group: "official",
+    name: "EEZ Studio",
+    tagline: "Visual LVGL UI design and code generation for ePaper displays.",
+    source: {
+      label: "Official website",
+      url: "https://www.envox.eu/studio/studio-introduction/",
+    },
+    description:
+      "EEZ Studio provides a visual drag-and-drop environment for designing LVGL-based UIs. Export your screen layout as C code, drop it into the project template, and compile with PlatformIO.",
+    logo: "assets/platforms/eezstudio-logo.png",
+    preview: "assets/platforms/eezstudio-preview.jpg",
+    previewAlt: "EEZ Studio EcoLife dashboard on reTerminal ePaper display",
+    accent: "#004966",
+    highlight: "#00AEEF",
+    supportedDevices: ["E1001", "E1002", "E1003", "E1004"],
+    installReady: false,
+    downloadMode: true,
+    downloadUrl: "downloads/EEZStudio.zip",
+    downloadSteps: [
+      {
+        title: "Download project template",
+        description: "Click the button below to download the PlatformIO project template pre-configured for {deviceName}.",
+      },
+      {
+        title: "Design your UI in EEZ Studio",
+        description: "Open EEZ Studio, design your screen layout with widgets and images, then export the project as LVGL v9 C source code.",
+      },
+      {
+        title: "Replace the UI folder",
+        description: "Copy the exported files into the project's src/ui/ directory, replacing the default Hello World example.",
+      },
+      {
+        title: "Compile and flash with PlatformIO",
+        description: "Open the project in VS Code with PlatformIO, select the {deviceId} environment, click Build, then Upload to flash your custom UI.",
+      },
+    ],
+    bullets: [
+      "Visual drag-and-drop LVGL v9 UI editor",
+      "Export C code directly into the project",
+      "PlatformIO build workflow for all E-series devices",
+    ],
+    versions: [],
+    configFields: [],
+    firmwareOptions: [],
+  },
+  {
     id: "squareline",
     group: "official",
     name: "SquareLine Vision",
