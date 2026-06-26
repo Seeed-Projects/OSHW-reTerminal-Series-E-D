@@ -65,16 +65,16 @@
 <!-- Replace with an actual screenshot of the Firmware Hub -->
 <!-- ![Firmware Hub Screenshot](docs/images/screenshot.png) -->
 
-The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you flash firmware onto Seeed Studio's reTerminal E-Series ePaper devices in four simple steps:
+The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you flash firmware, export templates, or download project templates for Seeed Studio's reTerminal E-Series ePaper devices in four simple steps:
 
 1. **Select a platform** — choose from official platforms, Base demos, or community projects
 2. **Review the selected platform** — confirm the device and demo summary
-3. **Pick firmware, version, or template options** — choose a Base demo release or ESPHome YAML modules
-4. **Flash or export** — write firmware over USB or preview, copy, and download an ESPHome YAML file from the browser
+3. **Pick firmware, version, template options, or a project template** — choose the workflow that matches the selected platform
+4. **Flash, export, or build locally** — write firmware over USB, export an ESPHome YAML file, or download a PlatformIO project template
 
 A built-in **serial monitor** lets you view real-time device logs, choose the baud rate, pause the visible stream, and save the retained recent log without leaving the page.
 
-No Arduino IDE, no driver headaches, no command-line compiling — just plug in your device and go.
+Browser-flashable workflows run directly from the page. Template and download workflows provide the files needed for local customization and builds.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -102,6 +102,7 @@ All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support
 | **Base** | ✅ Ready | E1001 – E1004 | Smoke-test demos (RTC, deep sleep, mic recording, touch draw) |
 | **ESPHome** | ✅ YAML templates | E1001 – E1002 | Smart home integration with Home Assistant |
 | **TRMNL** | ✅ Ready | E1001 – E1003 | Official TRMNL dashboard firmware for always-on ePaper panels |
+| **EEZ Studio** | ✅ Project template | E1001 | Visual LVGL UI design with a downloadable PlatformIO project template |
 | **SquareLine Vision** | 🔜 Coming soon | E1002, E1003 | Visual UI designer for embedded ePaper displays |
 | **OpenDisplay** | 🔜 Coming soon | E1001 – E1003 | BLE-powered ePaper control + browser image upload |
 
@@ -121,14 +122,14 @@ The web app is a **zero-dependency static site** — no bundler, no framework, n
 
 ## Getting Started
 
-### Flash from Browser
+### Use the Firmware Hub
 
-The quickest way to get started — no local setup needed:
+The quickest way to get started is to follow the path shown by the selected platform:
 
 1. Open the **[Firmware Hub](https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/)** in **Chrome** or **Edge** (desktop only)
 2. Connect your reTerminal E-Series device via USB
 3. Select a platform and device
-4. Pick a firmware demo and version, then click **Install**; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**
+4. Pick a firmware demo and version, then click **Install**; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**; for EEZ Studio, click **Download project template** and build locally with PlatformIO
 5. For flashing, choose the serial port when prompted and wait for the flash to complete
 
 > **Note:** Web Serial requires **HTTPS** or **localhost** and is only available in Chromium-based browsers (Chrome, Edge, Opera). Safari and Firefox are not supported.
@@ -257,6 +258,7 @@ Configure GitHub Pages to serve from the `gh-pages` branch. The deployed site is
 - [x] Built-in serial monitor
 - [x] CI/CD pipeline for automated builds and deployment
 - [x] ESPHome YAML template generation for Home Assistant workflows
+- [x] EEZ Studio PlatformIO project template download
 - [ ] SquareLine Vision UI designer support
 - [ ] OpenDisplay BLE control + image upload
 - [ ] "Erase & flash" mode for full chip erase before flashing

@@ -302,6 +302,15 @@ jobs:
             --release-assets-dir release-assets \
             --release-notes release-notes.md
 
+      - name: Package EEZ Studio project template
+        run: |
+          set -euo pipefail
+          mkdir -p pages/downloads
+          cd source
+          zip -r ../pages/downloads/EEZStudio.zip examples/official/EEZStudio/ \
+            -x "examples/official/EEZStudio/.pio/*" \
+            -x "examples/official/EEZStudio/.DS_Store"
+
       - name: Commit and push gh-pages
         run: |
           set -euo pipefail

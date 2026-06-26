@@ -27,7 +27,7 @@ The Firmware Hub currently has three groups.
 
 | Group | `group` value | Use it for |
 |---|---|---|
-| Official Platforms | `official` | Official platform integrations or partner workflows, such as ESPHome, SquareLine Vision, and OpenDisplay |
+| Official Platforms | `official` | Official platform integrations or partner workflows, such as ESPHome, EEZ Studio, SquareLine Vision, and OpenDisplay |
 | Base | `base` | First-party hardware bring-up demos: RTC, sleep, buttons, buzzer, display, sensors, SD card, microphone |
 | Community Projects | `community` | Community apps or contributed end-user projects built on the device stack |
 
@@ -180,11 +180,11 @@ group, or add firmware options to an existing official platform card.
 
 Before writing any code, decide how users will consume your contribution:
 
-| Question | Answer: Flash mode | Answer: Template mode |
-|---|---|---|
-| Does your project produce a ready-to-run `.bin` firmware? | Yes | No |
-| Can the user flash it directly from the browser without modification? | Yes | No — each user needs to customize the config |
-| What does the user get? | A working firmware on the device | A starter config file to edit and compile elsewhere |
+| Question | Answer: Flash mode | Answer: Template mode | Answer: Download mode |
+|---|---|---|---|
+| Does your project produce a ready-to-run `.bin` firmware? | Yes | A generated config file | A source project template |
+| How does the user finish setup? | Flash from the browser | Export a config file and use the target toolchain | Download, customize, compile, and flash locally |
+| What does the user get? | A working firmware on the device | A starter config file | A packaged PlatformIO or source project |
 
 **Flash mode** — set `installReady: true`, provide `firmwareOptions` with build
 IDs, and register build targets in `firmware_release.py`. GitHub Actions builds
@@ -196,9 +196,17 @@ generates a configuration file in the browser for the user to preview, copy, or
 download. See [Template mode platforms](#template-mode-platforms) for the full
 data structure.
 
+**Download mode** — set `installReady: false` and `downloadMode: true`, provide
+`downloadUrl` and `downloadSteps`. The Hub presents a download button and a
+step-by-step local build guide. See
+[Download mode platforms](#download-mode-platforms) for the field reference.
+
 Most official platforms that require per-user customization (such as ESPHome,
 where every user's display layout and sensor setup is different) should use
 template mode.
+
+Use download mode when the contribution is a complete source project template
+that users customize in an external tool before compiling locally.
 
 ### 1. Add the example source
 
@@ -286,6 +294,38 @@ For a new official platform card, add an object to `PLATFORM_CARDS`.
 See [Template mode platforms](#template-mode-platforms) for the full field
 reference and a working example.
 
+**Download mode** (source project, user builds locally):
+
+```js
+{
+  id: "my-official-platform",
+  group: "official",
+  name: "My Official Platform",
+  tagline: "Short workflow summary.",
+  source: { label: "Official website", url: "https://example.com" },
+  description: "What this platform does and when to use it.",
+  logo: "assets/platforms/my-official-platform-logo.svg",
+  preview: "assets/platforms/my-official-platform-preview.svg",
+  previewAlt: "My Official Platform preview",
+  accent: "#004966",
+  highlight: "#8FC31F",
+  supportedDevices: ["E1001"],
+  installReady: false,
+  downloadMode: true,
+  downloadUrl: "downloads/MyOfficialPlatform.zip",
+  downloadSteps: [
+    {
+      title: "Download project template",
+      description: "Download the packaged PlatformIO project."
+    }
+  ],
+  bullets: ["Source project template", "Local build workflow"],
+  versions: [],
+  configFields: [],
+  firmwareOptions: []
+}
+```
+
 The `source` field is required for official platform cards. Use it to link to
 the official product or project website.
 
@@ -314,6 +354,9 @@ needs special libraries, add entries in `.github/scripts/firmware_release.py`
 under `FIRMWARE_TARGETS`.
 
 Do not edit `.github/workflows/build-and-deploy.yml` for this.
+
+For download-mode source templates, package the source folder during deployment
+so the Hub can serve the `downloadUrl` file from `gh-pages`.
 
 ## Scenario 3: add a community project
 
@@ -541,6 +584,31 @@ Minimal template-mode platform example:
 Template mode platforms do not need firmware build targets in
 `.github/scripts/firmware_release.py`, `versions.json` entries, or
 `manifest.json` files. They are purely client-side.
+
+## Download mode platforms
+
+Use download mode when the Hub should provide a source project archive and a
+local build guide instead of generating a browser-side config file or flashing a
+compiled binary.
+
+### Download mode platform fields
+
+| Field | Required | Default | Description |
+|---|---:|---|---|
+| `downloadMode` | Yes | — | Must be `true` |
+| `downloadUrl` | Yes | — | Relative URL for the packaged project archive |
+| `downloadSteps` | Yes | — | Ordered setup guide shown in the flash panel |
+
+### Download step fields
+
+| Field | Required | Description |
+|---|---:|---|
+| `title` | Yes | Short step title |
+| `description` | Yes | One paragraph describing the action |
+
+Download-mode platforms use `installReady: false`, empty `versions`, empty
+`configFields`, and empty `firmwareOptions`. The deployment workflow packages
+the source project into the file referenced by `downloadUrl`.
 
 ## Scenario 4: update an existing example
 
@@ -869,6 +937,8 @@ Use this checklist before opening a pull request.
 - Every template-mode `templateOptions` entry includes a `snippet` field.
 - Template data, including headers, footers, and snippets, lives in
   `web/js/firmwares.js`, not in `web/js/app.js`.
+- Download-mode platforms set `installReady: false` and `downloadMode: true`.
+- Download-mode platforms include `downloadUrl` and `downloadSteps`.
 
 ### Configuration
 
@@ -895,8 +965,9 @@ After the pull request is merged into `main`, GitHub Actions will:
 3. write a new date-based version for those firmware targets,
 4. update `firmware/versions.json` for the version dropdown,
 5. update `firmware/catalog.json` for auto-discovered firmware,
-6. deploy the Firmware Hub to `gh-pages`,
-7. create a GitHub Release that includes a full latest firmware package for all
+6. package download-mode project templates,
+7. deploy the Firmware Hub to `gh-pages`,
+8. create a GitHub Release that includes a full latest firmware package for all
    examples.
 
 No contributor-side release step is required.

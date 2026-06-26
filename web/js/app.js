@@ -488,14 +488,16 @@ function renderFlowState() {
   const flashPanel = document.getElementById("flashPanel");
 
   const isTemplate = Boolean(selectedPlatform?.templateMode);
+  const isDownload = Boolean(selectedPlatform?.downloadMode);
   const showBaseDetail = baseDetailOpen && !hasSelection;
   document.body.classList.toggle("has-selection", hasSelection);
   if (selectionPanel) selectionPanel.classList.toggle("is-collapsed", hasSelection || showBaseDetail);
   toggleStepPanel(baseDetailPanel, showBaseDetail, 0);
   toggleStepPanel(selectedPanel, hasSelection, 0);
-  toggleStepPanel(versionPanel, hasSelection, 90);
+  toggleStepPanel(versionPanel, hasSelection && !isDownload, 90);
   toggleStepPanel(flashPanel, hasSelection, 180);
-  if (hasSelection) renderFlashPanelMode(isTemplate);
+  if (hasSelection) renderFlashPanelMode(isTemplate, isDownload);
+  if (hasSelection && isDownload) renderDownloadGuide();
 }
 
 function toggleStepPanel(panel, visible, delayMs) {
@@ -867,8 +869,8 @@ function copyTemplateToClipboard() {
   });
 }
 
-// Toggles flash-panel child elements between flash mode and template preview mode.
-function renderFlashPanelMode(isTemplate) {
+// Toggles flash-panel child elements between flash, template preview, and download modes.
+function renderFlashPanelMode(isTemplate, isDownload) {
   const flashPanel = document.getElementById("flashPanel");
   if (!flashPanel) return;
   const heading = flashPanel.querySelector(".panel-heading h2");
@@ -879,15 +881,56 @@ function renderFlashPanelMode(isTemplate) {
   const flashActions = flashPanel.querySelector(".flash-actions");
   const templatePreview = document.getElementById("templatePreview");
   const templateExport = document.getElementById("templateExportActions");
+  const downloadGuide = document.getElementById("downloadGuide");
+  const downloadActions = document.getElementById("downloadActions");
 
-  if (heading) heading.textContent = isTemplate ? "Preview and export" : "Flash to device";
-  if (installMode) installMode.classList.toggle("is-hidden", isTemplate);
-  if (progressRow) progressRow.classList.toggle("is-hidden", isTemplate);
-  if (flashActions) flashActions.classList.toggle("is-hidden", isTemplate);
+  if (heading) {
+    if (isDownload) heading.textContent = "Download and build";
+    else if (isTemplate) heading.textContent = "Preview and export";
+    else heading.textContent = "Flash to device";
+  }
+  const hideFlash = isTemplate || isDownload;
+  if (installMode) installMode.classList.toggle("is-hidden", hideFlash);
+  if (progressRow) progressRow.classList.toggle("is-hidden", hideFlash);
+  if (flashActions) flashActions.classList.toggle("is-hidden", hideFlash);
   if (templatePreview) templatePreview.classList.toggle("is-hidden", !isTemplate);
   if (templateExport) templateExport.classList.toggle("is-hidden", !isTemplate);
+  if (downloadGuide) downloadGuide.classList.toggle("is-hidden", !isDownload);
+  if (downloadActions) downloadActions.classList.toggle("is-hidden", !isDownload);
   if (isTemplate && installNote) installNote.classList.remove("is-visible");
   if (isTemplate && errorAlert) errorAlert.classList.remove("is-visible");
+  if (isDownload && installNote) installNote.classList.remove("is-visible");
+  if (isDownload && errorAlert) errorAlert.classList.remove("is-visible");
+}
+
+function renderDownloadGuide() {
+  const container = document.getElementById("downloadGuide");
+  if (!container || !selectedPlatform?.downloadMode) return;
+
+  const steps = selectedPlatform.downloadSteps || [];
+  const devName = selectedDevice?.name || "";
+  const devId = selectedDevice?.id || "";
+  container.innerHTML = `
+    <ol class="download-steps-list">
+      ${steps.map((step, i) => `
+        <li class="download-step">
+          <div class="download-step-number">${i + 1}</div>
+          <div class="download-step-content">
+            <strong>${step.title}</strong>
+            <p>${step.description.replace(/\{deviceName\}/g, devName).replace(/\{deviceId\}/g, devId)}</p>
+          </div>
+        </li>
+      `).join("")}
+    </ol>
+    <div class="download-wiki-hint">
+      Need more help? <a href="https://wiki.seeedstudio.com/reterminal_e10xx_with_eezstudio/" target="_blank" rel="noopener">Read the full tutorial on Seeed Studio Wiki →</a>
+    </div>
+  `;
+
+  const downloadBtn = document.getElementById("downloadProjectButton");
+  if (downloadBtn && selectedPlatform.downloadUrl) {
+    downloadBtn.href = selectedPlatform.downloadUrl;
+  }
 }
 
 // Fetches a binary file as the string format expected by esptool-js.
