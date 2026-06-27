@@ -243,5 +243,115 @@ class TrmnlTargetTest(unittest.TestCase):
             self.assertEqual(missing, [f"{firmware_id}.spiffs.bin"])
 
 
+class ExternalFirmwareTest(unittest.TestCase):
+    def test_photoframe_targets_registered_for_expected_devices(self) -> None:
+        external = {item.id: item for item in firmware_release.EXTERNAL_FIRMWARE}
+        self.assertIn("PhotoFrame_reTerminal_E1002", external)
+        self.assertIn("PhotoFrame_reTerminal_E1004", external)
+        self.assertEqual(external["PhotoFrame_reTerminal_E1002"].devices, ("E1002",))
+        self.assertEqual(external["PhotoFrame_reTerminal_E1004"].devices, ("E1004",))
+        self.assertTrue(
+            all(item.group == "community" for item in firmware_release.EXTERNAL_FIRMWARE)
+        )
+
+    def test_external_manifest_is_single_merged_part_at_zero(self) -> None:
+        external = firmware_release.ExternalFirmware(
+            id="PhotoFrame_reTerminal_E1002",
+            version="2.8.0",
+            url="https://example.test/photoframe-firmware-e1002-merged.bin",
+            devices=("E1002",),
+            title="ESP32 PhotoFrame for E1002",
+        )
+
+        def fake_download(url: str, destination: Path) -> None:
+            destination.write_bytes(b"merged-firmware-image")
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch.object(
+            firmware_release, "download_binary", side_effect=fake_download
+        ):
+            destination = Path(temp_dir) / external.id / external.version
+            firmware_release.write_external_manifest(external, destination)
+
+            manifest = json.loads((destination / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["version"], "2.8.0")
+            self.assertTrue(manifest["new_install_prompt_erase"])
+            builds = manifest["builds"]
+            self.assertEqual(builds[0]["chipFamily"], "ESP32-S3")
+            parts = builds[0]["parts"]
+            self.assertEqual(len(parts), 1)
+            self.assertEqual(parts[0]["offset"], 0)
+            self.assertTrue(
+                path_without_query(parts[0]["path"]).endswith("-merged.bin")
+            )
+            self.assertIn("?sha256=", parts[0]["path"])
+            self.assertTrue(
+                (destination / "photoframe-firmware-e1002-merged.bin").exists()
+            )
+
+    def test_publish_external_firmware_is_idempotent(self) -> None:
+        external = (
+            firmware_release.ExternalFirmware(
+                id="PhotoFrame_reTerminal_E1002",
+                version="2.8.0",
+                url="https://example.test/e1002-merged.bin",
+                devices=("E1002",),
+            ),
+        )
+
+        calls = {"count": 0}
+
+        def fake_download(url: str, destination: Path) -> None:
+            calls["count"] += 1
+            destination.write_bytes(b"merged")
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch.object(
+            firmware_release, "download_binary", side_effect=fake_download
+        ):
+            firmware_root = Path(temp_dir)
+
+            first = firmware_release.publish_external_firmware(firmware_root, external)
+            self.assertEqual(first, {"PhotoFrame_reTerminal_E1002": "2.8.0"})
+
+            second = firmware_release.publish_external_firmware(firmware_root, external)
+            self.assertEqual(second, {})
+            self.assertEqual(calls["count"], 1)
+
+            versions = firmware_release.write_versions_json(firmware_root)
+            self.assertEqual(versions["PhotoFrame_reTerminal_E1002"], ["2.8.0"])
+
+    def test_catalog_lists_external_firmware_as_community(self) -> None:
+        external = (
+            firmware_release.ExternalFirmware(
+                id="PhotoFrame_reTerminal_E1004",
+                version="2.8.0",
+                url="https://example.test/e1004-merged.bin",
+                devices=("E1004",),
+                title="ESP32 PhotoFrame for E1004",
+            ),
+        )
+
+        def fake_download(url: str, destination: Path) -> None:
+            destination.write_bytes(b"merged")
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch.object(
+            firmware_release, "download_binary", side_effect=fake_download
+        ):
+            firmware_root = Path(temp_dir)
+            firmware_release.publish_external_firmware(firmware_root, external)
+            firmware_release.write_catalog_json(firmware_root, [], external)
+
+            catalog = json.loads(
+                (firmware_root / "catalog.json").read_text(encoding="utf-8")
+            )
+            entry = next(
+                item
+                for item in catalog["firmware"]
+                if item["id"] == "PhotoFrame_reTerminal_E1004"
+            )
+            self.assertEqual(entry["group"], "community")
+            self.assertEqual(entry["compatible"], ["E1004"])
+            self.assertFalse(entry["autoDiscovered"])
+
+
 if __name__ == "__main__":
     unittest.main()
