@@ -13,6 +13,7 @@ import os
 import re
 import shutil
 import subprocess
+import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -373,6 +374,69 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
 )
 
 
+@dataclass(frozen=True)
+class ExternalFirmware:
+    """A browser-flashable firmware whose binary is built and released elsewhere.
+
+    在其他仓库构建和发布的可烧录固件。
+
+    The full-flash merged image (bootloader + partition table + app at offset 0)
+    is mirrored onto gh-pages at deploy time so the Firmware Hub can flash it
+    same-origin — release-assets.githubusercontent.com does not send CORS headers,
+    so the browser cannot fetch the upstream asset directly.
+
+    完整合并镜像（偏移 0 处的 bootloader + 分区表 + 应用）在部署时镜像到 gh-pages，
+    以便固件中心同源烧录 —— release-assets.githubusercontent.com 不返回 CORS 头，
+    浏览器无法直接抓取上游产物。
+    """
+
+    id: str
+    version: str
+    url: str
+    devices: tuple[str, ...]
+    title: str = ""
+    group: str = "community"
+    chip_family: str = "ESP32-S3"
+
+    def to_catalog(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.title or self.id.replace("_", " "),
+            "path": "",
+            "tool": "external",
+            "compatible": list(self.devices),
+            "autoDiscovered": False,
+            "group": self.group,
+        }
+
+
+# Externally built firmware mirrored into the hub at deploy time. Bumping a
+# version here publishes a new flashable version on the next deploy.
+# 在部署时镜像进固件中心的外部固件。在此处提升版本号即可在下次部署时发布新的可烧录版本。
+EXTERNAL_FIRMWARE: tuple[ExternalFirmware, ...] = (
+    ExternalFirmware(
+        id="PhotoFrame_reTerminal_E1002",
+        version="2.8.0",
+        url=(
+            "https://github.com/aitjcize/esp32-photoframe/releases/download/"
+            "v2.8.0/photoframe-firmware-seeedstudio_reterminal_e1002-merged.bin"
+        ),
+        devices=("E1002",),
+        title="ESP32 PhotoFrame for E1002",
+    ),
+    ExternalFirmware(
+        id="PhotoFrame_reTerminal_E1004",
+        version="2.8.0",
+        url=(
+            "https://github.com/aitjcize/esp32-photoframe/releases/download/"
+            "v2.8.0/photoframe-firmware-seeedstudio_reterminal_e1004-merged.bin"
+        ),
+        devices=("E1004",),
+        title="ESP32 PhotoFrame for E1004",
+    ),
+)
+
+
 @dataclass
 class ReleasePlan:
     changed_files: list[str]
@@ -642,6 +706,74 @@ def write_manifest(
     )
 
 
+def download_binary(url: str, destination: Path) -> None:
+    """Download a firmware binary to a local path.
+
+    将固件二进制下载到本地路径。
+    """
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    request = urllib.request.Request(url, headers={"User-Agent": "firmware-release"})
+    with urllib.request.urlopen(request) as response, destination.open("wb") as output:
+        shutil.copyfileobj(response, output)
+
+
+def write_external_manifest(external: ExternalFirmware, destination: Path) -> None:
+    """Mirror an external merged image and emit a same-origin manifest.
+
+    镜像外部合并镜像并生成同源 manifest。
+    """
+
+    destination.mkdir(parents=True, exist_ok=True)
+    bin_name = external.url.rsplit("/", 1)[-1]
+    download_binary(external.url, destination / bin_name)
+
+    manifest = {
+        "name": external.title or external.id,
+        "version": external.version,
+        "new_install_prompt_erase": True,
+        "builds": [
+            {
+                "chipFamily": external.chip_family,
+                "parts": [
+                    {
+                        "path": cache_busted_path(destination / bin_name, bin_name),
+                        "offset": 0,
+                    }
+                ],
+            }
+        ],
+    }
+    (destination / "manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def publish_external_firmware(
+    firmware_root: Path,
+    external_firmware: tuple[ExternalFirmware, ...],
+) -> dict[str, str]:
+    """Publish external firmware manifests, skipping versions already mirrored.
+
+    发布外部固件 manifest，跳过已镜像的版本。
+    """
+
+    published: dict[str, str] = {}
+    for external in external_firmware:
+        destination = firmware_root / external.id / external.version
+        if (destination / "manifest.json").exists():
+            continue
+        try:
+            write_external_manifest(external, destination)
+        except Exception as exc:  # noqa: BLE001 - never fail the whole deploy
+            print(f"Skipped external firmware: {external.id} ({exc})")
+            continue
+        published[external.id] = external.version
+        print(f"Published external firmware: {external.id} -> {external.version}")
+    return published
+
+
 def migrate_legacy_latest(firmware_root: Path, today: str) -> None:
     """Copy legacy latest-only firmware into a date version once.
 
@@ -678,9 +810,15 @@ def write_versions_json(firmware_root: Path) -> dict[str, list[str]]:
     return versions
 
 
-def write_catalog_json(firmware_root: Path, targets: list[FirmwareTarget]) -> None:
+def write_catalog_json(
+    firmware_root: Path,
+    targets: list[FirmwareTarget],
+    external_firmware: tuple[ExternalFirmware, ...] = (),
+) -> None:
     catalog_items = [target.to_catalog() for target in targets]
+    catalog_items.extend(external.to_catalog() for external in external_firmware)
     known_ids = {target.id for target in targets}
+    known_ids.update(external.id for external in external_firmware)
     for firmware_dir in sorted(entry for entry in firmware_root.iterdir() if entry.is_dir()):
         if firmware_dir.name in known_ids or not date_versions(firmware_dir):
             continue
@@ -699,10 +837,15 @@ def write_catalog_json(firmware_root: Path, targets: list[FirmwareTarget]) -> No
     )
 
 
-def copy_release_assets(firmware_root: Path, versions: dict[str, list[str]], release_dir: Path) -> None:
+def copy_release_assets(
+    firmware_root: Path,
+    versions: dict[str, list[str]],
+    release_dir: Path,
+    exclude_ids: set[str] = frozenset(),
+) -> None:
     release_dir.mkdir(parents=True, exist_ok=True)
     for firmware_id, firmware_versions in sorted(versions.items()):
-        if not firmware_versions:
+        if not firmware_versions or firmware_id in exclude_ids:
             continue
         current_version = firmware_versions[0]
         source_dir = firmware_root / firmware_id / current_version
@@ -837,9 +980,16 @@ def prepare_pages(
     for firmware_id, reason in sorted(skipped_targets.items()):
         print(f"Skipped firmware: {firmware_id} ({reason})")
 
+    publish_external_firmware(firmware_root, EXTERNAL_FIRMWARE)
+
     versions = write_versions_json(firmware_root)
-    write_catalog_json(firmware_root, plan.all_targets)
-    copy_release_assets(firmware_root, versions, release_assets_dir)
+    write_catalog_json(firmware_root, plan.all_targets, EXTERNAL_FIRMWARE)
+    copy_release_assets(
+        firmware_root,
+        versions,
+        release_assets_dir,
+        exclude_ids={external.id for external in EXTERNAL_FIRMWARE},
+    )
     write_release_notes(release_notes, changed_versions, versions)
     release_ready = bool(plan.changed_targets) and not skipped_targets
 
