@@ -105,6 +105,7 @@ All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support
 | **EEZ Studio** | ✅ Project template | E1001 | Visual LVGL UI design with a downloadable PlatformIO project template |
 | **SquareLine Vision** | 🔜 Coming soon | E1002, E1003 | Visual UI designer for embedded ePaper displays |
 | **OpenDisplay** | 🔜 Coming soon | E1001 – E1003 | BLE-powered ePaper control + browser image upload |
+| **ESP32 PhotoFrame** | ✅ Community | E1002, E1004 | Full-color photo frame firmware with measured-palette image quality, web UI, REST API, and Home Assistant integration ([repo](https://github.com/aitjcize/esp32-photoframe)) |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
