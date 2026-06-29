@@ -1,0 +1,16 @@
+{
+  "name": "ESP32 PhotoFrame for E1004",
+  "version": "2.8.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "photoframe-firmware-seeedstudio_reterminal_e1004-merged.bin?sha256=3b28c463144be2af",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

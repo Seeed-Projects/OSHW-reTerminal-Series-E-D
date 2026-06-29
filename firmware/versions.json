@@ -62,6 +62,12 @@
   "MicroSD_ListFiles": [
     "2026.06.07"
   ],
+  "PhotoFrame_reTerminal_E1002": [
+    "2.8.0"
+  ],
+  "PhotoFrame_reTerminal_E1004": [
+    "2.8.0"
+  ],
   "RTC_PCF8563": [
     "2026.06.07"
   ],

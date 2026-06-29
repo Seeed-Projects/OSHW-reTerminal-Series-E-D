@@ -418,6 +418,28 @@
         "E1003"
       ],
       "autoDiscovered": false
+    },
+    {
+      "id": "PhotoFrame_reTerminal_E1002",
+      "name": "ESP32 PhotoFrame for E1002",
+      "path": "",
+      "tool": "external",
+      "compatible": [
+        "E1002"
+      ],
+      "autoDiscovered": false,
+      "group": "community"
+    },
+    {
+      "id": "PhotoFrame_reTerminal_E1004",
+      "name": "ESP32 PhotoFrame for E1004",
+      "path": "",
+      "tool": "external",
+      "compatible": [
+        "E1004"
+      ],
+      "autoDiscovered": false,
+      "group": "community"
     }
   ]
 }
