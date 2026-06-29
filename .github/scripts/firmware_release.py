@@ -764,11 +764,7 @@ def publish_external_firmware(
         destination = firmware_root / external.id / external.version
         if (destination / "manifest.json").exists():
             continue
-        try:
-            write_external_manifest(external, destination)
-        except Exception as exc:  # noqa: BLE001 - never fail the whole deploy
-            print(f"Skipped external firmware: {external.id} ({exc})")
-            continue
+        write_external_manifest(external, destination)
         published[external.id] = external.version
         print(f"Published external firmware: {external.id} -> {external.version}")
     return published

@@ -339,13 +339,25 @@ For a flash-mode firmware option, add it to the platform card's `firmwareOptions
   category: "Application",
   compatible: ["E1001"],
   configFields: [],
+  flashNotes: [
+    { type: "warning", text: "Use the erase flash mode for a full-chip image." }
+  ],
   notes: [
-    { type: "info", text: "What users should know before flashing." }
+    { type: "info", text: "What users should know before setup." }
   ]
 }
 ```
 
 The `id` must match the firmware ID built by GitHub Actions.
+
+For full-chip images that start at offset `0x0`, set
+`recommendedInstallMode: "erase"` on the firmware option so the Hub opens with
+`Erase flash + flash` selected, and add the matching user guidance to
+`flashNotes`.
+
+对于从 `0x0` 起写入的整片镜像，在固件选项中设置
+`recommendedInstallMode: "erase"`，让 Hub 默认选中 `Erase flash + flash`，
+并把对应的用户提示放进 `flashNotes`。
 
 ### 3. Register non-standard build targets
 
@@ -436,6 +448,13 @@ display mode from Step 0.
 ```
 
 Then add one or more `firmwareOptions` with IDs that match the build targets.
+For full-chip images that start at offset `0x0`, set
+`recommendedInstallMode: "erase"` on the matching firmware option and place
+the erase-mode guidance in `flashNotes`.
+
+继续添加一个或多个 `firmwareOptions`，ID 需要匹配构建目标。对于从 `0x0`
+起写入的整片镜像，在对应固件选项中设置 `recommendedInstallMode: "erase"`，
+并把擦除模式提示放进 `flashNotes`。
 
 **Template mode** (example config):
 
@@ -683,8 +702,10 @@ The web page is driven by `web/js/firmwares.js`.
 | `description` | Yes | What the firmware does |
 | `category` | Yes | Short category label such as `Display`, `Power`, `Application` |
 | `compatible` | Yes | Device IDs that can flash this firmware |
+| `recommendedInstallMode` | No | Use `"erase"` for full-chip images; omitted firmware uses standard flash / 整片镜像使用 `"erase"`，未填写时使用标准烧录 |
 | `configFields` | No | Firmware-specific setup fields |
-| `notes` | No | Warnings or helpful notes shown before flashing |
+| `notes` | No | Step 2 setup and preparation notes / Step 2 的配置与准备提示 |
+| `flashNotes` | No | Step 3 flashing notes, such as erase-mode or connection guidance / Step 3 的烧录提示，例如擦除模式或连接提示 |
 
 The firmware option `id` is the link between:
 
@@ -933,6 +954,10 @@ Use this checklist before opening a pull request.
   copy, device-specific compatibility, notes, or config fields.
 - Every `firmwareOptions[].id` matches a firmware build ID.
 - Every compatible device is listed correctly.
+- Full-chip images set `recommendedInstallMode: "erase"` and put erase-mode
+  guidance in `flashNotes`.
+- 整片镜像设置 `recommendedInstallMode: "erase"`，并将擦除模式提示放在
+  `flashNotes`。
 - Template-mode platforms set `installReady: false` and `templateMode: true`.
 - Every template-mode `templateOptions` entry includes a `snippet` field.
 - Template data, including headers, footers, and snippets, lives in

@@ -319,6 +319,24 @@ class ExternalFirmwareTest(unittest.TestCase):
             versions = firmware_release.write_versions_json(firmware_root)
             self.assertEqual(versions["PhotoFrame_reTerminal_E1002"], ["2.8.0"])
 
+    def test_publish_external_firmware_fails_when_download_fails(self) -> None:
+        external = (
+            firmware_release.ExternalFirmware(
+                id="PhotoFrame_reTerminal_E1002",
+                version="2.8.0",
+                url="https://example.test/e1002-merged.bin",
+                devices=("E1002",),
+            ),
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch.object(
+            firmware_release,
+            "download_binary",
+            side_effect=RuntimeError("download failed"),
+        ):
+            with self.assertRaises(RuntimeError):
+                firmware_release.publish_external_firmware(Path(temp_dir), external)
+
     def test_catalog_lists_external_firmware_as_community(self) -> None:
         external = (
             firmware_release.ExternalFirmware(
