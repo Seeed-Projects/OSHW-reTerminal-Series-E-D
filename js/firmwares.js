@@ -1520,8 +1520,11 @@ deep_sleep:
         category: "Application",
         compatible: ["E1002"],
         defaultVersion: "2.8.0",
-        notes: [
+        recommendedInstallMode: "erase",
+        flashNotes: [
           { type: "warning", text: "This replaces the stock firmware and rewrites the partition table. Use the \"Erase + flash\" mode so the full-chip image at 0x0 writes over the stock layout cleanly." },
+        ],
+        notes: [
           { type: "info", text: "After flashing, the device starts a Wi-Fi setup portal. Join it (or use the companion app) to connect your network, then open the web interface to upload images and configure auto-rotation." },
         ],
       },
@@ -1532,8 +1535,11 @@ deep_sleep:
         category: "Application",
         compatible: ["E1004"],
         defaultVersion: "2.8.0",
-        notes: [
+        recommendedInstallMode: "erase",
+        flashNotes: [
           { type: "warning", text: "This replaces the stock firmware and rewrites the partition table. Use the \"Erase + flash\" mode so the full-chip image at 0x0 writes over the stock layout cleanly." },
+        ],
+        notes: [
           { type: "info", text: "After flashing, the device starts a Wi-Fi setup portal. Join it (or use the companion app) to connect your network, then open the web interface to upload images and configure auto-rotation." },
         ],
       },

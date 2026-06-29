@@ -453,10 +453,12 @@ function selectPlatformDevice(platformId, deviceId) {
   const availableOptions = getAvailableFirmwareOptions(selectedPlatform, deviceId);
   selectedFirmwareOption = chooseFirmwareOption(availableOptions);
   selectedVersion = getDefaultVersion(selectedPlatform);
+  applyRecommendedInstallMode();
 
   renderSelectedRelease();
   renderSetupPanel();
   renderConfigArea();
+  renderFlashNotes();
   updateFlashState();
   renderFlowState();
   resetProgress();
@@ -475,6 +477,7 @@ function clearPlatformSelection() {
   baseDetailOpen = returnToBaseDetail;
   renderPlatformCards();
   renderFlowState();
+  renderFlashNotes();
   updateFlashState();
   resetProgress();
 }
@@ -655,6 +658,16 @@ function renderVersionPanel() {
   }).join("");
 }
 
+// Renders setup and flashing notes with shared alert styling.
+// 使用统一提示样式渲染配置提示和烧录提示。
+function renderAlertNotes(notes) {
+  return notes.map((note) => `
+    <div class="alert alert-${note.type === "warning" ? "warning" : "info"} is-visible">
+      <span>${note.text}</span>
+    </div>
+  `).join("");
+}
+
 function renderConfigArea() {
   const container = document.getElementById("configArea");
   if (!container || !selectedPlatform) return;
@@ -663,11 +676,7 @@ function renderConfigArea() {
   const platformFields = selectedPlatform?.configFields || [];
   const fwFields = selectedFirmwareOption?.configFields || [];
   const allFields = [...platformFields, ...fwFields];
-  const notesHtml = notes.map((n) => `
-    <div class="alert alert-${n.type === "warning" ? "warning" : "info"} is-visible">
-      <span>${n.text}</span>
-    </div>
-  `).join("");
+  const notesHtml = renderAlertNotes(notes);
 
   if (!allFields.length) {
     container.innerHTML = notesHtml || `
@@ -723,6 +732,12 @@ function renderConfigArea() {
   }
 }
 
+function renderFlashNotes() {
+  const container = document.getElementById("flashNotes");
+  if (!container) return;
+  container.innerHTML = renderAlertNotes(selectedFirmwareOption?.flashNotes || []);
+}
+
 function collectConfigValues() {
   const platformFields = selectedPlatform?.configFields || [];
   const fwFields = selectedFirmwareOption?.configFields || [];
@@ -764,6 +779,29 @@ function getTemplateFieldValues() {
 let eraseBeforeFlash = false;
 let isFlashing = false;
 let lastFlashedPort = null;
+
+// Applies the selected firmware's default install mode to the flash controls.
+// 将所选固件的默认安装模式同步到烧录控制按钮。
+function setInstallMode(mode, { log = false } = {}) {
+  const modeStandard = document.getElementById("modeStandard");
+  const modeErase = document.getElementById("modeErase");
+  const normalizedMode = mode === "erase" ? "erase" : "standard";
+
+  eraseBeforeFlash = normalizedMode === "erase";
+  if (modeStandard) {
+    modeStandard.classList.toggle("is-active", normalizedMode === "standard");
+  }
+  if (modeErase) modeErase.classList.toggle("is-active", normalizedMode === "erase");
+  if (log) {
+    appendLog(`[system] Flash mode: ${normalizedMode === "erase" ? "erase + flash" : "standard"}`);
+  }
+}
+
+// Reads the firmware option's preferred install mode, defaulting to standard flash.
+// 读取固件选项的推荐安装模式，默认使用标准烧录。
+function applyRecommendedInstallMode() {
+  setInstallMode(selectedFirmwareOption?.recommendedInstallMode || "standard");
+}
 
 function updateFlashState() {
   const flashBtn = document.getElementById("flashButton");
@@ -875,6 +913,7 @@ function renderFlashPanelMode(isTemplate, isDownload) {
   if (!flashPanel) return;
   const heading = flashPanel.querySelector(".panel-heading h2");
   const installMode = flashPanel.querySelector(".install-mode");
+  const flashNotes = document.getElementById("flashNotes");
   const installNote = document.getElementById("installNote");
   const errorAlert = document.getElementById("errorAlert");
   const progressRow = flashPanel.querySelector(".progress-row");
@@ -891,6 +930,7 @@ function renderFlashPanelMode(isTemplate, isDownload) {
   }
   const hideFlash = isTemplate || isDownload;
   if (installMode) installMode.classList.toggle("is-hidden", hideFlash);
+  if (flashNotes) flashNotes.classList.toggle("is-hidden", hideFlash);
   if (progressRow) progressRow.classList.toggle("is-hidden", hideFlash);
   if (flashActions) flashActions.classList.toggle("is-hidden", hideFlash);
   if (templatePreview) templatePreview.classList.toggle("is-hidden", !isTemplate);
@@ -1419,10 +1459,12 @@ function bindFlowEvents() {
       selectedFirmwareOption =
         chooseFirmwareOption(options, firmwareSelect.value, previousLanguage);
       selectedVersion = getDefaultVersion(selectedPlatform);
+      applyRecommendedInstallMode();
       renderSelectedRelease();
       renderLanguageSelect();
       renderVersionPanel();
       renderConfigArea();
+      renderFlashNotes();
       updateFlashState();
       resetProgress();
       appendLog(`[system] Selected demo: ${selectedFirmwareOption?.name || "None"}`);
@@ -1443,9 +1485,11 @@ function bindFlowEvents() {
         variants.find((item) => item.id === languageSelect.value) ||
         selectedFirmwareOption;
       selectedVersion = getDefaultVersion(selectedPlatform);
+      applyRecommendedInstallMode();
       renderSelectedRelease();
       renderVersionPanel();
       renderConfigArea();
+      renderFlashNotes();
       updateFlashState();
       resetProgress();
       appendLog(`[system] Selected language: ${selectedFirmwareOption?.languageLabel || "None"}`);
@@ -1467,18 +1511,12 @@ function bindFlowEvents() {
   const modeStandard = document.getElementById("modeStandard");
   const modeErase = document.getElementById("modeErase");
   if (modeStandard && modeErase) {
-    modeStandard.addEventListener("click", () => {
-      modeStandard.classList.add("is-active");
-      modeErase.classList.remove("is-active");
-      eraseBeforeFlash = false;
-      appendLog("[system] Flash mode: standard");
-    });
-    modeErase.addEventListener("click", () => {
-      modeErase.classList.add("is-active");
-      modeStandard.classList.remove("is-active");
-      eraseBeforeFlash = true;
-      appendLog("[system] Flash mode: erase + flash");
-    });
+    modeStandard.addEventListener("click", () =>
+      setInstallMode("standard", { log: true })
+    );
+    modeErase.addEventListener("click", () =>
+      setInstallMode("erase", { log: true })
+    );
   }
 }
 
