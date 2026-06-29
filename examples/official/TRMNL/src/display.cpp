@@ -2573,6 +2573,9 @@ void display_sleep(void)
     Log_info("Goto Sleep...");
 #ifdef BB_EPAPER
     bbep.sleep(DEEP_SLEEP);
+#ifdef BOARD_SEEED_RETERMINAL_E1002
+    bbep.wait(false);
+#endif
 #else
     bbep.einkPower(0);
     bbep.deInit();
