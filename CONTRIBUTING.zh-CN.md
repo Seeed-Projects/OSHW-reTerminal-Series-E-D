@@ -29,7 +29,7 @@ Firmware Hub 目前有三个组。
 
 | 组 | `group` 值 | 用途 |
 |---|---|---|
-| 官方平台 | `official` | 官方平台集成或合作伙伴工作流，例如 ESPHome、SquareLine Vision 和 OpenDisplay |
+| 官方平台 | `official` | 官方平台集成或合作伙伴工作流，例如 ESPHome、EEZ Studio、Zephyr、SquareLine Vision 和 OpenDisplay |
 | 基础 | `base` | 第一方硬件 bring-up（通俗解释：让硬件基本跑起来并验证功能）示例：RTC、睡眠、按钮、蜂鸣器、显示、传感器、SD 卡、麦克风 |
 | 社区项目 | `community` | 基于设备技术栈构建的社区应用或贡献的终端用户项目 |
 
@@ -162,18 +162,18 @@ examples/
 | 问题 | 答案：烧录模式 | 答案：模板模式 | 答案：官方工具模式 |
 |---|---|---|---|
 | 你的项目会产出可直接运行的 `.bin` 固件吗？ | 是 | 生成配置文件 | 由上游平台维护 |
-| 用户如何完成设置？ | 从浏览器烧录 | 导出配置文件，再使用目标工具链 | 打开上游固件或工具箱页面 |
+| 用户如何完成设置？ | 从浏览器烧录 | 导出配置文件，再使用目标工具链 | 打开上游固件、文档或工具箱页面 |
 | 用户得到什么？ | 设备上可运行的固件 | 一个可在别处编辑和编译的入门配置文件 | 直接进入官方平台工具 |
 
 **烧录模式**：设置 `installReady: true`，提供带有构建 ID 的 `firmwareOptions`，并在 `firmware_release.py` 中注册构建目标。GitHub Actions 会构建二进制文件；Hub 会通过 Web Serial 把它烧录到设备。
 
 **模板模式**：设置 `installReady: false` 和 `templateMode: true`，提供带有 `snippet` 字段的 `templateOptions`。不需要构建目标。Hub 会在浏览器中生成一个配置文件，供用户预览、复制或下载。完整数据结构请见 [模板模式平台](#模板模式平台)。
 
-**官方工具模式**：设置 `installReady: false`，本地固件字段留空，并提供 `externalTool`。Hub 会在 Step 2 显示官方固件或工具箱入口，并使用官方流程完成后续设置。完整字段参考请见 [官方工具平台](#官方工具平台)。
+**官方工具模式**：设置 `installReady: false`，本地固件字段留空，并提供 `externalTool`。Hub 会在 Step 2 显示官方固件、文档或工具箱入口，并使用官方流程完成后续设置。完整字段参考请见 [官方工具平台](#官方工具平台)。
 
 大多数需要每个用户单独自定义的官方平台（例如 ESPHome，每个用户的显示布局和传感器设置都不同）应该使用模板模式。
 
-当上游平台已经维护固件安装器、浏览器工具箱或配置流程时，请使用官方工具模式。
+当上游平台已经维护固件安装器、文档、浏览器工具箱或配置流程时，请使用官方工具模式。
 
 ### 1. 添加示例源码
 
@@ -262,7 +262,7 @@ examples/official/MyOfficialProject/
 
 完整字段参考和可运行示例请见 [模板模式平台](#模板模式平台)。
 
-**官方工具模式**（上游固件或工具箱，用户到官方工具继续）：
+**官方工具模式**（上游固件、文档或工具箱，用户到官方工具继续）：
 
 ```js
 {
@@ -274,10 +274,15 @@ examples/official/MyOfficialProject/
   wiki: { label: "Wiki", url: "https://wiki.seeedstudio.com/example/" },
   description: "What this platform does and when to use it.",
   externalTool: {
-    label: "Open official toolbox",
-    url: "https://example.com/toolbox",
-    title: "Use the official toolbox",
-    description: "Continue with the official platform tool to install firmware, configure the workflow, and manage device content."
+    stepTitle: "Official docs",
+    label: "Open official docs",
+    url: "https://example.com/docs/default-board",
+    urlsByDevice: {
+      E1001: "https://example.com/docs/e1001",
+      E1002: "https://example.com/docs/e1002"
+    },
+    title: "Use the official documentation",
+    description: "Continue with the official platform documentation to install firmware, configure the workflow, and manage device content."
   },
   logo: "assets/platforms/my-official-platform-logo.png",
   preview: "assets/platforms/my-official-platform-preview.png",
@@ -528,7 +533,7 @@ python3 .github/scripts/firmware_release.py plan \
 
 ## 官方工具平台
 
-当上游平台已经维护固件安装器、浏览器工具箱或配置流程时，使用官方工具模式。Hub 会显示已选平台和设备，然后在 Step 2 链接到官方工作流。
+当上游平台已经维护固件安装器、文档、浏览器工具箱或配置流程时，使用官方工具模式。Hub 会显示已选平台和设备，然后在 Step 2 链接到官方工作流。
 
 ### 官方工具平台字段
 
@@ -537,6 +542,8 @@ python3 .github/scripts/firmware_release.py plan \
 | `externalTool` | Yes | — | 描述官方目标页面的对象 |
 | `externalTool.label` | Yes | — | 按钮文字 |
 | `externalTool.url` | Yes | — | 按钮打开的绝对 URL |
+| `externalTool.urlsByDevice` | No | — | 按设备 ID 提供目标 URL 的映射 |
+| `externalTool.stepTitle` | No | `Official toolbox` | Step 2 面板标题 |
 | `externalTool.title` | Yes | — | Step 2 卡片内的标题 |
 | `externalTool.description` | Yes | — | 说明官方工具入口的一段文字 |
 
@@ -601,7 +608,7 @@ python3 .github/scripts/firmware_release.py plan \
 | `templateFilePattern` | No | 文件名模式，默认是 `{platformId}-{deviceId}` |
 | `templateJoiner` | No | 模板各部分之间的分隔符，默认是 `\n\n` |
 | `templateOptions` | Template only | 用于组装模板输出的功能选项 |
-| `externalTool` | Official tool only | Step 2 中显示的官方固件或工具箱目标 |
+| `externalTool` | Official tool only | Step 2 中显示的官方固件、文档或工具箱目标 |
 | `bullets` | Yes | 三条简短工作流亮点 |
 | `configFields` | Yes | 所有固件选项共享的平台级字段 |
 | `firmwareOptions` | Yes | 可烧录的固件选项 |

@@ -73,9 +73,9 @@ The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you f
 
 A built-in **serial monitor** lets you view real-time device logs, choose the baud rate, pause the visible stream, and save the retained recent log without leaving the page.
 
-Browser-flashable workflows run directly from the page. Template and download workflows provide the files needed for local customization and builds. Official tool workflows link to the upstream platform's maintained firmware or toolbox page.
+Browser-flashable workflows run directly from the page. Template and download workflows provide the files needed for local customization and builds. Official tool workflows link to the upstream platform's maintained firmware, documentation, or toolbox page.
 
-Official platform cards include direct Seeed Studio Wiki shortcuts for platform-specific setup tutorials.
+Official platform cards include direct Seeed Studio Wiki shortcuts for platform-specific setup tutorials where available.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -105,6 +105,7 @@ All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support
 | **TRMNL** | ✅ Ready | E1001 – E1003 | Official TRMNL dashboard firmware for always-on ePaper panels |
 | **EEZ Studio** | ✅ Project template | E1001 – E1004 | Visual LVGL UI design with a downloadable PlatformIO project template |
 | **LVGL** | ✅ Ready | E1001 – E1004 | Ready-to-run LVGL 9.5.0 status dashboard rendered through Seeed_GFX |
+| **Zephyr** | ✅ Official docs | E1001 – E1003 | Official Zephyr RTOS board documentation and local west build/flash workflow |
 | **SquareLine Vision** | 🔜 Coming soon | E1002, E1003 | Visual UI designer for embedded ePaper displays |
 | **OpenDisplay** | ✅ Official toolbox | E1001 – E1003 | BLE-powered ePaper control and browser image upload through the official OpenDisplay toolbox |
 | **Voice Memo Reminder** | ✅ Community | E1001 – E1003 | AI voice memo firmware with English and Chinese reminder-list builds |
@@ -137,7 +138,7 @@ The quickest way to get started is to follow the path shown by the selected plat
 1. Open the **[Firmware Hub](https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/)** in **Chrome** or **Edge** (desktop only)
 2. Connect your reTerminal E-Series device via USB
 3. Select a platform and device
-4. Pick a firmware demo and version; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**; for EEZ Studio, click **Download project template** and build locally with PlatformIO; for OpenDisplay, click **Open OpenDisplay Toolbox** and continue with the official toolbox
+4. Pick a firmware demo and version; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**; for EEZ Studio, click **Download project template** and build locally with PlatformIO; for OpenDisplay, click **Open OpenDisplay Toolbox** and continue with the official toolbox; for Zephyr, click **Open Zephyr Board Docs** and follow the selected board's official west workflow
 5. For flashable firmware, choose **Standard flash** or **Erase flash + flash**, click **Connect & flash**, select the serial port, and wait for the flash to complete
 
 > **Note:** Web Serial requires **HTTPS** or **localhost** and is only available in Chromium-based browsers (Chrome, Edge, Opera). Safari and Firefox are not supported.
@@ -305,6 +306,7 @@ Configure GitHub Pages to serve from the `gh-pages` branch. The deployed site is
 - [x] Community ESP32 PhotoFrame firmware entries with erase-then-flash install flow
 - [ ] SquareLine Vision UI designer support
 - [x] OpenDisplay official toolbox entry for BLE control and image upload
+- [x] Zephyr official board documentation entry for E1001, E1002, and E1003
 
 See the [open issues](https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D/issues) for a full list of proposed features and known bugs.
 

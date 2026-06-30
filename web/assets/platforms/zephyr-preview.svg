@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-labelledby="title desc">
+  <title id="title">Zephyr board documentation preview</title>
+  <desc id="desc">A Firmware Hub preview showing Zephyr board docs, west commands, and supported reTerminal devices.</desc>
+  <defs>
+    <linearGradient id="zephyrPreviewBg" x1="0" y1="0" x2="720" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e9f8fb"/>
+      <stop offset=".55" stop-color="#f7fbf5"/>
+      <stop offset="1" stop-color="#e8f4ee"/>
+    </linearGradient>
+    <linearGradient id="zephyrPreviewAccent" x1="102" y1="70" x2="620" y2="350" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1bb7cf"/>
+      <stop offset=".52" stop-color="#1b6ca8"/>
+      <stop offset="1" stop-color="#5dbb63"/>
+    </linearGradient>
+    <filter id="zephyrPreviewShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#14363d" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect width="720" height="420" fill="url(#zephyrPreviewBg)"/>
+  <circle cx="626" cy="64" r="108" fill="#d6f2ea" opacity=".65"/>
+  <circle cx="94" cy="338" r="120" fill="#d9f3f8" opacity=".8"/>
+  <g filter="url(#zephyrPreviewShadow)">
+    <rect x="82" y="58" width="556" height="304" rx="24" fill="#ffffff"/>
+    <rect x="82" y="58" width="556" height="62" rx="24" fill="url(#zephyrPreviewAccent)"/>
+    <path d="M82 96h556v36H82z" fill="url(#zephyrPreviewAccent)"/>
+    <circle cx="120" cy="90" r="8" fill="#dff9ff"/>
+    <circle cx="146" cy="90" r="8" fill="#dff9ff" opacity=".72"/>
+    <circle cx="172" cy="90" r="8" fill="#dff9ff" opacity=".5"/>
+    <text x="212" y="97" fill="#ffffff" font-family="Arial, sans-serif" font-size="20" font-weight="700">Zephyr board docs</text>
+    <rect x="118" y="154" width="220" height="168" rx="16" fill="#f4f9fb" stroke="#cfe1e7"/>
+    <text x="140" y="188" fill="#16333b" font-family="Arial, sans-serif" font-size="21" font-weight="700">reTerminal E-Series</text>
+    <text x="140" y="222" fill="#4f6670" font-family="Arial, sans-serif" font-size="15">E1001</text>
+    <text x="140" y="248" fill="#4f6670" font-family="Arial, sans-serif" font-size="15">E1002</text>
+    <text x="140" y="274" fill="#4f6670" font-family="Arial, sans-serif" font-size="15">E1003</text>
+    <rect x="378" y="154" width="224" height="168" rx="16" fill="#132a34"/>
+    <text x="402" y="188" fill="#8ee8f0" font-family="SFMono-Regular, Menlo, monospace" font-size="14">west build -b</text>
+    <text x="402" y="216" fill="#ffffff" font-family="SFMono-Regular, Menlo, monospace" font-size="14">reterminal_e1001</text>
+    <text x="402" y="254" fill="#b7ee7d" font-family="SFMono-Regular, Menlo, monospace" font-size="14">west flash</text>
+    <text x="402" y="292" fill="#f5f7f8" font-family="SFMono-Regular, Menlo, monospace" font-size="14">west espressif monitor</text>
+  </g>
+</svg>

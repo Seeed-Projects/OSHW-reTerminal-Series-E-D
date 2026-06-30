@@ -27,6 +27,25 @@ for (const [platformId, wikiUrl] of officialWikiUrls) {
   assert.equal(platform.wiki?.url, wikiUrl, `${platformId} wiki URL is registered`);
 }
 
+const zephyrPlatform = PLATFORM_CARDS.find((platform) => platform.id === "zephyr");
+assert.ok(zephyrPlatform, "Zephyr platform is registered");
+assert.equal(zephyrPlatform.group, "official");
+assert.equal(zephyrPlatform.installReady, false);
+assert.deepEqual(zephyrPlatform.supportedDevices, ["E1001", "E1002", "E1003"]);
+assert.equal(zephyrPlatform.externalTool?.stepTitle, "Official docs");
+assert.equal(zephyrPlatform.externalTool?.label, "Open Zephyr Board Docs");
+assert.deepEqual(
+  zephyrPlatform.externalTool?.urlsByDevice,
+  {
+    E1001: "https://docs.zephyrproject.org/latest/boards/seeed/reterminal_e1001/doc/index.html",
+    E1002: "https://docs.zephyrproject.org/latest/boards/seeed/reterminal_e1002/doc/index.html",
+    E1003: "https://docs.zephyrproject.org/latest/boards/seeed/reterminal_e1003/doc/index.html",
+  }
+);
+assert.deepEqual(zephyrPlatform.versions, []);
+assert.deepEqual(zephyrPlatform.configFields, []);
+assert.deepEqual(zephyrPlatform.firmwareOptions, []);
+
 const lvglStatusPanel = PLATFORM_CARDS.find((platform) =>
   platform.id === "lvgl-epaper-status-panel"
 );

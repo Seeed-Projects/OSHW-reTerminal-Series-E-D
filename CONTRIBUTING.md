@@ -27,7 +27,7 @@ The Firmware Hub currently has three groups.
 
 | Group | `group` value | Use it for |
 |---|---|---|
-| Official Platforms | `official` | Official platform integrations or partner workflows, such as ESPHome, EEZ Studio, SquareLine Vision, and OpenDisplay |
+| Official Platforms | `official` | Official platform integrations or partner workflows, such as ESPHome, EEZ Studio, Zephyr, SquareLine Vision, and OpenDisplay |
 | Base | `base` | First-party hardware bring-up demos: RTC, sleep, buttons, buzzer, display, sensors, SD card, microphone |
 | Community Projects | `community` | Community apps or contributed end-user projects built on the device stack |
 
@@ -183,7 +183,7 @@ Before writing any code, decide how users will consume your contribution:
 | Question | Answer: Flash mode | Answer: Template mode | Answer: Download mode | Answer: Official tool mode |
 |---|---|---|---|---|
 | Does your project produce a ready-to-run `.bin` firmware? | Yes | A generated config file | A source project template | Maintained by the upstream platform |
-| How does the user finish setup? | Flash from the browser | Export a config file and use the target toolchain | Download, customize, compile, and flash locally | Open the upstream firmware or toolbox page |
+| How does the user finish setup? | Flash from the browser | Export a config file and use the target toolchain | Download, customize, compile, and flash locally | Open the upstream firmware, docs, or toolbox page |
 | What does the user get? | A working firmware on the device | A starter config file | A packaged PlatformIO or source project | A direct handoff to the official platform tool |
 
 **Flash mode** — set `installReady: true`, provide `firmwareOptions` with build
@@ -203,7 +203,7 @@ step-by-step local build guide. See
 
 **Official tool mode** — set `installReady: false`, leave local firmware fields
 empty, and provide `externalTool`. The Hub shows a Step 2 button that opens the
-official firmware or toolbox page and skips the local flashing step. See
+official firmware, documentation, or toolbox page and skips the local flashing step. See
 [Official tool platforms](#official-tool-platforms) for the field reference.
 
 Most official platforms that require per-user customization (such as ESPHome,
@@ -337,7 +337,7 @@ reference and a working example.
 }
 ```
 
-**Official tool mode** (upstream firmware or toolbox, user continues there):
+**Official tool mode** (upstream firmware, docs, or toolbox, user continues there):
 
 ```js
 {
@@ -349,10 +349,15 @@ reference and a working example.
   wiki: { label: "Wiki", url: "https://wiki.seeedstudio.com/example/" },
   description: "What this platform does and when to use it.",
   externalTool: {
-    label: "Open official toolbox",
-    url: "https://example.com/toolbox",
-    title: "Use the official toolbox",
-    description: "Continue with the official platform tool to install firmware, configure the workflow, and manage device content."
+    stepTitle: "Official docs",
+    label: "Open official docs",
+    url: "https://example.com/docs/default-board",
+    urlsByDevice: {
+      E1001: "https://example.com/docs/e1001",
+      E1002: "https://example.com/docs/e1002"
+    },
+    title: "Use the official documentation",
+    description: "Continue with the official platform documentation to install firmware, configure the workflow, and manage device content."
   },
   logo: "assets/platforms/my-official-platform-logo.png",
   preview: "assets/platforms/my-official-platform-preview.png",
@@ -675,7 +680,7 @@ the source project into the file referenced by `downloadUrl`.
 ## Official tool platforms
 
 Use official tool mode when an upstream platform maintains the firmware
-installer, browser toolbox, or configuration flow. The Hub shows the selected
+installer, documentation, browser toolbox, or configuration flow. The Hub shows the selected
 platform and device, then uses Step 2 to link users to that official workflow.
 
 ### Official tool platform fields
@@ -685,6 +690,8 @@ platform and device, then uses Step 2 to link users to that official workflow.
 | `externalTool` | Yes | — | Object describing the official destination |
 | `externalTool.label` | Yes | — | Button text |
 | `externalTool.url` | Yes | — | Absolute URL opened by the button |
+| `externalTool.urlsByDevice` | No | — | Device-specific URL map keyed by device ID |
+| `externalTool.stepTitle` | No | `Official toolbox` | Step 2 panel heading |
 | `externalTool.title` | Yes | — | Heading inside the Step 2 card |
 | `externalTool.description` | Yes | — | One paragraph explaining the handoff |
 
@@ -753,7 +760,7 @@ The web page is driven by `web/js/firmwares.js`.
 | `templateFilePattern` | No | Filename pattern, defaults to `{platformId}-{deviceId}` |
 | `templateJoiner` | No | Separator between template parts, defaults to `\n\n` |
 | `templateOptions` | Template only | Feature options used to assemble template output |
-| `externalTool` | Official tool only | Official firmware or toolbox destination shown in Step 2 |
+| `externalTool` | Official tool only | Official firmware, documentation, or toolbox destination shown in Step 2 |
 | `bullets` | Yes | Three short workflow highlights |
 | `configFields` | Yes | Platform-level fields shared by all firmware options |
 | `firmwareOptions` | Yes | Flashable firmware choices |
