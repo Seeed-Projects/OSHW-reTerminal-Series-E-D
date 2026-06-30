@@ -371,6 +371,11 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   background: var(--seeed);
 }
 
+.is-external-tool .hero-step[data-step="2"]::after,
+.is-external-tool .hero-step[data-step="3"] {
+  display: none;
+}
+
 .hero-visual {
   display: grid;
   place-items: center;
@@ -939,6 +944,9 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   display: grid;
   gap: 12px;
 }
+.config-area--external {
+  grid-column: 1 / -1;
+}
 
 .field-block {
   display: flex;
@@ -1050,6 +1058,21 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
 }
 .config-empty strong { color: #343d40; font-size: 13px; }
 .config-empty span { color: var(--muted); font-size: 12.5px; }
+
+.external-tool-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  grid-column: 1 / -1;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(250, 252, 251, .9);
+}
+.external-tool-card strong { color: #343d40; font-size: 13px; }
+.external-tool-card span { color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+.external-tool-card .button { margin-top: 2px; text-decoration: none; }
 
 .install-mode {
   display: flex;

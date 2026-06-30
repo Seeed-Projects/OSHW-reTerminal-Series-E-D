@@ -17,7 +17,7 @@
 | 目标 | 是否允许？ | 主要需要修改的文件 |
 |---|---:|---|
 | 添加新的核心硬件示例 | 是 | `examples/base/<Demo>/`，可选 `web/js/firmwares.js` |
-| 添加新的官方合作伙伴/平台示例 | 是 | `examples/official/<Project>/`、`web/js/firmwares.js`，可选 `.github/scripts/firmware_release.py`。先选择：**烧录模式**（完整固件）或 **模板模式**（示例配置）。 |
+| 添加新的官方合作伙伴/平台示例 | 是 | `examples/official/<Project>/`、`web/js/firmwares.js`，可选 `.github/scripts/firmware_release.py`。先选择：**烧录模式**、**模板模式**或 **官方工具模式**。 |
 | 添加新的社区项目 | 是 | `examples/community/<Project>/`、`web/js/firmwares.js`，可选 `.github/scripts/firmware_release.py`。先选择：**烧录模式**或 **模板模式**。 |
 | 更新已有示例 | 是 | 仅修改对应的示例文件夹；如果 UI 有变化，再修改匹配的网页元数据 |
 | 添加新的平台组/分类 | 否 | 不要编辑 `PLATFORM_GROUPS` |
@@ -159,17 +159,21 @@ examples/
 
 写任何代码之前，先决定用户将如何使用你的贡献：
 
-| 问题 | 答案：烧录模式 | 答案：模板模式 |
-|---|---|---|
-| 你的项目会产出可直接运行的 `.bin` 固件吗？ | 是 | 否 |
-| 用户能否无需修改、直接从浏览器烧录它？ | 是 | 否，每个用户都需要自定义配置 |
-| 用户得到什么？ | 设备上可运行的固件 | 一个可在别处编辑和编译的入门配置文件 |
+| 问题 | 答案：烧录模式 | 答案：模板模式 | 答案：官方工具模式 |
+|---|---|---|---|
+| 你的项目会产出可直接运行的 `.bin` 固件吗？ | 是 | 生成配置文件 | 由上游平台维护 |
+| 用户如何完成设置？ | 从浏览器烧录 | 导出配置文件，再使用目标工具链 | 打开上游固件或工具箱页面 |
+| 用户得到什么？ | 设备上可运行的固件 | 一个可在别处编辑和编译的入门配置文件 | 直接进入官方平台工具 |
 
 **烧录模式**：设置 `installReady: true`，提供带有构建 ID 的 `firmwareOptions`，并在 `firmware_release.py` 中注册构建目标。GitHub Actions 会构建二进制文件；Hub 会通过 Web Serial 把它烧录到设备。
 
 **模板模式**：设置 `installReady: false` 和 `templateMode: true`，提供带有 `snippet` 字段的 `templateOptions`。不需要构建目标。Hub 会在浏览器中生成一个配置文件，供用户预览、复制或下载。完整数据结构请见 [模板模式平台](#模板模式平台)。
 
+**官方工具模式**：设置 `installReady: false`，本地固件字段留空，并提供 `externalTool`。Hub 会在 Step 2 显示官方固件或工具箱入口，并使用官方流程完成后续设置。完整字段参考请见 [官方工具平台](#官方工具平台)。
+
 大多数需要每个用户单独自定义的官方平台（例如 ESPHome，每个用户的显示布局和传感器设置都不同）应该使用模板模式。
+
+当上游平台已经维护固件安装器、浏览器工具箱或配置流程时，请使用官方工具模式。
 
 ### 1. 添加示例源码
 
@@ -255,6 +259,36 @@ examples/official/MyOfficialProject/
 ```
 
 完整字段参考和可运行示例请见 [模板模式平台](#模板模式平台)。
+
+**官方工具模式**（上游固件或工具箱，用户到官方工具继续）：
+
+```js
+{
+  id: "my-official-platform",
+  group: "official",
+  name: "My Official Platform",
+  tagline: "Short workflow summary.",
+  source: { label: "Official website", url: "https://example.com" },
+  description: "What this platform does and when to use it.",
+  externalTool: {
+    label: "Open official toolbox",
+    url: "https://example.com/toolbox",
+    title: "Use the official toolbox",
+    description: "Continue with the official platform tool to install firmware, configure the workflow, and manage device content."
+  },
+  logo: "assets/platforms/my-official-platform-logo.png",
+  preview: "assets/platforms/my-official-platform-preview.png",
+  previewAlt: "My Official Platform preview",
+  accent: "#004966",
+  highlight: "#8FC31F",
+  supportedDevices: ["E1001", "E1002"],
+  installReady: false,
+  bullets: ["Official firmware tool", "Browser-based workflow", "Upstream-maintained setup"],
+  versions: [],
+  configFields: [],
+  firmwareOptions: []
+}
+```
 
 官方平台卡片必须提供 `source` 字段。用它链接到官方产品或项目网站。
 
@@ -489,6 +523,22 @@ python3 .github/scripts/firmware_release.py plan \
 
 模板模式平台不需要 `.github/scripts/firmware_release.py` 中的固件构建目标、`versions.json` 条目或 `manifest.json` 文件。它们完全在客户端侧完成。
 
+## 官方工具平台
+
+当上游平台已经维护固件安装器、浏览器工具箱或配置流程时，使用官方工具模式。Hub 会显示已选平台和设备，然后在 Step 2 链接到官方工作流。
+
+### 官方工具平台字段
+
+| Field | Required | Default | Description |
+|---|---:|---|---|
+| `externalTool` | Yes | — | 描述官方目标页面的对象 |
+| `externalTool.label` | Yes | — | 按钮文字 |
+| `externalTool.url` | Yes | — | 按钮打开的绝对 URL |
+| `externalTool.title` | Yes | — | Step 2 卡片内的标题 |
+| `externalTool.description` | Yes | — | 说明官方工具入口的一段文字 |
+
+官方工具平台使用 `installReady: false`，并保持 `versions`、`configFields` 和 `firmwareOptions` 为空。网页会为这些平台隐藏本地烧录面板。
+
 ## 场景 4：更新已有示例
 
 修改已经存在的代码时，使用这条路径。
@@ -547,6 +597,7 @@ python3 .github/scripts/firmware_release.py plan \
 | `templateFilePattern` | No | 文件名模式，默认是 `{platformId}-{deviceId}` |
 | `templateJoiner` | No | 模板各部分之间的分隔符，默认是 `\n\n` |
 | `templateOptions` | Template only | 用于组装模板输出的功能选项 |
+| `externalTool` | Official tool only | Step 2 中显示的官方固件或工具箱目标 |
 | `bullets` | Yes | 三条简短工作流亮点 |
 | `configFields` | Yes | 所有固件选项共享的平台级字段 |
 | `firmwareOptions` | Yes | 可烧录的固件选项 |
@@ -797,6 +848,8 @@ pio run -e <env-name>
 - 模板模式平台设置 `installReady: false` 和 `templateMode: true`。
 - 每个模板模式 `templateOptions` 条目都包含 `snippet` 字段。
 - 模板数据，包括 header、footer 和 snippet，放在 `web/js/firmwares.js` 中，而不是 `web/js/app.js` 中。
+- 官方工具平台设置 `installReady: false`，并包含 `externalTool`。
+- 官方工具平台保持 `versions`、`configFields` 和 `firmwareOptions` 为空。
 
 ### 配置
 

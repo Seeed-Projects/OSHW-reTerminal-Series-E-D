@@ -1380,6 +1380,12 @@ deep_sleep:
     },
     description:
       "OpenDisplay provides firmware and browser tools for low-power ePaper display projects, including BLE control, configuration, and image upload flows.",
+    externalTool: {
+      label: "Open OpenDisplay Toolbox",
+      url: "https://opendisplay.org/firmware/toolbox/index.html",
+      title: "Use the official OpenDisplay toolbox",
+      description: "OpenDisplay firmware and browser tools are maintained by the OpenDisplay project. Continue there to install firmware, configure BLE workflows, and upload images.",
+    },
     logo: "assets/platforms/opendisplay-logo-card-v2.png",
     preview: "assets/platforms/opendisplay-screen-enhanced.png",
     previewAlt: "OpenDisplay browser upload flow",

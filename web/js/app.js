@@ -498,14 +498,16 @@ function renderFlowState() {
 
   const isTemplate = Boolean(selectedPlatform?.templateMode);
   const isDownload = Boolean(selectedPlatform?.downloadMode);
+  const isExternalTool = Boolean(selectedPlatform?.externalTool);
   const showBaseDetail = baseDetailOpen && !hasSelection;
   document.body.classList.toggle("has-selection", hasSelection);
+  document.body.classList.toggle("is-external-tool", hasSelection && isExternalTool);
   if (selectionPanel) selectionPanel.classList.toggle("is-collapsed", hasSelection || showBaseDetail);
   toggleStepPanel(baseDetailPanel, showBaseDetail, 0);
   toggleStepPanel(selectedPanel, hasSelection, 0);
   toggleStepPanel(versionPanel, hasSelection && !isDownload, 90);
-  toggleStepPanel(flashPanel, hasSelection, 180);
-  if (hasSelection) renderFlashPanelMode(isTemplate, isDownload);
+  toggleStepPanel(flashPanel, hasSelection && !isExternalTool, 180);
+  if (hasSelection && !isExternalTool) renderFlashPanelMode(isTemplate, isDownload);
   if (hasSelection && isDownload) renderDownloadGuide();
 }
 
@@ -642,14 +644,18 @@ function renderVersionPanel() {
   if (!versionSelect || !selectedPlatform) return;
 
   const isTemplate = Boolean(selectedPlatform?.templateMode);
+  const isExternalTool = Boolean(selectedPlatform?.externalTool);
   const versionField = versionSelect.closest(".field-block");
-  if (versionField) versionField.classList.toggle("is-hidden", isTemplate);
+  if (versionField) versionField.classList.toggle("is-hidden", isTemplate || isExternalTool);
 
   const versionPanel = document.getElementById("versionPanel");
   const panelHeading = versionPanel?.querySelector(".panel-heading h2");
-  if (panelHeading) panelHeading.textContent = isTemplate ? "Template setup" : "Version and setup";
+  if (panelHeading) {
+    if (isExternalTool) panelHeading.textContent = "Official toolbox";
+    else panelHeading.textContent = isTemplate ? "Template setup" : "Version and setup";
+  }
 
-  if (isTemplate) return;
+  if (isTemplate || isExternalTool) return;
 
   const versions = getVersionOptions(selectedPlatform);
   if (!versions.some((item) => item.version === selectedVersion?.version)) {
@@ -675,9 +681,27 @@ function renderAlertNotes(notes) {
   `).join("");
 }
 
+function renderExternalToolConfig(tool) {
+  return `
+    <div class="external-tool-card">
+      <strong>${tool.title}</strong>
+      <span>${tool.description}</span>
+      <a class="button" href="${tool.url}" target="_blank" rel="noopener">${tool.label}</a>
+    </div>
+  `;
+}
+
 function renderConfigArea() {
   const container = document.getElementById("configArea");
   if (!container || !selectedPlatform) return;
+
+  const externalTool = selectedPlatform.externalTool;
+  container.classList.toggle("config-area--external", Boolean(externalTool));
+
+  if (externalTool) {
+    container.innerHTML = renderExternalToolConfig(externalTool);
+    return;
+  }
 
   const notes = selectedFirmwareOption?.notes || [];
   const platformFields = selectedPlatform?.configFields || [];

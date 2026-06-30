@@ -65,15 +65,15 @@
 <!-- Replace with an actual screenshot of the Firmware Hub -->
 <!-- ![Firmware Hub Screenshot](docs/images/screenshot.png) -->
 
-The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you flash firmware, export templates, or download project templates for Seeed Studio's reTerminal E-Series ePaper devices in three focused steps:
+The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you flash firmware, export templates, download project templates, or open official platform tools for Seeed Studio's reTerminal E-Series ePaper devices in a focused guided flow:
 
 1. **Select a platform** — choose from official platforms, Base demos, or community projects
-2. **Configure the workflow** — pick a device, firmware version, template options, install mode, or downloadable project template
-3. **Flash, export, or build locally** — write firmware over USB, export an ESPHome YAML file, or download a PlatformIO project template
+2. **Configure the workflow** — pick a device, firmware version, template options, install mode, downloadable project template, or official toolbox
+3. **Flash, export, build locally, or continue with the official tool** — write firmware over USB, export an ESPHome YAML file, download a PlatformIO project template, or open an upstream platform toolbox
 
 A built-in **serial monitor** lets you view real-time device logs, choose the baud rate, pause the visible stream, and save the retained recent log without leaving the page.
 
-Browser-flashable workflows run directly from the page. Template and download workflows provide the files needed for local customization and builds.
+Browser-flashable workflows run directly from the page. Template and download workflows provide the files needed for local customization and builds. Official tool workflows link to the upstream platform's maintained firmware or toolbox page.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -104,7 +104,7 @@ All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support
 | **EEZ Studio** | ✅ Project template | E1001 – E1004 | Visual LVGL UI design with a downloadable PlatformIO project template |
 | **LVGL** | ✅ Ready | E1001 – E1004 | Ready-to-run LVGL 9.5.0 status dashboard rendered through Seeed_GFX |
 | **SquareLine Vision** | 🔜 Coming soon | E1002, E1003 | Visual UI designer for embedded ePaper displays |
-| **OpenDisplay** | 🔜 Coming soon | E1001 – E1003 | BLE-powered ePaper control + browser image upload |
+| **OpenDisplay** | ✅ Official toolbox | E1001 – E1003 | BLE-powered ePaper control and browser image upload through the official OpenDisplay toolbox |
 | **Voice Memo Reminder** | ✅ Community | E1001 – E1003 | AI voice memo firmware with English and Chinese reminder-list builds |
 | **ESP32 PhotoFrame** | ✅ Community | E1002, E1004 | Full-color photo frame firmware with measured-palette image quality, web UI, REST API, and Home Assistant integration ([repo](https://github.com/aitjcize/esp32-photoframe)) |
 
@@ -135,7 +135,7 @@ The quickest way to get started is to follow the path shown by the selected plat
 1. Open the **[Firmware Hub](https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/)** in **Chrome** or **Edge** (desktop only)
 2. Connect your reTerminal E-Series device via USB
 3. Select a platform and device
-4. Pick a firmware demo and version; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**; for EEZ Studio, click **Download project template** and build locally with PlatformIO
+4. Pick a firmware demo and version; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**; for EEZ Studio, click **Download project template** and build locally with PlatformIO; for OpenDisplay, click **Open OpenDisplay Toolbox** and continue with the official toolbox
 5. For flashable firmware, choose **Standard flash** or **Erase flash + flash**, click **Connect & flash**, select the serial port, and wait for the flash to complete
 
 > **Note:** Web Serial requires **HTTPS** or **localhost** and is only available in Chromium-based browsers (Chrome, Edge, Opera). Safari and Firefox are not supported.
@@ -302,7 +302,7 @@ Configure GitHub Pages to serve from the `gh-pages` branch. The deployed site is
 - [x] Community Voice Memo Reminder firmware entries for English and Chinese builds
 - [x] Community ESP32 PhotoFrame firmware entries with erase-then-flash install flow
 - [ ] SquareLine Vision UI designer support
-- [ ] OpenDisplay BLE control + image upload
+- [x] OpenDisplay official toolbox entry for BLE control and image upload
 
 See the [open issues](https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D/issues) for a full list of proposed features and known bugs.
 
