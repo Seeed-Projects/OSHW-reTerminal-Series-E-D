@@ -12,6 +12,21 @@ for (const option of firmwareOptions) {
   );
 }
 
+const officialWikiUrls = new Map([
+  ["esphome", "https://wiki.seeedstudio.com/epaper_work_with_esphome/"],
+  ["trmnl", "https://wiki.seeedstudio.com/reterminal_e10xx_trmnl/"],
+  ["eezstudio", "https://wiki.seeedstudio.com/reterminal_e10xx_with_eezstudio/"],
+  ["lvgl-epaper-status-panel", "https://wiki.seeedstudio.com/epaper_work_with_lvgl"],
+  ["squareline", "https://wiki.seeedstudio.com/reterminal_e10xx_with_squareline_vision/"],
+  ["opendisplay", "https://wiki.seeedstudio.com/EN04_opendisplay/"],
+]);
+
+for (const [platformId, wikiUrl] of officialWikiUrls) {
+  const platform = PLATFORM_CARDS.find((item) => item.id === platformId);
+  assert.ok(platform, `${platformId} platform is registered`);
+  assert.equal(platform.wiki?.url, wikiUrl, `${platformId} wiki URL is registered`);
+}
+
 const lvglStatusPanel = PLATFORM_CARDS.find((platform) =>
   platform.id === "lvgl-epaper-status-panel"
 );

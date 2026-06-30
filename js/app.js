@@ -232,11 +232,12 @@ function renderPlatformDetailTags(platform, className = "") {
   return platform.detailTags.map((tag) => `<span${classAttr}>${tag}</span>`).join("");
 }
 
-function renderPlatformCreditMeta(platform, className = "") {
+function renderPlatformCreditMeta(platform, className = "", showWiki = true) {
   const canShowAuthor = platform.group === "community" && platform.author;
   const canShowSource =
     (platform.group === "official" || platform.group === "community") && platform.source?.url;
-  if (!canShowAuthor && !canShowSource) {
+  const canShowWiki = showWiki && platform.group === "official" && platform.wiki?.url;
+  if (!canShowAuthor && !canShowSource && !canShowWiki) {
     return "";
   }
 
@@ -257,8 +258,16 @@ function renderPlatformCreditMeta(platform, className = "") {
         <span>${platform.source.label || "Source"}</span>
       </a>`
     : "";
+  const wiki = canShowWiki
+    ? `<a class="community-source platform-wiki-link" href="${platform.wiki.url}" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M3.5 2.25h3.35c.68 0 1.28.26 1.65.7.37-.44.97-.7 1.65-.7h2.35c.69 0 1.25.56 1.25 1.25v9.25c0 .69-.56 1.25-1.25 1.25h-2.35c-.47 0-.87.15-1.15.43a.75.75 0 0 1-1 0 1.62 1.62 0 0 0-1.15-.43H3.5c-.69 0-1.25-.56-1.25-1.25V3.5c0-.69.56-1.25 1.25-1.25Zm4.25 10.03V4.1c-.18-.22-.5-.35-.9-.35H3.75v8.75h3.1c.32 0 .62.05.9.16Zm1.5.38c.28-.11.58-.16.9-.16h2.1V3.75h-2.1c-.4 0-.72.13-.9.35Z"/>
+        </svg>
+        <span>${platform.wiki.label || "Wiki"}</span>
+      </a>`
+    : "";
 
-  return `<div class="${metaClassName}">${author}${source}</div>`;
+  return `<div class="${metaClassName}">${author}${source}${wiki}</div>`;
 }
 
 function renderPlatformCard(platform) {
@@ -498,14 +507,16 @@ function renderFlowState() {
 
   const isTemplate = Boolean(selectedPlatform?.templateMode);
   const isDownload = Boolean(selectedPlatform?.downloadMode);
+  const isExternalTool = Boolean(selectedPlatform?.externalTool);
   const showBaseDetail = baseDetailOpen && !hasSelection;
   document.body.classList.toggle("has-selection", hasSelection);
+  document.body.classList.toggle("is-external-tool", hasSelection && isExternalTool);
   if (selectionPanel) selectionPanel.classList.toggle("is-collapsed", hasSelection || showBaseDetail);
   toggleStepPanel(baseDetailPanel, showBaseDetail, 0);
   toggleStepPanel(selectedPanel, hasSelection, 0);
   toggleStepPanel(versionPanel, hasSelection && !isDownload, 90);
-  toggleStepPanel(flashPanel, hasSelection, 180);
-  if (hasSelection) renderFlashPanelMode(isTemplate, isDownload);
+  toggleStepPanel(flashPanel, hasSelection && !isExternalTool, 180);
+  if (hasSelection && !isExternalTool) renderFlashPanelMode(isTemplate, isDownload);
   if (hasSelection && isDownload) renderDownloadGuide();
 }
 
@@ -531,7 +542,7 @@ function renderSelectedRelease() {
         <span class="tag tag-device">${selectedDevice.name}</span>
       </div>
       <h3>${firmwareName}</h3>
-      ${renderPlatformCreditMeta(selectedPlatform, "community-meta-selected")}
+      ${renderPlatformCreditMeta(selectedPlatform, "community-meta-selected", false)}
       <p>${firmwareDescription}</p>
       <div class="compat-list">
         ${renderDeviceSpecs(selectedDevice, "compat-badge active")}
@@ -642,14 +653,18 @@ function renderVersionPanel() {
   if (!versionSelect || !selectedPlatform) return;
 
   const isTemplate = Boolean(selectedPlatform?.templateMode);
+  const isExternalTool = Boolean(selectedPlatform?.externalTool);
   const versionField = versionSelect.closest(".field-block");
-  if (versionField) versionField.classList.toggle("is-hidden", isTemplate);
+  if (versionField) versionField.classList.toggle("is-hidden", isTemplate || isExternalTool);
 
   const versionPanel = document.getElementById("versionPanel");
   const panelHeading = versionPanel?.querySelector(".panel-heading h2");
-  if (panelHeading) panelHeading.textContent = isTemplate ? "Template setup" : "Version and setup";
+  if (panelHeading) {
+    if (isExternalTool) panelHeading.textContent = "Official toolbox";
+    else panelHeading.textContent = isTemplate ? "Template setup" : "Version and setup";
+  }
 
-  if (isTemplate) return;
+  if (isTemplate || isExternalTool) return;
 
   const versions = getVersionOptions(selectedPlatform);
   if (!versions.some((item) => item.version === selectedVersion?.version)) {
@@ -675,9 +690,27 @@ function renderAlertNotes(notes) {
   `).join("");
 }
 
+function renderExternalToolConfig(tool) {
+  return `
+    <div class="external-tool-card">
+      <strong>${tool.title}</strong>
+      <span>${tool.description}</span>
+      <a class="button" href="${tool.url}" target="_blank" rel="noopener">${tool.label}</a>
+    </div>
+  `;
+}
+
 function renderConfigArea() {
   const container = document.getElementById("configArea");
   if (!container || !selectedPlatform) return;
+
+  const externalTool = selectedPlatform.externalTool;
+  container.classList.toggle("config-area--external", Boolean(externalTool));
+
+  if (externalTool) {
+    container.innerHTML = renderExternalToolConfig(externalTool);
+    return;
+  }
 
   const notes = selectedFirmwareOption?.notes || [];
   const platformFields = selectedPlatform?.configFields || [];

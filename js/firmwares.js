@@ -399,6 +399,10 @@ const PLATFORM_CARDS = [
       label: "Official website",
       url: "https://esphome.io/",
     },
+    wiki: {
+      label: "Wiki",
+      url: "https://wiki.seeedstudio.com/epaper_work_with_esphome/",
+    },
     description:
       "ESPHome turns microcontroller boards into local smart-home devices using simple YAML configuration, web tools, and Home Assistant workflows.",
     logo: "assets/platforms/esphome-logo-card.png",
@@ -1159,6 +1163,10 @@ deep_sleep:
       label: "Official website",
       url: "https://trmnl.com/",
     },
+    wiki: {
+      label: "Wiki",
+      url: "https://wiki.seeedstudio.com/reterminal_e10xx_trmnl/",
+    },
     description:
       "TRMNL provides ready-to-run dashboard firmware for publishing calendar, task, metric, and plugin-based content to reTerminal ePaper displays.",
     logo: "assets/platforms/trmnl-logo.svg",
@@ -1225,6 +1233,10 @@ deep_sleep:
       label: "Official website",
       url: "https://www.envox.eu/studio/studio-introduction/",
     },
+    wiki: {
+      label: "Wiki",
+      url: "https://wiki.seeedstudio.com/reterminal_e10xx_with_eezstudio/",
+    },
     description:
       "EEZ Studio provides a visual drag-and-drop environment for designing LVGL-based UIs. Export your screen layout as C code, drop it into the project template, and compile with PlatformIO.",
     logo: "assets/platforms/eezstudio-logo.png",
@@ -1271,6 +1283,10 @@ deep_sleep:
     source: {
       label: "Official website",
       url: "https://lvgl.io/",
+    },
+    wiki: {
+      label: "Wiki",
+      url: "https://wiki.seeedstudio.com/epaper_work_with_lvgl",
     },
     description:
       "LVGL ePaper Status Panel renders a static device, network, and battery dashboard through LVGL 9 and the Seeed_GFX ePaper driver.",
@@ -1346,6 +1362,10 @@ deep_sleep:
       label: "Official website",
       url: "https://app.vision.squareline.io/",
     },
+    wiki: {
+      label: "Wiki",
+      url: "https://wiki.seeedstudio.com/reterminal_e10xx_with_squareline_vision/",
+    },
     description:
       "SquareLine Vision focuses on designing embedded interfaces visually, then preparing UI assets and implementation output for screen-based products.",
     logo: "assets/platforms/squareline-logo.png",
@@ -1378,8 +1398,18 @@ deep_sleep:
       label: "Official website",
       url: "https://www.opendisplay.org/",
     },
+    wiki: {
+      label: "Wiki",
+      url: "https://wiki.seeedstudio.com/EN04_opendisplay/",
+    },
     description:
       "OpenDisplay provides firmware and browser tools for low-power ePaper display projects, including BLE control, configuration, and image upload flows.",
+    externalTool: {
+      label: "Open OpenDisplay Toolbox",
+      url: "https://opendisplay.org/firmware/toolbox/index.html",
+      title: "Use the official OpenDisplay toolbox",
+      description: "OpenDisplay firmware and browser tools are maintained by the OpenDisplay project. Continue there to install firmware, configure BLE workflows, and upload images.",
+    },
     logo: "assets/platforms/opendisplay-logo-card-v2.png",
     preview: "assets/platforms/opendisplay-screen-enhanced.png",
     previewAlt: "OpenDisplay browser upload flow",
