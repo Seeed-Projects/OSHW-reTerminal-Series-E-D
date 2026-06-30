@@ -47,7 +47,7 @@
         <li><a href="#build-firmware-locally">Build Firmware Locally</a></li>
       </ul>
     </li>
-    <li><a href="#arduino-examples">Arduino Examples</a></li>
+    <li><a href="#firmware-examples">Firmware Examples</a></li>
     <li><a href="#project-structure">Project Structure</a></li>
     <li><a href="#cicd">CI/CD</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
@@ -65,12 +65,11 @@
 <!-- Replace with an actual screenshot of the Firmware Hub -->
 <!-- ![Firmware Hub Screenshot](docs/images/screenshot.png) -->
 
-The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you flash firmware, export templates, or download project templates for Seeed Studio's reTerminal E-Series ePaper devices in four simple steps:
+The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you flash firmware, export templates, or download project templates for Seeed Studio's reTerminal E-Series ePaper devices in three focused steps:
 
 1. **Select a platform** — choose from official platforms, Base demos, or community projects
-2. **Review the selected platform** — confirm the device and demo summary
-3. **Pick firmware, version, template options, or a project template** — choose the workflow that matches the selected platform
-4. **Flash, export, or build locally** — write firmware over USB, export an ESPHome YAML file, or download a PlatformIO project template
+2. **Configure the workflow** — pick a device, firmware version, template options, install mode, or downloadable project template
+3. **Flash, export, or build locally** — write firmware over USB, export an ESPHome YAML file, or download a PlatformIO project template
 
 A built-in **serial monitor** lets you view real-time device logs, choose the baud rate, pause the visible stream, and save the retained recent log without leaving the page.
 
@@ -106,6 +105,7 @@ All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support
 | **LVGL** | ✅ Ready | E1001 – E1004 | Ready-to-run LVGL 9.5.0 status dashboard rendered through Seeed_GFX |
 | **SquareLine Vision** | 🔜 Coming soon | E1002, E1003 | Visual UI designer for embedded ePaper displays |
 | **OpenDisplay** | 🔜 Coming soon | E1001 – E1003 | BLE-powered ePaper control + browser image upload |
+| **Voice Memo Reminder** | ✅ Community | E1001 – E1003 | AI voice memo firmware with English and Chinese reminder-list builds |
 | **ESP32 PhotoFrame** | ✅ Community | E1002, E1004 | Full-color photo frame firmware with measured-palette image quality, web UI, REST API, and Home Assistant integration ([repo](https://github.com/aitjcize/esp32-photoframe)) |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -117,8 +117,12 @@ All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support
 * [![JavaScript][JS-badge]][JS-url]
 * [![ESP Web Tools][ESPWebTools-badge]][ESPWebTools-url]
 * [![Arduino][Arduino-badge]][Arduino-url]
+* [PlatformIO](https://platformio.org/)
+* [LVGL](https://lvgl.io/)
 
 The web app is a **zero-dependency static site** — no bundler, no framework, no `node_modules`. It uses the [Web Serial API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) via [ESP Web Tools](https://esphome.github.io/esp-web-tools/) to flash firmware directly from the browser.
+
+Firmware projects are built with Arduino CLI or PlatformIO, depending on the target. The release pipeline maps each example to its supported reTerminal model and publishes browser-flashable manifests automatically.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -131,8 +135,8 @@ The quickest way to get started is to follow the path shown by the selected plat
 1. Open the **[Firmware Hub](https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/)** in **Chrome** or **Edge** (desktop only)
 2. Connect your reTerminal E-Series device via USB
 3. Select a platform and device
-4. Pick a firmware demo and version, then click **Install**; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**; for EEZ Studio, click **Download project template** and build locally with PlatformIO
-5. For flashing, choose the serial port when prompted and wait for the flash to complete
+4. Pick a firmware demo and version; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**; for EEZ Studio, click **Download project template** and build locally with PlatformIO
+5. For flashable firmware, choose **Standard flash** or **Erase flash + flash**, click **Connect & flash**, select the serial port, and wait for the flash to complete
 
 > **Note:** Web Serial requires **HTTPS** or **localhost** and is only available in Chromium-based browsers (Chrome, Edge, Opera). Safari and Firefox are not supported.
 
@@ -157,7 +161,7 @@ Then open `http://localhost:8000` (or whichever port your server uses).
 
 ### Build Firmware Locally
 
-To compile Arduino sketches without the CI pipeline:
+To compile Arduino sketches without the CI pipeline, use Arduino CLI:
 
 ```bash
 # Install arduino-cli
@@ -184,9 +188,21 @@ arduino-cli config set library.enable_unsafe_install true
 arduino-cli lib install --git-url https://github.com/Seeed-Studio/Seeed_GFX.git
 ```
 
+Official PlatformIO projects can be built from their own directories:
+
+```bash
+# LVGL status panel for E1001
+pio run -d examples/official/LVGLePaperStatusPanel -e reterminal_e1001
+
+# EEZ Studio template for E1004
+pio run -d examples/official/EEZStudio -e reterminal_e1004
+```
+
+TRMNL firmware uses the PlatformIO environments defined in `examples/official/TRMNL/platformio.ini`.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Arduino Examples
+## Firmware Examples
 
 Each example lives under a grouped `examples/` category and can be flashed via
 the Firmware Hub or compiled manually.
@@ -196,7 +212,20 @@ the Firmware Hub or compiled manually.
 | [`RTC_PCF8563`](examples/base/RTC_PCF8563/) | E1001 – E1004 | Read and write the PCF8563 real-time clock over I2C |
 | [`LowPower_DeepSleep`](examples/base/LowPower_DeepSleep/) | E1001 – E1004 | Enter ESP32-S3 deep sleep (~14 µA), wake on button press |
 | [`MicRecordToSD`](examples/base/MicRecordToSD/) | E1001 – E1003 | Record PDM microphone audio to WAV files on MicroSD |
+| [`LED_Control`](examples/base/LED_Control/) | E1001 – E1004 | Toggle the onboard LED with model-specific firmware builds |
+| [`Buzzer_Control`](examples/base/Buzzer_Control/) | E1001 – E1004 | Play basic alert tones from the onboard buzzer |
+| [`Buzzer_Music`](examples/base/Buzzer_Music/) | E1001 – E1004 | Play musical note patterns from the onboard buzzer |
+| [`UserButtons`](examples/base/UserButtons/) | E1001 – E1004 | Detect and report presses on the three user buttons |
+| [`Battery_Monitor`](examples/base/Battery_Monitor/) | E1001 – E1004 | Read and report battery voltage through the onboard ADC path |
+| [`MicroSD_ListFiles`](examples/base/MicroSD_ListFiles/) | E1001 – E1004 | Mount the MicroSD card and list files over serial |
 | [`E1003_TouchDraw`](examples/base/E1003_TouchDraw/) | E1003 | Draw on the 10.3″ ePaper display using touch input |
+| [`GxEPD2_reTerminal_E1001`](examples/base/GxEPD2_reTerminal_E1001/) | E1001 | Run a multi-screen black-and-white GxEPD2 display demo |
+| [`GxEPD2_reTerminal_E1002`](examples/base/GxEPD2_reTerminal_E1002/) | E1002 | Run a multi-screen 6-color GxEPD2 display demo |
+| [`GxEPD2_reTerminal_E1003`](examples/base/GxEPD2_reTerminal_E1003/) | E1003 | Run a 10.3″ grayscale GxEPD2 display demo |
+| [`GxEPD2_reTerminal_E1004`](examples/base/GxEPD2_reTerminal_E1004/) | E1004 | Run a 13.3″ 6-color GxEPD2 display demo |
+| [`GxEPD2_reTerminal_E1001_Gray4`](examples/base/GxEPD2_reTerminal_E1001_Gray4/) | E1001 | Render a 4-level grayscale display demo through Adafruit GFX canvas logic |
+| [`Seeed_GFX_E1001_Gray4`](examples/base/Seeed_GFX_E1001_Gray4/) | E1001 | Render a 4-level grayscale display demo through Seeed_GFX |
+| [`GxEPD2_reTerminal_E1003_Gray16`](examples/base/GxEPD2_reTerminal_E1003_Gray16/) | E1003 | Render a 16-level grayscale display demo |
 | [`E1001_ChineseTextDemo`](examples/base/E1001_ChineseTextDemo/) | E1001 | Render Chinese text with a TTF font stored in SPIFFS |
 | [`E1002_ChineseTextDemo`](examples/base/E1002_ChineseTextDemo/) | E1002 | Render Chinese text with a TTF font stored in SPIFFS |
 | [`E1003_ChineseTextDemo`](examples/base/E1003_ChineseTextDemo/) | E1003 | Render Chinese text with a TTF font stored in SPIFFS |
@@ -207,6 +236,8 @@ the Firmware Hub or compiled manually.
 | [`SD_ImagePipeline_E1002`](examples/base/SD_ImagePipeline_E1002/) | E1002 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
 | [`SD_ImagePipeline_E1003`](examples/base/SD_ImagePipeline_E1003/) | E1003 | Display a JPEG/PNG from MicroSD in 16-level grayscale |
 | [`SD_ImagePipeline_E1004`](examples/base/SD_ImagePipeline_E1004/) | E1004 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
+| [`TRMNL`](examples/official/TRMNL/) | E1001 – E1003 | Build the official TRMNL dashboard firmware for reTerminal E-Series |
+| [`EEZStudio`](examples/official/EEZStudio/) | E1001 – E1004 | Build an LVGL PlatformIO template generated for EEZ Studio workflows |
 | [`LVGLePaperStatusPanel`](examples/official/LVGLePaperStatusPanel/) | E1001 – E1004 | Render a static LVGL 9.5.0 status dashboard with Seeed_GFX |
 | [`ePaper-Voice-Memo`](examples/community/ePaper-Voice-Memo/) | E1001 – E1003 | AI voice memo to compact/card ePaper reminder lists with English/Chinese firmware options |
 
@@ -229,6 +260,7 @@ OSHW-reTerminal-Series-E-D/
 │   ├── css/style.css           # Responsive styles
 │   ├── js/
 │   │   ├── app.js              # UI logic, Web Serial monitor, flash events
+│   │   ├── esphome-template.js # ESPHome YAML template generator
 │   │   └── firmwares.js        # Device and platform data definitions
 │   └── assets/
 │       ├── brand/              # Logo and icons
@@ -258,14 +290,19 @@ Configure GitHub Pages to serve from the `gh-pages` branch. The deployed site is
 
 - [x] Base demo firmware (RTC, deep sleep, mic, touch draw)
 - [x] Browser-based flashing via ESP Web Tools
+- [x] Standard flash and erase-then-flash install modes
 - [x] Built-in serial monitor
 - [x] CI/CD pipeline for automated builds and deployment
 - [x] ESPHome YAML template generation for Home Assistant workflows
 - [x] EEZ Studio PlatformIO project template download
+- [x] Official TRMNL firmware entries for E1001, E1002, and E1003
+- [x] Official LVGL 9.5.0 status panel firmware entries for E1001, E1002, E1003, and E1004
+- [x] Chinese text demos for E1001, E1002, E1003, and E1004
+- [x] MicroSD image pipeline demos with browser-configurable image options
+- [x] Community Voice Memo Reminder firmware entries for English and Chinese builds
+- [x] Community ESP32 PhotoFrame firmware entries with erase-then-flash install flow
 - [ ] SquareLine Vision UI designer support
 - [ ] OpenDisplay BLE control + image upload
-- [ ] "Erase & flash" mode for full chip erase before flashing
-- [ ] E1003 Chinese text demo in Firmware Hub
 
 See the [open issues](https://github.com/Seeed-Projects/OSHW-reTerminal-Series-E-D/issues) for a full list of proposed features and known bugs.
 
