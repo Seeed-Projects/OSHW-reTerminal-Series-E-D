@@ -32,6 +32,7 @@ const zephyrPlatform = PLATFORM_CARDS.find((platform) => platform.id === "zephyr
 assert.ok(zephyrPlatform, "Zephyr platform is registered");
 assert.equal(zephyrPlatform.group, "official");
 assert.equal(zephyrPlatform.installReady, false);
+assert.equal(zephyrPlatform.logo, "assets/platforms/zephyr-logo.png");
 assert.deepEqual(zephyrPlatform.supportedDevices, ["E1001", "E1002", "E1003"]);
 assert.equal(zephyrPlatform.externalTool?.stepTitle, "Official docs");
 assert.equal(zephyrPlatform.externalTool?.label, "Open Zephyr Board Docs");

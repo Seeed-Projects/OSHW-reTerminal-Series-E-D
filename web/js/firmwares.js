@@ -1380,7 +1380,7 @@ deep_sleep:
       title: "Use the official Zephyr board documentation",
       description: "Open the selected board's Zephyr documentation to set up the west workspace, build samples, flash firmware, and monitor logs with the official Zephyr workflow.",
     },
-    logo: "assets/platforms/zephyr-logo-card.svg",
+    logo: "assets/platforms/zephyr-logo.png",
     preview: "assets/platforms/zephyr-preview.svg",
     previewAlt: "Zephyr board documentation and west workflow preview",
     accent: "#1B6CA8",
