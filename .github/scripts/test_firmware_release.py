@@ -243,6 +243,34 @@ class TrmnlTargetTest(unittest.TestCase):
             self.assertEqual(missing, [f"{firmware_id}.spiffs.bin"])
 
 
+class LvglStatusPanelTargetTest(unittest.TestCase):
+    def test_lvgl_status_panel_source_change_builds_all_platformio_targets(self) -> None:
+        plan = firmware_release.build_plan([
+            "examples/official/LVGLePaperStatusPanel/src/main.cpp",
+        ])
+        targets = {
+            target.id: target
+            for target in plan.changed_targets
+            if target.id.startswith("LVGL_StatusPanel_")
+        }
+
+        self.assertEqual(
+            set(targets),
+            {
+                "LVGL_StatusPanel_E1001",
+                "LVGL_StatusPanel_E1002",
+                "LVGL_StatusPanel_E1003",
+                "LVGL_StatusPanel_E1004",
+            },
+        )
+        self.assertEqual(targets["LVGL_StatusPanel_E1001"].pio_env, "reterminal_e1001")
+        self.assertEqual(targets["LVGL_StatusPanel_E1002"].pio_env, "reterminal_e1002")
+        self.assertEqual(targets["LVGL_StatusPanel_E1003"].pio_env, "reterminal_e1003")
+        self.assertEqual(targets["LVGL_StatusPanel_E1004"].pio_env, "reterminal_e1004")
+        self.assertTrue(all(target.tool == "platformio" for target in targets.values()))
+        self.assertTrue(all(target.group == "official" for target in targets.values()))
+
+
 class ExternalFirmwareTest(unittest.TestCase):
     def test_photoframe_targets_registered_for_expected_devices(self) -> None:
         external = {item.id: item for item in firmware_release.EXTERNAL_FIRMWARE}

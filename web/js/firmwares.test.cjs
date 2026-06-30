@@ -12,6 +12,27 @@ for (const option of firmwareOptions) {
   );
 }
 
+const lvglStatusPanel = PLATFORM_CARDS.find((platform) =>
+  platform.id === "lvgl-epaper-status-panel"
+);
+assert.ok(lvglStatusPanel, "LVGL ePaper Status Panel platform is registered");
+assert.equal(lvglStatusPanel.group, "official");
+assert.equal(lvglStatusPanel.installReady, true);
+assert.deepEqual(
+  lvglStatusPanel.supportedDevices,
+  ["E1001", "E1002", "E1003", "E1004"]
+);
+assert.deepEqual(lvglStatusPanel.detailTags, ["LVGL 9.5.0"]);
+assert.deepEqual(
+  lvglStatusPanel.firmwareOptions.map((option) => option.id),
+  [
+    "LVGL_StatusPanel_E1001",
+    "LVGL_StatusPanel_E1002",
+    "LVGL_StatusPanel_E1003",
+    "LVGL_StatusPanel_E1004",
+  ]
+);
+
 const photoframeOptions = firmwareOptions.filter((option) =>
   option.id.startsWith("PhotoFrame_")
 );

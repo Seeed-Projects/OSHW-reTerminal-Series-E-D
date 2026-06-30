@@ -226,6 +226,12 @@ function renderDeviceSpecs(device, className = "") {
   return device.specs.map((spec) => `<span${classAttr}>${spec}</span>`).join("");
 }
 
+function renderPlatformDetailTags(platform, className = "") {
+  if (!platform?.detailTags?.length) return "";
+  const classAttr = className ? ` class="${className}"` : "";
+  return platform.detailTags.map((tag) => `<span${classAttr}>${tag}</span>`).join("");
+}
+
 function renderPlatformCreditMeta(platform, className = "") {
   const canShowAuthor = platform.group === "community" && platform.author;
   const canShowSource =
@@ -529,6 +535,7 @@ function renderSelectedRelease() {
       <p>${firmwareDescription}</p>
       <div class="compat-list">
         ${renderDeviceSpecs(selectedDevice, "compat-badge active")}
+        ${renderPlatformDetailTags(selectedPlatform, "compat-badge active")}
       </div>
     </div>
     <div class="selected-device-photo">

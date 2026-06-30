@@ -102,7 +102,8 @@ All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support
 | **Base** | ✅ Ready | E1001 – E1004 | Smoke-test demos (RTC, deep sleep, mic recording, touch draw) |
 | **ESPHome** | ✅ YAML templates | E1001 – E1002 | Smart home integration with Home Assistant |
 | **TRMNL** | ✅ Ready | E1001 – E1003 | Official TRMNL dashboard firmware for always-on ePaper panels |
-| **EEZ Studio** | ✅ Project template | E1001 | Visual LVGL UI design with a downloadable PlatformIO project template |
+| **EEZ Studio** | ✅ Project template | E1001 – E1004 | Visual LVGL UI design with a downloadable PlatformIO project template |
+| **LVGL** | ✅ Ready | E1001 – E1004 | Ready-to-run LVGL 9.5.0 status dashboard rendered through Seeed_GFX |
 | **SquareLine Vision** | 🔜 Coming soon | E1002, E1003 | Visual UI designer for embedded ePaper displays |
 | **OpenDisplay** | 🔜 Coming soon | E1001 – E1003 | BLE-powered ePaper control + browser image upload |
 | **ESP32 PhotoFrame** | ✅ Community | E1002, E1004 | Full-color photo frame firmware with measured-palette image quality, web UI, REST API, and Home Assistant integration ([repo](https://github.com/aitjcize/esp32-photoframe)) |
@@ -206,6 +207,7 @@ the Firmware Hub or compiled manually.
 | [`SD_ImagePipeline_E1002`](examples/base/SD_ImagePipeline_E1002/) | E1002 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
 | [`SD_ImagePipeline_E1003`](examples/base/SD_ImagePipeline_E1003/) | E1003 | Display a JPEG/PNG from MicroSD in 16-level grayscale |
 | [`SD_ImagePipeline_E1004`](examples/base/SD_ImagePipeline_E1004/) | E1004 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
+| [`LVGLePaperStatusPanel`](examples/official/LVGLePaperStatusPanel/) | E1001 – E1004 | Render a static LVGL 9.5.0 status dashboard with Seeed_GFX |
 | [`ePaper-Voice-Memo`](examples/community/ePaper-Voice-Memo/) | E1001 – E1003 | AI voice memo to compact/card ePaper reminder lists with English/Chinese firmware options |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
