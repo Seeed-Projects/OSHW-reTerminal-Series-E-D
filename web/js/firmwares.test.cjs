@@ -17,6 +17,7 @@ const officialWikiUrls = new Map([
   ["trmnl", "https://wiki.seeedstudio.com/reterminal_e10xx_trmnl/"],
   ["eezstudio", "https://wiki.seeedstudio.com/reterminal_e10xx_with_eezstudio/"],
   ["lvgl-epaper-status-panel", "https://wiki.seeedstudio.com/epaper_work_with_lvgl"],
+  ["zephyr", "https://wiki.seeedstudio.com/epaper_work_with_zephyr/"],
   ["squareline", "https://wiki.seeedstudio.com/reterminal_e10xx_with_squareline_vision/"],
   ["opendisplay", "https://wiki.seeedstudio.com/EN04_opendisplay/"],
 ]);

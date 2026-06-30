@@ -1362,6 +1362,10 @@ deep_sleep:
       label: "Official website",
       url: "https://www.zephyrproject.org/",
     },
+    wiki: {
+      label: "Wiki",
+      url: "https://wiki.seeedstudio.com/epaper_work_with_zephyr/",
+    },
     description:
       "Zephyr provides upstream board documentation for reTerminal E1001, E1002, and E1003, including west-based build, flash, and monitor commands for ESP32-S3 development.",
     externalTool: {
