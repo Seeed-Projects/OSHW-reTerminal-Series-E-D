@@ -253,6 +253,7 @@ For a new official platform card, add an object to `PLATFORM_CARDS`.
   name: "My Official Platform",
   tagline: "Short workflow summary.",
   source: { label: "Official website", url: "https://example.com" },
+  wiki: { label: "Wiki", url: "https://wiki.seeedstudio.com/example/" },
   description: "What this platform does and when to use it.",
   logo: "assets/platforms/my-official-platform-logo.png",
   preview: "assets/platforms/my-official-platform-preview.png",
@@ -277,6 +278,7 @@ For a new official platform card, add an object to `PLATFORM_CARDS`.
   name: "My Official Platform",
   tagline: "Short workflow summary.",
   source: { label: "Official website", url: "https://example.com" },
+  wiki: { label: "Wiki", url: "https://wiki.seeedstudio.com/example/" },
   description: "What this platform does and when to use it.",
   logo: "assets/platforms/my-official-platform-logo.png",
   preview: "assets/platforms/my-official-platform-preview.png",
@@ -311,6 +313,7 @@ reference and a working example.
   name: "My Official Platform",
   tagline: "Short workflow summary.",
   source: { label: "Official website", url: "https://example.com" },
+  wiki: { label: "Wiki", url: "https://wiki.seeedstudio.com/example/" },
   description: "What this platform does and when to use it.",
   logo: "assets/platforms/my-official-platform-logo.svg",
   preview: "assets/platforms/my-official-platform-preview.svg",
@@ -343,6 +346,7 @@ reference and a working example.
   name: "My Official Platform",
   tagline: "Short workflow summary.",
   source: { label: "Official website", url: "https://example.com" },
+  wiki: { label: "Wiki", url: "https://wiki.seeedstudio.com/example/" },
   description: "What this platform does and when to use it.",
   externalTool: {
     label: "Open official toolbox",
@@ -365,7 +369,8 @@ reference and a working example.
 ```
 
 The `source` field is required for official platform cards. Use it to link to
-the official product or project website.
+the official product or project website. Add `wiki` when a Seeed Studio Wiki
+tutorial exists for the platform.
 
 For a flash-mode firmware option, add it to the platform card's `firmwareOptions` array:
 
@@ -732,6 +737,7 @@ The web page is driven by `web/js/firmwares.js`.
 | `description` | Yes | Longer explanation shown in the card |
 | `author` | Community only | Creator name shown on Community Projects cards |
 | `source` | Official and Community | Official website or original project link shown on cards |
+| `wiki` | Official only | Seeed Studio Wiki tutorial link shown beside the official website link |
 | `logo` | Yes | Logo asset path |
 | `preview` | Yes | Preview image asset path |
 | `previewAlt` | Yes | Accessible image description |
@@ -1008,6 +1014,7 @@ Use this checklist before opening a pull request.
 - The project uses only `official`, `base`, or `community`.
 - No new `PLATFORM_GROUPS` entry was added.
 - Official platform cards include `source`.
+- Official platform cards include `wiki` when a Seeed Studio Wiki tutorial is available.
 - Community Projects include `author` and `source`.
 - `web/js/firmwares.js` was updated when the project needs a card, polished
   copy, device-specific compatibility, notes, or config fields.

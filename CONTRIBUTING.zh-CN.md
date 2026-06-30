@@ -212,6 +212,7 @@ examples/official/MyOfficialProject/
   name: "My Official Platform",
   tagline: "Short workflow summary.",
   source: { label: "Official website", url: "https://example.com" },
+  wiki: { label: "Wiki", url: "https://wiki.seeedstudio.com/example/" },
   description: "What this platform does and when to use it.",
   logo: "assets/platforms/my-official-platform-logo.png",
   preview: "assets/platforms/my-official-platform-preview.png",
@@ -236,6 +237,7 @@ examples/official/MyOfficialProject/
   name: "My Official Platform",
   tagline: "Short workflow summary.",
   source: { label: "Official website", url: "https://example.com" },
+  wiki: { label: "Wiki", url: "https://wiki.seeedstudio.com/example/" },
   description: "What this platform does and when to use it.",
   logo: "assets/platforms/my-official-platform-logo.png",
   preview: "assets/platforms/my-official-platform-preview.png",
@@ -269,6 +271,7 @@ examples/official/MyOfficialProject/
   name: "My Official Platform",
   tagline: "Short workflow summary.",
   source: { label: "Official website", url: "https://example.com" },
+  wiki: { label: "Wiki", url: "https://wiki.seeedstudio.com/example/" },
   description: "What this platform does and when to use it.",
   externalTool: {
     label: "Open official toolbox",
@@ -290,7 +293,7 @@ examples/official/MyOfficialProject/
 }
 ```
 
-官方平台卡片必须提供 `source` 字段。用它链接到官方产品或项目网站。
+官方平台卡片必须提供 `source` 字段。用它链接到官方产品或项目网站。如果平台有 Seeed Studio Wiki 教程，请添加 `wiki` 字段。
 
 对于烧录模式固件选项，请把它添加到平台卡片的 `firmwareOptions` 数组：
 
@@ -582,6 +585,7 @@ python3 .github/scripts/firmware_release.py plan \
 | `description` | Yes | 卡片中显示的更长说明 |
 | `author` | Community only | Community Projects 卡片上显示的创建者名称 |
 | `source` | Official and Community | 卡片上显示的官方网站或原始项目链接 |
+| `wiki` | Official only | 显示在官方网站链接旁边的 Seeed Studio Wiki 教程链接 |
 | `logo` | Yes | Logo 资源路径 |
 | `preview` | Yes | 预览图片资源路径 |
 | `previewAlt` | Yes | 无障碍图片描述 |
@@ -841,6 +845,7 @@ pio run -e <env-name>
 - 项目只使用 `official`、`base` 或 `community`。
 - 没有添加新的 `PLATFORM_GROUPS` 条目。
 - 官方平台卡片包含 `source`。
+- 当官方平台有 Seeed Studio Wiki 教程时，平台卡片包含 `wiki`。
 - Community Projects 包含 `author` 和 `source`。
 - 当项目需要卡片、精致文案、按设备区分的兼容性、说明或配置字段时，已更新 `web/js/firmwares.js`。
 - 每个 `firmwareOptions[].id` 都匹配一个固件构建 ID。

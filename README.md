@@ -75,6 +75,8 @@ A built-in **serial monitor** lets you view real-time device logs, choose the ba
 
 Browser-flashable workflows run directly from the page. Template and download workflows provide the files needed for local customization and builds. Official tool workflows link to the upstream platform's maintained firmware or toolbox page.
 
+Official platform cards include direct Seeed Studio Wiki shortcuts for platform-specific setup tutorials.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Supported Hardware
