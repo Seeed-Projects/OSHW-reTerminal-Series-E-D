@@ -1264,6 +1264,80 @@ deep_sleep:
     firmwareOptions: [],
   },
   {
+    id: "lvgl-epaper-status-panel",
+    group: "official",
+    name: "LVGL",
+    tagline: "Ready-to-run LVGL status dashboard for reTerminal ePaper displays.",
+    source: {
+      label: "Official website",
+      url: "https://lvgl.io/",
+    },
+    description:
+      "LVGL ePaper Status Panel renders a static device, network, and battery dashboard through LVGL 9 and the Seeed_GFX ePaper driver.",
+    logo: "assets/platforms/lvgl-logo-colored.png",
+    preview: "assets/platforms/lvgl-epaper-status-panel-preview.jpg",
+    previewAlt: "LVGL ePaper status panel running on a reTerminal display",
+    accent: "#353A40",
+    highlight: "#4466F2",
+    supportedDevices: ["E1001", "E1002", "E1003", "E1004"],
+    detailTags: ["LVGL 9.5.0"],
+    installReady: true,
+    bullets: [
+      "Static LVGL 9 status panel",
+      "Seeed_GFX ePaper display pipeline",
+      "Web-flashable builds for every E-Series display",
+    ],
+    versions: [
+      {
+        version: "1.0.0",
+        label: "Stable",
+      },
+    ],
+    configFields: [],
+    firmwareOptions: [
+      {
+        id: "LVGL_StatusPanel_E1001",
+        name: "LVGL Status Panel",
+        description: "Install the LVGL status panel firmware for reTerminal E1001.",
+        category: "Dashboard",
+        compatible: ["E1001"],
+        notes: [
+          { type: "info", text: "After flashing, the device renders a static LVGL dashboard with device, network, and battery demo panels." },
+        ],
+      },
+      {
+        id: "LVGL_StatusPanel_E1002",
+        name: "LVGL Status Panel",
+        description: "Install the LVGL status panel firmware for reTerminal E1002.",
+        category: "Dashboard",
+        compatible: ["E1002"],
+        notes: [
+          { type: "info", text: "After flashing, the device renders a static LVGL dashboard with device, network, and battery demo panels." },
+        ],
+      },
+      {
+        id: "LVGL_StatusPanel_E1003",
+        name: "LVGL Status Panel",
+        description: "Install the LVGL status panel firmware for reTerminal E1003.",
+        category: "Dashboard",
+        compatible: ["E1003"],
+        notes: [
+          { type: "info", text: "After flashing, the device renders a static LVGL dashboard with device, network, and battery demo panels." },
+        ],
+      },
+      {
+        id: "LVGL_StatusPanel_E1004",
+        name: "LVGL Status Panel",
+        description: "Install the LVGL status panel firmware for reTerminal E1004.",
+        category: "Dashboard",
+        compatible: ["E1004"],
+        notes: [
+          { type: "info", text: "After flashing, the device renders a static LVGL dashboard with device, network, and battery demo panels." },
+        ],
+      },
+    ],
+  },
+  {
     id: "squareline",
     group: "official",
     name: "SquareLine Vision",

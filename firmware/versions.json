@@ -50,6 +50,18 @@
   "LED_Control_E1004": [
     "2026.06.07"
   ],
+  "LVGL_StatusPanel_E1001": [
+    "2026.06.30"
+  ],
+  "LVGL_StatusPanel_E1002": [
+    "2026.06.30"
+  ],
+  "LVGL_StatusPanel_E1003": [
+    "2026.06.30"
+  ],
+  "LVGL_StatusPanel_E1004": [
+    "2026.06.30"
+  ],
   "LowPower_DeepSleep": [
     "2026.06.07"
   ],
