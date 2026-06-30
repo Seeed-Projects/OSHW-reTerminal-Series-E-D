@@ -660,7 +660,9 @@ function renderVersionPanel() {
   const versionPanel = document.getElementById("versionPanel");
   const panelHeading = versionPanel?.querySelector(".panel-heading h2");
   if (panelHeading) {
-    if (isExternalTool) panelHeading.textContent = "Official toolbox";
+    if (isExternalTool) {
+      panelHeading.textContent = selectedPlatform.externalTool.stepTitle || "Official toolbox";
+    }
     else panelHeading.textContent = isTemplate ? "Template setup" : "Version and setup";
   }
 
@@ -690,12 +692,17 @@ function renderAlertNotes(notes) {
   `).join("");
 }
 
-function renderExternalToolConfig(tool) {
+function getExternalToolUrl(tool, device) {
+  return tool.urlsByDevice?.[device?.id] || tool.url;
+}
+
+function renderExternalToolConfig(tool, device) {
+  const toolUrl = getExternalToolUrl(tool, device);
   return `
     <div class="external-tool-card">
       <strong>${tool.title}</strong>
       <span>${tool.description}</span>
-      <a class="button" href="${tool.url}" target="_blank" rel="noopener">${tool.label}</a>
+      <a class="button" href="${toolUrl}" target="_blank" rel="noopener">${tool.label}</a>
     </div>
   `;
 }
@@ -708,7 +715,7 @@ function renderConfigArea() {
   container.classList.toggle("config-area--external", Boolean(externalTool));
 
   if (externalTool) {
-    container.innerHTML = renderExternalToolConfig(externalTool);
+    container.innerHTML = renderExternalToolConfig(externalTool, selectedDevice);
     return;
   }
 
