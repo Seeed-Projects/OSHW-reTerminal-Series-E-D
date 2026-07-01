@@ -1,5 +1,4 @@
 let expandedPlatformId = null;
-let baseDetailOpen = false;
 let selectedPlatform = null;
 let selectedDevice = null;
 let selectedFirmwareOption = null;
@@ -30,8 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
   void loadFirmwareVersions();
   renderPlatformCards();
-  renderBaseBringup();
-  renderBaseDetailPanel();
   renderFlowState();
   bindFlowEvents();
   bindWorkspaceEvents();
@@ -185,8 +182,6 @@ async function loadFirmwareVersions() {
 
   await loadFirmwareCatalog();
   renderPlatformCards();
-  renderBaseBringup();
-  renderBaseDetailPanel();
 
   if (selectedPlatform) {
     selectedVersion = getDefaultVersion(selectedPlatform);
@@ -362,85 +357,6 @@ function renderPlatformCards() {
   });
 }
 
-function renderBaseBringup() {
-  const container = document.getElementById("baseBringup");
-  const basePlatform = getBasePlatform();
-  if (!container || !basePlatform) return;
-
-  container.innerHTML = `
-    <button class="base-bringup-card" type="button" aria-label="Open hardware bring-up">
-      <span class="base-bringup-logo">
-        <img src="${basePlatform.logo}" alt="${basePlatform.name} logo">
-      </span>
-      <span class="base-bringup-copy">
-        <strong>Hardware bring-up</strong>
-        <span>${basePlatform.tagline}</span>
-      </span>
-      <span class="base-bringup-arrow" aria-hidden="true">→</span>
-    </button>
-  `;
-
-  const btn = container.querySelector(".base-bringup-card");
-  if (btn) btn.addEventListener("click", openBaseDetailPage);
-}
-
-function renderBaseDetailPanel() {
-  const container = document.getElementById("baseDetailContent");
-  const basePlatform = getBasePlatform();
-  if (!container || !basePlatform) return;
-
-  const devices = basePlatform.supportedDevices
-    .map((deviceId) => {
-      const device = getDevice(deviceId);
-      if (!device) return "";
-      return `
-        <button class="device-option" data-platform="${basePlatform.id}" data-device="${device.id}" type="button">
-          <span class="device-image">
-            <img src="${device.image}" alt="${device.imageAlt}">
-          </span>
-          <span class="device-copy">
-            <strong>${device.name}</strong>
-            <span>${device.description}</span>
-            <span class="device-specs">${renderDeviceSpecs(device)}</span>
-          </span>
-        </button>
-      `;
-    })
-    .join("");
-
-  container.innerHTML = `
-    <div class="base-detail-copy">
-      <p>${basePlatform.description}</p>
-    </div>
-    <div class="base-detail-device-choice">
-      <div>
-        <p class="eyebrow">Supported devices</p>
-        <h3>Select device type</h3>
-      </div>
-      <div class="device-options">${devices}</div>
-    </div>
-  `;
-
-  container.querySelectorAll("[data-device]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      selectPlatformDevice(btn.dataset.platform, btn.dataset.device);
-    });
-  });
-}
-
-function openBaseDetailPage() {
-  baseDetailOpen = true;
-  expandedPlatformId = null;
-  renderPlatformCards();
-  renderBaseDetailPanel();
-  renderFlowState();
-}
-
-function closeBaseDetailPage() {
-  baseDetailOpen = false;
-  renderFlowState();
-}
-
 function collapsePlatformCards() {
   if (!expandedPlatformId) return;
   expandedPlatformId = null;
@@ -461,7 +377,6 @@ function bindBlankAreaCollapse() {
 // 选择平台和设备组合，用来驱动后续配置流程。
 function selectPlatformDevice(platformId, deviceId) {
   document.body.classList.remove("is-flash-step");
-  baseDetailOpen = false;
   selectedPlatform =
     PLATFORM_CARDS.find((platform) => platform.id === platformId) || null;
   selectedDevice = getDevice(deviceId);
@@ -483,13 +398,11 @@ function selectPlatformDevice(platformId, deviceId) {
 }
 
 function clearPlatformSelection() {
-  const returnToBaseDetail = selectedPlatform?.group === "base";
   document.body.classList.remove("is-flash-step");
   selectedPlatform = null;
   selectedDevice = null;
   selectedFirmwareOption = null;
   selectedVersion = null;
-  baseDetailOpen = returnToBaseDetail;
   renderPlatformCards();
   renderFlowState();
   renderFlashNotes();
@@ -500,7 +413,6 @@ function clearPlatformSelection() {
 function renderFlowState() {
   const hasSelection = Boolean(selectedPlatform && selectedDevice);
   const selectionPanel = document.getElementById("selectionPanel");
-  const baseDetailPanel = document.getElementById("baseDetailPanel");
   const selectedPanel = document.getElementById("selectedPanel");
   const versionPanel = document.getElementById("versionPanel");
   const flashPanel = document.getElementById("flashPanel");
@@ -508,11 +420,9 @@ function renderFlowState() {
   const isTemplate = Boolean(selectedPlatform?.templateMode);
   const isDownload = Boolean(selectedPlatform?.downloadMode);
   const isExternalTool = Boolean(selectedPlatform?.externalTool);
-  const showBaseDetail = baseDetailOpen && !hasSelection;
   document.body.classList.toggle("has-selection", hasSelection);
   document.body.classList.toggle("is-external-tool", hasSelection && isExternalTool);
-  if (selectionPanel) selectionPanel.classList.toggle("is-collapsed", hasSelection || showBaseDetail);
-  toggleStepPanel(baseDetailPanel, showBaseDetail, 0);
+  if (selectionPanel) selectionPanel.classList.toggle("is-collapsed", hasSelection);
   toggleStepPanel(selectedPanel, hasSelection, 0);
   toggleStepPanel(versionPanel, hasSelection && !isDownload, 90);
   toggleStepPanel(flashPanel, hasSelection && !isExternalTool, 180);
@@ -597,8 +507,8 @@ function renderFirmwareSelect() {
   field.classList.remove("field-block--template-options");
   const options = getFirmwareBaseOptions(selectedPlatform, selectedDevice.id);
   const labelText =
-    selectedPlatform.group === "base"
-      ? "Base demo"
+    selectedPlatform.id === "base"
+      ? "Arduino demo"
       : selectedPlatform.group === "community"
         ? "Project firmware"
         : "Firmware option";
@@ -1489,11 +1399,6 @@ function bindFlowEvents() {
   const changeBtn = document.getElementById("changePlatformButton");
   if (changeBtn) {
     changeBtn.addEventListener("click", clearPlatformSelection);
-  }
-
-  const baseBackBtn = document.getElementById("baseDetailBackButton");
-  if (baseBackBtn) {
-    baseBackBtn.addEventListener("click", closeBaseDetailPage);
   }
 
   const firmwareField = document.getElementById("firmwareField");

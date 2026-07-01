@@ -65,12 +65,16 @@ const PLATFORM_GROUPS = [
 const PLATFORM_CARDS = [
   {
     id: "base",
-    group: "base",
-    name: "Base",
+    group: "official",
+    name: "Arduino",
     tagline: "Product bring-up demos for first-time hardware checks.",
+    wiki: {
+      label: "Wiki",
+      url: "https://wiki.seeedstudio.com/epaper_work_with_arduino/",
+    },
     description:
-      "Use Base firmware when you want to verify core hardware quickly: RTC, low-power mode, microphone recording, touch, and display behavior.",
-    logo: "assets/platforms/base-logo.svg",
+      "Use Arduino firmware when you want to verify core hardware quickly: RTC, low-power mode, microphone recording, touch, and display behavior.",
+    logo: "assets/platforms/arduino-logo.png",
     preview: "assets/platforms/base-preview.svg?v=20260604-platform-art",
     previewAlt: "Basic firmware setup preview",
     accent: "#004966",
