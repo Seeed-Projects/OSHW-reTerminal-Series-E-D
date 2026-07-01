@@ -89,17 +89,6 @@
         <div class="platform-grid" id="platformGrid"></div>
       </article>
 
-      <article class="panel step-panel is-hidden" id="baseDetailPanel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Hardware bring-up</p>
-            <h2>Select device</h2>
-          </div>
-          <button class="button button-secondary button-small" id="baseDetailBackButton" type="button">Back</button>
-        </div>
-        <div class="base-detail-content" id="baseDetailContent"></div>
-      </article>
-
       <article class="panel selected-panel step-panel is-hidden" id="selectedPanel">
         <div class="panel-heading">
           <div>
@@ -119,7 +108,7 @@
         </div>
         <div class="setup-grid">
           <div class="field-block is-hidden" id="firmwareField">
-            <span>Base demo</span>
+            <span>Firmware option</span>
             <select id="firmwareSelect"></select>
           </div>
           <div class="field-block is-hidden" id="languageField">
@@ -217,8 +206,6 @@
 
     <!-- ============ RIGHT: Persistent monitor ============ -->
     <aside class="monitor-col">
-      <div id="baseBringup"></div>
-
       <article class="panel console-panel">
         <div class="console-heading">
           <div class="console-title">
