@@ -275,8 +275,10 @@ class ExternalFirmwareTest(unittest.TestCase):
     def test_photoframe_targets_registered_for_expected_devices(self) -> None:
         external = {item.id: item for item in firmware_release.EXTERNAL_FIRMWARE}
         self.assertIn("PhotoFrame_reTerminal_E1002", external)
+        self.assertIn("PhotoFrame_reTerminal_E1003", external)
         self.assertIn("PhotoFrame_reTerminal_E1004", external)
         self.assertEqual(external["PhotoFrame_reTerminal_E1002"].devices, ("E1002",))
+        self.assertEqual(external["PhotoFrame_reTerminal_E1003"].devices, ("E1003",))
         self.assertEqual(external["PhotoFrame_reTerminal_E1004"].devices, ("E1004",))
         self.assertTrue(
             all(item.group == "community" for item in firmware_release.EXTERNAL_FIRMWARE)
@@ -285,11 +287,13 @@ class ExternalFirmwareTest(unittest.TestCase):
     def test_external_manifest_is_single_merged_part_at_zero(self) -> None:
         external = firmware_release.ExternalFirmware(
             id="PhotoFrame_reTerminal_E1002",
-            version="2.8.0",
-            url="https://example.test/photoframe-firmware-e1002-merged.bin",
+            repo="aitjcize/esp32-photoframe",
+            asset="photoframe-firmware-e1002-merged.bin",
             devices=("E1002",),
             title="ESP32 PhotoFrame for E1002",
         )
+        version = "2.8.0"
+        url = "https://example.test/photoframe-firmware-e1002-merged.bin"
 
         def fake_download(url: str, destination: Path) -> None:
             destination.write_bytes(b"merged-firmware-image")
@@ -297,8 +301,8 @@ class ExternalFirmwareTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir, patch.object(
             firmware_release, "download_binary", side_effect=fake_download
         ):
-            destination = Path(temp_dir) / external.id / external.version
-            firmware_release.write_external_manifest(external, destination)
+            destination = Path(temp_dir) / external.id / version
+            firmware_release.write_external_manifest(external, version, url, destination)
 
             manifest = json.loads((destination / "manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["version"], "2.8.0")
@@ -320,8 +324,8 @@ class ExternalFirmwareTest(unittest.TestCase):
         external = (
             firmware_release.ExternalFirmware(
                 id="PhotoFrame_reTerminal_E1002",
-                version="2.8.0",
-                url="https://example.test/e1002-merged.bin",
+                repo="aitjcize/esp32-photoframe",
+                asset="e1002-merged.bin",
                 devices=("E1002",),
             ),
         )
@@ -332,15 +336,22 @@ class ExternalFirmwareTest(unittest.TestCase):
             calls["count"] += 1
             destination.write_bytes(b"merged")
 
+        def fake_tag(repo: str) -> str:
+            return "v2.8.0"
+
         with tempfile.TemporaryDirectory() as temp_dir, patch.object(
             firmware_release, "download_binary", side_effect=fake_download
         ):
             firmware_root = Path(temp_dir)
 
-            first = firmware_release.publish_external_firmware(firmware_root, external)
+            first = firmware_release.publish_external_firmware(
+                firmware_root, external, resolve_tag=fake_tag
+            )
             self.assertEqual(first, {"PhotoFrame_reTerminal_E1002": "2.8.0"})
 
-            second = firmware_release.publish_external_firmware(firmware_root, external)
+            second = firmware_release.publish_external_firmware(
+                firmware_root, external, resolve_tag=fake_tag
+            )
             self.assertEqual(second, {})
             self.assertEqual(calls["count"], 1)
 
@@ -351,8 +362,8 @@ class ExternalFirmwareTest(unittest.TestCase):
         external = (
             firmware_release.ExternalFirmware(
                 id="PhotoFrame_reTerminal_E1002",
-                version="2.8.0",
-                url="https://example.test/e1002-merged.bin",
+                repo="aitjcize/esp32-photoframe",
+                asset="e1002-merged.bin",
                 devices=("E1002",),
             ),
         )
@@ -363,14 +374,16 @@ class ExternalFirmwareTest(unittest.TestCase):
             side_effect=RuntimeError("download failed"),
         ):
             with self.assertRaises(RuntimeError):
-                firmware_release.publish_external_firmware(Path(temp_dir), external)
+                firmware_release.publish_external_firmware(
+                    Path(temp_dir), external, resolve_tag=lambda repo: "v2.8.0"
+                )
 
     def test_catalog_lists_external_firmware_as_community(self) -> None:
         external = (
             firmware_release.ExternalFirmware(
                 id="PhotoFrame_reTerminal_E1004",
-                version="2.8.0",
-                url="https://example.test/e1004-merged.bin",
+                repo="aitjcize/esp32-photoframe",
+                asset="e1004-merged.bin",
                 devices=("E1004",),
                 title="ESP32 PhotoFrame for E1004",
             ),
@@ -383,7 +396,9 @@ class ExternalFirmwareTest(unittest.TestCase):
             firmware_release, "download_binary", side_effect=fake_download
         ):
             firmware_root = Path(temp_dir)
-            firmware_release.publish_external_firmware(firmware_root, external)
+            firmware_release.publish_external_firmware(
+                firmware_root, external, resolve_tag=lambda repo: "v2.8.0"
+            )
             firmware_release.write_catalog_json(firmware_root, [], external)
 
             catalog = json.loads(

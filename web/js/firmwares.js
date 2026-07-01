@@ -1640,17 +1640,17 @@ deep_sleep:
     tagline: "Community ePaper photo frame firmware with measured-palette image quality and a web UI.",
     author: "aitjcize",
     source: {
-      label: "aitjcize/esp32-photoframe",
-      url: "https://github.com/aitjcize/esp32-photoframe",
+      label: "esp32-photoframe",
+      url: "https://aitjcize.github.io/esp32-photoframe/",
     },
     description:
       "ESP32 PhotoFrame replaces the stock firmware with a measured-palette dithering pipeline, a drag-and-drop web interface, deep-sleep power management, SD card and URL image sources, and Home Assistant integration.",
-    logo: "assets/brand/reterminal-epaper-icon.svg",
+    logo: "assets/platforms/photoframe-logo.svg",
     preview: "assets/platforms/photoframe-preview.png",
     previewAlt: "ESP32 PhotoFrame web interface running on a reTerminal ePaper display",
     accent: "#5A3A1E",
     highlight: "#C8843C",
-    supportedDevices: ["E1002", "E1004"],
+    supportedDevices: ["E1002", "E1003", "E1004"],
     installReady: true,
     bullets: [
       "Measured-palette dithering for accurate ePaper color",
@@ -1659,7 +1659,7 @@ deep_sleep:
     ],
     versions: [
       {
-        version: "2.8.0",
+        version: "2.9.0",
         label: "Stable",
       },
     ],
@@ -1671,7 +1671,22 @@ deep_sleep:
         description: "Full-color photo frame firmware for the reTerminal E1002 (7.3\" Spectra 6). Includes the web interface, REST API, and Home Assistant integration.",
         category: "Application",
         compatible: ["E1002"],
-        defaultVersion: "2.8.0",
+        defaultVersion: "2.9.0",
+        recommendedInstallMode: "erase",
+        flashNotes: [
+          { type: "warning", text: "This replaces the stock firmware and rewrites the partition table. Use the \"Erase + flash\" mode so the full-chip image at 0x0 writes over the stock layout cleanly." },
+        ],
+        notes: [
+          { type: "info", text: "After flashing, the device starts a Wi-Fi setup portal. Join it (or use the companion app) to connect your network, then open the web interface to upload images and configure auto-rotation." },
+        ],
+      },
+      {
+        id: "PhotoFrame_reTerminal_E1003",
+        name: "ESP32 PhotoFrame",
+        description: "Grayscale photo frame firmware for the reTerminal E1003 (10.3\" 16-level grayscale). Includes the web interface, REST API, and Home Assistant integration.",
+        category: "Application",
+        compatible: ["E1003"],
+        defaultVersion: "2.9.0",
         recommendedInstallMode: "erase",
         flashNotes: [
           { type: "warning", text: "This replaces the stock firmware and rewrites the partition table. Use the \"Erase + flash\" mode so the full-chip image at 0x0 writes over the stock layout cleanly." },
@@ -1686,7 +1701,7 @@ deep_sleep:
         description: "Full-color photo frame firmware for the reTerminal E1004 (13.3\" Spectra 6). Includes the web interface, REST API, and Home Assistant integration.",
         category: "Application",
         compatible: ["E1004"],
-        defaultVersion: "2.8.0",
+        defaultVersion: "2.9.0",
         recommendedInstallMode: "erase",
         flashNotes: [
           { type: "warning", text: "This replaces the stock firmware and rewrites the partition table. Use the \"Erase + flash\" mode so the full-chip image at 0x0 writes over the stock layout cleanly." },

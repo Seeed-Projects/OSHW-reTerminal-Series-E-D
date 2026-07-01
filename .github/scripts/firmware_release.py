@@ -17,7 +17,7 @@ import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 FIRMWARE_VERSION_RE = re.compile(r"^(?:\d{4}\.\d{2}\.\d{2}(?:\.\d+)?|\d+\.\d+\.\d+)$")
@@ -427,12 +427,19 @@ class ExternalFirmware:
     """
 
     id: str
-    version: str
-    url: str
+    # Source GitHub repo + release asset. The version (latest release tag) and
+    # the download URL are resolved at publish time, so a new upstream firmware
+    # release is picked up automatically without editing this file.
+    repo: str
+    asset: str
     devices: tuple[str, ...]
     title: str = ""
     group: str = "community"
     chip_family: str = "ESP32-S3"
+
+    def url_for(self, tag: str) -> str:
+        """Build the release-asset download URL for a resolved release tag."""
+        return f"https://github.com/{self.repo}/releases/download/{tag}/{self.asset}"
 
     def to_catalog(self) -> dict[str, Any]:
         return {
@@ -446,27 +453,30 @@ class ExternalFirmware:
         }
 
 
-# Externally built firmware mirrored into the hub at deploy time. Bumping a
-# version here publishes a new flashable version on the next deploy.
-# 在部署时镜像进固件中心的外部固件。在此处提升版本号即可在下次部署时发布新的可烧录版本。
+# Externally built firmware mirrored into the hub at deploy time. The version is
+# resolved automatically from each repo's latest GitHub release, so a new upstream
+# release is published on the next deploy without editing this file.
+# 在部署时镜像进固件中心的外部固件。版本号在部署时从各仓库的最新 GitHub Release 自动解析，
+# 上游发布新版本后，下次部署会自动发布，无需修改此文件。
 EXTERNAL_FIRMWARE: tuple[ExternalFirmware, ...] = (
     ExternalFirmware(
         id="PhotoFrame_reTerminal_E1002",
-        version="2.8.0",
-        url=(
-            "https://github.com/aitjcize/esp32-photoframe/releases/download/"
-            "v2.8.0/photoframe-firmware-seeedstudio_reterminal_e1002-merged.bin"
-        ),
+        repo="aitjcize/esp32-photoframe",
+        asset="photoframe-firmware-seeedstudio_reterminal_e1002-merged.bin",
         devices=("E1002",),
         title="ESP32 PhotoFrame for E1002",
     ),
     ExternalFirmware(
+        id="PhotoFrame_reTerminal_E1003",
+        repo="aitjcize/esp32-photoframe",
+        asset="photoframe-firmware-seeedstudio_reterminal_e1003-merged.bin",
+        devices=("E1003",),
+        title="ESP32 PhotoFrame for E1003",
+    ),
+    ExternalFirmware(
         id="PhotoFrame_reTerminal_E1004",
-        version="2.8.0",
-        url=(
-            "https://github.com/aitjcize/esp32-photoframe/releases/download/"
-            "v2.8.0/photoframe-firmware-seeedstudio_reterminal_e1004-merged.bin"
-        ),
+        repo="aitjcize/esp32-photoframe",
+        asset="photoframe-firmware-seeedstudio_reterminal_e1004-merged.bin",
         devices=("E1004",),
         title="ESP32 PhotoFrame for E1004",
     ),
@@ -754,19 +764,45 @@ def download_binary(url: str, destination: Path) -> None:
         shutil.copyfileobj(response, output)
 
 
-def write_external_manifest(external: ExternalFirmware, destination: Path) -> None:
+def latest_release_tag(repo: str) -> str:
+    """Return the latest (non-prerelease) GitHub release tag for a repo, e.g.
+    'v2.9.0'. Uses GITHUB_TOKEN/GH_TOKEN when present to avoid rate limits.
+
+    返回仓库的最新（非预发布）GitHub Release 标签。
+    """
+
+    api_url = f"https://api.github.com/repos/{repo}/releases/latest"
+    headers = {
+        "User-Agent": "firmware-release",
+        "Accept": "application/vnd.github+json",
+    }
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    request = urllib.request.Request(api_url, headers=headers)
+    with urllib.request.urlopen(request) as response:
+        data = json.load(response)
+    tag = data.get("tag_name")
+    if not tag:
+        raise RuntimeError(f"No latest release tag found for {repo}")
+    return tag
+
+
+def write_external_manifest(
+    external: ExternalFirmware, version: str, url: str, destination: Path
+) -> None:
     """Mirror an external merged image and emit a same-origin manifest.
 
     镜像外部合并镜像并生成同源 manifest。
     """
 
     destination.mkdir(parents=True, exist_ok=True)
-    bin_name = external.url.rsplit("/", 1)[-1]
-    download_binary(external.url, destination / bin_name)
+    bin_name = url.rsplit("/", 1)[-1]
+    download_binary(url, destination / bin_name)
 
     manifest = {
         "name": external.title or external.id,
-        "version": external.version,
+        "version": version,
         "new_install_prompt_erase": True,
         "builds": [
             {
@@ -789,20 +825,28 @@ def write_external_manifest(external: ExternalFirmware, destination: Path) -> No
 def publish_external_firmware(
     firmware_root: Path,
     external_firmware: tuple[ExternalFirmware, ...],
+    resolve_tag: Callable[[str], str] = latest_release_tag,
 ) -> dict[str, str]:
-    """Publish external firmware manifests, skipping versions already mirrored.
+    """Publish external firmware manifests at each repo's latest release version,
+    skipping versions already mirrored. The tag is resolved once per repo.
 
-    发布外部固件 manifest，跳过已镜像的版本。
+    以各仓库最新 Release 版本发布外部固件 manifest，跳过已镜像的版本。
     """
 
     published: dict[str, str] = {}
+    tags: dict[str, str] = {}
     for external in external_firmware:
-        destination = firmware_root / external.id / external.version
+        tag = tags.get(external.repo)
+        if tag is None:
+            tag = resolve_tag(external.repo)
+            tags[external.repo] = tag
+        version = tag.lstrip("v")
+        destination = firmware_root / external.id / version
         if (destination / "manifest.json").exists():
             continue
-        write_external_manifest(external, destination)
-        published[external.id] = external.version
-        print(f"Published external firmware: {external.id} -> {external.version}")
+        write_external_manifest(external, version, external.url_for(tag), destination)
+        published[external.id] = version
+        print(f"Published external firmware: {external.id} -> {version}")
     return published
 
 

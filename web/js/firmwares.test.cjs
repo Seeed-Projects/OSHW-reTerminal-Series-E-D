@@ -75,7 +75,11 @@ const photoframeOptions = firmwareOptions.filter((option) =>
 
 assert.deepEqual(
   photoframeOptions.map((option) => option.id).sort(),
-  ["PhotoFrame_reTerminal_E1002", "PhotoFrame_reTerminal_E1004"]
+  [
+    "PhotoFrame_reTerminal_E1002",
+    "PhotoFrame_reTerminal_E1003",
+    "PhotoFrame_reTerminal_E1004",
+  ]
 );
 
 for (const option of photoframeOptions) {
