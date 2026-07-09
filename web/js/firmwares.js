@@ -1652,17 +1652,15 @@ deep_sleep:
     highlight: "#C8843C",
     supportedDevices: ["E1002", "E1003", "E1004"],
     installReady: true,
+    // Versions mirror the latest upstream GitHub release at deploy time, so the
+    // list comes exclusively from firmware/versions.json — no hardcoded fallback.
+    requiresVersionManifest: true,
     bullets: [
       "Measured-palette dithering for accurate ePaper color",
       "Drag-and-drop web UI, REST API, and Home Assistant integration",
       "Deep-sleep power management with SD card and URL image sources",
     ],
-    versions: [
-      {
-        version: "2.9.0",
-        label: "Stable",
-      },
-    ],
+    versions: [],
     configFields: [],
     firmwareOptions: [
       {
@@ -1671,7 +1669,6 @@ deep_sleep:
         description: "Full-color photo frame firmware for the reTerminal E1002 (7.3\" Spectra 6). Includes the web interface, REST API, and Home Assistant integration.",
         category: "Application",
         compatible: ["E1002"],
-        defaultVersion: "2.9.0",
         recommendedInstallMode: "erase",
         flashNotes: [
           { type: "warning", text: "This replaces the stock firmware and rewrites the partition table. Use the \"Erase + flash\" mode so the full-chip image at 0x0 writes over the stock layout cleanly." },
@@ -1686,7 +1683,6 @@ deep_sleep:
         description: "Grayscale photo frame firmware for the reTerminal E1003 (10.3\" 16-level grayscale). Includes the web interface, REST API, and Home Assistant integration.",
         category: "Application",
         compatible: ["E1003"],
-        defaultVersion: "2.9.0",
         recommendedInstallMode: "erase",
         flashNotes: [
           { type: "warning", text: "This replaces the stock firmware and rewrites the partition table. Use the \"Erase + flash\" mode so the full-chip image at 0x0 writes over the stock layout cleanly." },
@@ -1701,7 +1697,6 @@ deep_sleep:
         description: "Full-color photo frame firmware for the reTerminal E1004 (13.3\" Spectra 6). Includes the web interface, REST API, and Home Assistant integration.",
         category: "Application",
         compatible: ["E1004"],
-        defaultVersion: "2.9.0",
         recommendedInstallMode: "erase",
         flashNotes: [
           { type: "warning", text: "This replaces the stock firmware and rewrites the partition table. Use the \"Erase + flash\" mode so the full-chip image at 0x0 writes over the stock layout cleanly." },

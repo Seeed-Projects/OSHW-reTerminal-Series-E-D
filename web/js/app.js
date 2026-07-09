@@ -98,7 +98,9 @@ function chooseFirmwareOption(options, preferredGroup = "", preferredLanguage = 
 
 function getInstallManifest() {
   if (!selectedPlatform?.installReady || !selectedFirmwareOption) return "";
-  const version = selectedVersion?.version || DEFAULT_FIRMWARE_VERSION;
+  const version = selectedVersion?.version
+    || (selectedPlatform.requiresVersionManifest ? "" : DEFAULT_FIRMWARE_VERSION);
+  if (!version) return "";
   return withFirmwareCacheBuster(`firmware/${selectedFirmwareOption.id}/${version}/manifest.json`);
 }
 
@@ -191,17 +193,20 @@ async function loadFirmwareVersions() {
   }
 }
 
-function getFirmwareVersionValues(firmwareOption) {
+function getFirmwareVersionValues(firmwareOption, platform = selectedPlatform) {
   if (!firmwareOption?.id) return [DEFAULT_FIRMWARE_VERSION];
   const versions = firmwareVersions[firmwareOption.id];
-  return Array.isArray(versions) && versions.length
-    ? versions
-    : [firmwareOption.defaultVersion || DEFAULT_FIRMWARE_VERSION];
+  if (Array.isArray(versions) && versions.length) return versions;
+  // Platforms whose versions mirror an upstream release have no meaningful
+  // hardcoded fallback — without the deployed manifest, flashing is disabled.
+  // 版本跟随上游发布的平台没有可用的硬编码回退——缺少清单时禁用烧录。
+  if (platform?.requiresVersionManifest) return [];
+  return [firmwareOption.defaultVersion || DEFAULT_FIRMWARE_VERSION];
 }
 
 function getVersionOptions(platform = selectedPlatform) {
   if (platform?.installReady && selectedFirmwareOption) {
-    return getFirmwareVersionValues(selectedFirmwareOption).map((version) => ({
+    return getFirmwareVersionValues(selectedFirmwareOption, platform).map((version) => ({
       version,
       label: version,
     }));
@@ -583,6 +588,12 @@ function renderVersionPanel() {
     selectedVersion = versions[0] || null;
   }
 
+  versionSelect.disabled = !versions.length;
+  if (!versions.length) {
+    versionSelect.innerHTML = `<option value="" selected disabled>Version list unavailable</option>`;
+    return;
+  }
+
   versionSelect.innerHTML = versions.map((item) => {
     const label = item.label && item.label !== item.version
       ? `${item.version} - ${item.label}`
@@ -766,10 +777,25 @@ function updateFlashState() {
   const installNote = document.getElementById("installNote");
   const manifest = getInstallManifest();
   const ready = Boolean(selectedPlatform?.installReady && manifest);
+  const versionListMissing = Boolean(
+    selectedPlatform?.installReady &&
+    selectedPlatform?.requiresVersionManifest &&
+    selectedFirmwareOption &&
+    !getFirmwareVersionValues(selectedFirmwareOption, selectedPlatform).length
+  );
 
   if (flashBtn) flashBtn.classList.toggle("is-hidden", !ready);
   if (disabledBtn) disabledBtn.classList.toggle("is-hidden", ready);
-  if (installNote) installNote.classList.toggle("is-visible", !ready);
+  if (installNote) {
+    installNote.classList.toggle("is-visible", !ready);
+    if (!ready) {
+      installNote.innerHTML = versionListMissing
+        ? `<strong>Version list unavailable.</strong>
+          <span>The firmware version manifest could not be loaded, so flashing is disabled. Reload the page or try again later.</span>`
+        : `<strong>Firmware not published yet.</strong>
+          <span>This platform card is ready, but its web flashing package has not been added.</span>`;
+    }
+  }
 }
 
 // Assembles template output from platform-level header, selected snippets, and footer.
