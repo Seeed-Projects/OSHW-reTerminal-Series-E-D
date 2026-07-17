@@ -19,6 +19,8 @@
 | 添加新的核心硬件示例 | 是 | `examples/base/<Demo>/`，可选 `web/js/firmwares.js` |
 | 添加新的官方合作伙伴/平台示例 | 是 | `examples/official/<Project>/`、`web/js/firmwares.js`，可选 `.github/scripts/firmware_release.py`。先选择：**烧录模式**、**模板模式**或 **官方工具模式**。 |
 | 添加新的社区项目 | 是 | `examples/community/<Project>/`、`web/js/firmwares.js`，可选 `.github/scripts/firmware_release.py`。先选择：**烧录模式**或 **模板模式**。 |
+| 添加新的 DIY Kit 驱动板 | 是 | `web/js/firmwares.js`（`BOARDS`）、`web/assets/devices/` 中的板子图片、固件 `compatible` 列表，以及 `.github/scripts/firmware_release.py` 中的 `DIY_BOARD_PANELS` |
+| 添加新的墨水屏面板 | 是 | `web/js/firmwares.js`（`PANELS` 与 `compatibleBoards`）、`web/assets/devices/` 中的屏幕图片，以及 `.github/scripts/firmware_release.py` 中的 `DIY_PANEL_SETUPS` 与 `DIY_BOARD_PANELS` |
 | 更新已有示例 | 是 | 仅修改对应的示例文件夹；如果 UI 有变化，再修改匹配的网页元数据 |
 | 添加新的平台组/分类 | 否 | 不要编辑 `PLATFORM_GROUPS` |
 | 手动创建固件版本或发布版本 | 否 | 不要编辑生成出来的固件输出 |
@@ -40,7 +42,8 @@ Firmware Hub 目前有三个组。
 | 路径 | 用途 | 贡献者操作 |
 |---|---|---|
 | `examples/` | 固件源码 | 在这里添加或更新示例代码 |
-| `web/js/firmwares.js` | Hub 分组、平台卡片、固件下拉选项、配置字段 | 当网页必须展示或描述某个项目时编辑 |
+| `web/js/firmwares.js` | Hub 分组、平台卡片、`DEVICES`、`BOARDS`、`PANELS`、固件下拉选项、配置字段 | 当网页需要展示硬件、屏幕或项目时编辑 |
+| `web/assets/devices/` | reTerminal、DIY Kit 驱动板和墨水屏的产品图片 | 注册硬件时同步添加匹配图片 |
 | `.github/scripts/firmware_release.py` | 构建注册表和发布辅助脚本 | 仅在 PlatformIO、多设备、特殊库或按设备构建时编辑 |
 | `.github/workflows/build-and-deploy.yml` | 共享的 GitHub Actions 工作流 | 普通示例贡献不要编辑 |
 | `firmware/` on `gh-pages` | 生成出来的固件版本、manifest 和 catalog | 不要手动编辑 |
@@ -549,7 +552,87 @@ python3 .github/scripts/firmware_release.py plan \
 
 官方工具平台使用 `installReady: false`，并保持 `versions`、`configFields` 和 `firmwareOptions` 为空。网页会为这些平台隐藏本地烧录面板。
 
-## 场景 4：更新已有示例
+## 场景 4：添加 DIY Kit 驱动板
+
+添加新的 XIAO ePaper DIY Kit 驱动板（EE 或 EN 系列）时，使用这条路径。
+
+### 1. 在 `BOARDS` 中注册板子
+
+打开 `web/js/firmwares.js`，向 `BOARDS` 添加条目：
+
+```js
+{
+  id: "EE06",
+  kind: "board",
+  series: "EE",                 // EE = ESP32-S3 串口烧录，EN = nRF52840 UF2
+  name: "XIAO ePaper DIY Kit - EE06",
+  description: "Short hardware summary for the card.",
+  chip: "ESP32-S3",
+  flashMethod: "serial",        // serial | uf2
+  connector: "24-pin",          // 显示在硬件卡片上的角标
+  image: "assets/devices/board-ee06.jpg",
+  imageAlt: "XIAO ePaper DIY Kit EE06 product photo",
+  specs: ["ESP32-S3", "24-pin FPC", "WiFi / BLE"],
+}
+```
+
+对于 EN 板，设置 `flashMethod: "uf2"`，并设置 `uf2VolumeLabel: "XIAO-BOOT"`（除非 bootloader 卷标名不同）。
+
+### 2. 添加板子图片
+
+把产品照片放到 `image` 指向的路径，使用小写 ASCII 文件名，例如 `board-ee06.jpg`。
+
+### 3. 把板子接到 Hub 上
+
+- 把板子 id 加到需要展示它的平台卡片 `supportedDevices` 中。
+- 把板子 id 加到支持它的固件选项 `compatible` 数组中。
+- 更新相关屏幕条目的 `compatibleBoards` 列表。
+
+### 4. 在组合构建矩阵中注册板子
+
+把板子加进 `.github/scripts/firmware_release.py` 的 `DIY_BOARD_PANELS`，
+写明芯片家族和支持的屏幕。CI 会为每个「板 + 屏」组合各构建一份固件：
+
+- **EE / ESP32-S3**：每个组合发布一套串口烧录 `.bin` 及标准 `manifest.json`。
+- **EN / nRF52840**：每个组合发布一个 `.uf2` 文件，路径为
+  `firmware/<firmware-id>/<version>/<firmware-id>.uf2`。
+
+如果 Seeed_GFX 还没有该板的引脚映射，需要在
+`User_Setups/EPaper_Board_Pins_Setups.h` 中补充
+`USE_XIAO_EPAPER_DISPLAY_BOARD_<BOARD>` 宏分支。
+
+## 场景 5：添加墨水屏面板
+
+添加可与 DIY Kit 驱动板搭配的新屏幕时，使用这条路径。
+
+### 1. 在 `PANELS` 中注册屏幕
+
+```js
+{
+  id: "P060_MONO",
+  name: '6.0" Monochrome eInk',
+  size: '6.0"',
+  colorType: "mono",            // mono | quad | spectra6
+  resolution: "800x480",
+  interface: "SPI",             // SPI | TTL
+  image: "assets/devices/panel-6-0-mono.jpg",
+  imageAlt: '6.0" monochrome eInk panel',
+  compatibleBoards: ["EE04", "EN04", "EE05", "EN05"],
+}
+```
+
+### 2. 保持兼容表准确
+
+只列出真正支持该屏幕的板子。Step 2 的屏幕下拉框会按 `compatibleBoards` 过滤（如果固件选项提供了 `compatiblePanels`，会再进一步收窄）。
+
+### 3. 固件侧配套
+
+- 确认 Seeed_GFX 已有该屏幕的 User_Setup（驱动芯片 + 分辨率），记下 setup 编号。
+- 在 `.github/scripts/firmware_release.py` 的 `DIY_PANEL_SETUPS` 中登记
+  `panel.id -> setup 编号`，再把该屏幕加入 `DIY_BOARD_PANELS` 中每块支持它的板子。
+  CI 会自动构建新增组合。
+
+## 场景 6：更新已有示例
 
 修改已经存在的代码时，使用这条路径。
 
@@ -567,7 +650,7 @@ python3 .github/scripts/firmware_release.py plan \
 
 合并后，只有已变更示例的固件目标会获得新版本。
 
-## 场景 5：请求新分类
+## 场景 7：请求新分类
 
 普通贡献中不接受新的平台组。
 
@@ -598,7 +681,7 @@ python3 .github/scripts/firmware_release.py plan \
 | `previewAlt` | Yes | 无障碍图片描述 |
 | `accent` | Yes | 现有主题颜色，通常是 `#004966` |
 | `highlight` | Yes | 现有高亮颜色，通常是 `#8FC31F` |
-| `supportedDevices` | Yes | 此平台可用的设备 ID |
+| `supportedDevices` | Yes | 此平台可用的硬件 ID（`DEVICES` 和/或 `BOARDS`） |
 | `installReady` | Yes | 只有网页烧录可用时才为 `true` |
 | `templateMode` | Template only | 对于配置文件输出平台为 `true` |
 | `templateHeader` | No | 始终添加到模板输出开头的文本 |
@@ -618,12 +701,46 @@ python3 .github/scripts/firmware_release.py plan \
 | Field | Required | Meaning |
 |---|---:|---|
 | `id` | Yes | 必须匹配固件构建 ID |
+| `comboPattern` | DIY Kit only | 按组合的构建 id 模式，例如 `XIAO_EPaper_Hello_{board}_{panel}`；Hub 会代入所选板和屏的 id |
 | `name` | Yes | 可见的固件名称 |
 | `description` | Yes | 固件做什么 |
 | `category` | Yes | 简短分类标签，例如 `Display`、`Power`、`Application` |
-| `compatible` | Yes | 可以烧录此固件的设备 ID |
+| `compatible` | Yes | 可以烧录此固件的硬件 ID（`DEVICES` 和/或 `BOARDS`） |
+| `compatiblePanels` | No | DIY Kit 固件可选的屏幕白名单；省略时允许所选板兼容的全部屏幕 |
 | `configFields` | No | 固件专用设置字段 |
 | `notes` | No | 烧录前显示的警告或有帮助的说明 |
+
+### 驱动板字段（`BOARDS`）
+
+| Field | Required | Meaning |
+|---|---:|---|
+| `id` | Yes | 稳定板子 ID，例如 `EE04` 或 `EN05` |
+| `kind` | Yes | 必须是 `"board"` |
+| `series` | Yes | `EE` 或 `EN` |
+| `name` | Yes | 可见板子名称 |
+| `description` | Yes | 卡片短描述 |
+| `chip` | Yes | `ESP32-S3` 或 `nRF52840` |
+| `flashMethod` | Yes | EE 用 `serial`，EN 用 `uf2` |
+| `connector` | Yes | 显示在卡片上的 FPC 接口标签 |
+| `uf2VolumeLabel` | EN only | bootloader 卷标名，通常是 `XIAO-BOOT` |
+| `image` | Yes | 产品图片路径 |
+| `imageAlt` | Yes | 无障碍图片描述 |
+| `specs` | Yes | 短徽章，例如芯片和接口 |
+
+### 屏幕字段（`PANELS`）
+
+| Field | Required | Meaning |
+|---|---:|---|
+| `id` | Yes | 稳定屏幕 ID，例如 `P075_MONO` |
+| `name` | Yes | 可见屏幕名称 |
+| `size` | Yes | 对角线尺寸字符串 |
+| `colorType` | Yes | `mono`、`quad` 或 `spectra6` |
+| `resolution` | Yes | 像素尺寸，例如 `800x480` |
+| `interface` | Yes | `SPI` 或 `TTL` |
+| `compatibleBoards` | Yes | 支持此屏幕的板子 ID |
+| `image` | Yes | 产品图片路径 |
+| `imageAlt` | Yes | 无障碍图片描述 |
+| `flexible` | No | 柔性屏设为 `true` |
 
 固件选项 `id` 是以下内容之间的连接点：
 
@@ -752,6 +869,34 @@ FirmwareTarget(
 
 只有当上游固件需要非日期版本号或非默认 flash 布局时，才使用 `fixed_version`、`boot_app0_offset` 或 `app_offset`。
 
+### DIY Kit「板 + 屏」组合
+
+DIY Kit 固件基于 Seeed_GFX 库，按「板 + 屏」组合各编译一份。两个编译期宏决定组合：
+
+- `BOARD_SCREEN_COMBO=<setup 编号>`：通过 Seeed_GFX User_Setup 选择屏幕
+  （驱动芯片 + 分辨率），例如 7.5 寸黑白屏是 `502`。
+- `USE_XIAO_EPAPER_DISPLAY_BOARD_<BOARD>`：从
+  `User_Setups/EPaper_Board_Pins_Setups.h` 选择驱动板引脚映射，
+  例如 `USE_XIAO_EPAPER_DISPLAY_BOARD_EE04`。
+
+组合构建矩阵位于 `.github/scripts/firmware_release.py`：
+
+- `DIY_PANEL_SETUPS`：把网页屏幕 id（`web/js/firmwares.js` 的 `PANELS`）
+  映射到 Seeed_GFX setup 编号。
+- `DIY_BOARD_PANELS`：把每块板映射到芯片家族（`esp32` 或 `nrf52`）
+  和它能驱动的屏幕列表。
+- `diy_kit_targets()`：把矩阵展开成每组合一个 `FirmwareTarget`，
+  命名为 `<sketch>_<BOARD>_<PANEL>`，两个宏通过 `cpp_flags`
+  （对应 `compiler.cpp.extra_flags`）注入，不会覆盖板卡包自身的构建参数。
+
+添加新屏幕：先在网页 `PANELS` 注册，再把 setup 编号写进 `DIY_PANEL_SETUPS`，
+最后在 `DIY_BOARD_PANELS` 中把它加到每块支持它的板子下。
+添加新板子：扩展 `DIY_BOARD_PANELS`，并用同一个 id 在网页 `BOARDS` 注册。
+
+网页侧的组合固件选项声明 `comboPattern`，
+例如 `"XIAO_EPaper_Hello_{board}_{panel}"`。Hub 会根据所选板和屏解析出
+具体固件 id，然后像普通固件一样从 `firmware/<解析后的 id>/<version>/...` 获取。
+
 ## 固件打包和烧录分区
 
 发布自动化期望每个固件 artifact（通俗解释：构建出来准备发布的文件包）包含：
@@ -778,6 +923,27 @@ PlatformIO 构建会由工作流重命名：
 | `boot_app0.bin` | `boot_app0.bin` |
 
 不要手动编辑生成的 manifests。
+
+### EN 板的 UF2 打包
+
+EN 系列板使用 Adafruit 风格 UF2 bootloader，卷标为 `XIAO-BOOT`。
+工作流用 Seeed nRF52 核心编译 EN 组合
+（FQBN `Seeeduino:nrf52:xiaonRF52840Plus`，SoftDevice S140 7.3.0），
+再用核心自带的 `uf2conv.py` 按 nRF52840 UF2 family id `0xADA52840`
+把 `.hex` 转成 `.uf2`。发布产物使用此布局：
+
+```
+firmware/<firmware-id>/<version>/<firmware-id>.uf2
+```
+
+示例：
+
+```
+firmware/XIAO_EPaper_Hello_EN04_P075_MONO/2026.07.17/XIAO_EPaper_Hello_EN04_P075_MONO.uf2
+```
+
+每个 UF2 目录同时会生成带 `"flashMethod": "uf2"` 的 `manifest.json`，
+让版本清单与串口固件保持一致。
 
 ## 本地编译检查
 
@@ -856,7 +1022,11 @@ pio run -e <env-name>
 - Community Projects 包含 `author` 和 `source`。
 - 当项目需要卡片、精致文案、按设备区分的兼容性、说明或配置字段时，已更新 `web/js/firmwares.js`。
 - 每个 `firmwareOptions[].id` 都匹配一个固件构建 ID。
-- 每个兼容设备都已正确列出。
+- 每个兼容设备或板子都已正确列出。
+- 新板子已在 `BOARDS` 中注册，且 id、`flashMethod`、接口和图片完整。
+- 新屏幕已在 `PANELS` 中注册，且 `compatibleBoards` 准确。
+- 组合固件选项声明了 `comboPattern`，且模式与 `diy_kit_targets()` 生成的构建 id 一致。
+- 新的 DIY Kit 板和屏幕已登记到 `DIY_BOARD_PANELS` / `DIY_PANEL_SETUPS`，CI 能构建全部支持的组合。
 - 模板模式平台设置 `installReady: false` 和 `templateMode: true`。
 - 每个模板模式 `templateOptions` 条目都包含 `snippet` 字段。
 - 模板数据，包括 header、footer 和 snippet，放在 `web/js/firmwares.js` 中，而不是 `web/js/app.js` 中。
@@ -897,11 +1067,12 @@ pull request 合并到 `main` 后，GitHub Actions 将会：
 如果你是 AI 编码代理：
 
 - 编辑前阅读此文件。
-- 修改文件前先选择一个贡献场景。
+- 修改文件前先选择一个贡献场景（示例、平台、社区项目、驱动板、屏幕或更新）。
 - 将变更保持在最小相关范围内。
 - 不要创建新的平台组。
 - 不要编辑生成出来的固件输出。
 - 不要添加真实密钥。
+- 添加板子或屏幕时，同步更新 `BOARDS` / `PANELS`、图片、兼容关系，以及与 `flashMethod` 匹配的固件打包路径。
 - 如果测试假示例，请使用临时目录或一次性分支，并且不要发布固件。
 - 尽可能以 dry-run 形式运行发布规划脚本：
 

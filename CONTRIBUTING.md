@@ -17,6 +17,8 @@ Choose the path that matches your contribution.
 | Add a new core hardware demo | Yes | `examples/base/<Demo>/`, optionally `web/js/firmwares.js` |
 | Add a new official partner/platform demo | Yes | `examples/official/<Project>/`, `web/js/firmwares.js`, optionally `.github/scripts/firmware_release.py`. First choose: **flash mode**, **template mode**, **download mode**, or **official tool mode**. |
 | Add a new community project | Yes | `examples/community/<Project>/`, `web/js/firmwares.js`, optionally `.github/scripts/firmware_release.py`. First choose: **flash mode**, **template mode**, or **download mode**. |
+| Add a new DIY Kit driver board | Yes | `web/js/firmwares.js` (`BOARDS`), board image under `web/assets/devices/`, firmware `compatible` lists, `DIY_BOARD_PANELS` in `.github/scripts/firmware_release.py` |
+| Add a new ePaper panel | Yes | `web/js/firmwares.js` (`PANELS` + `compatibleBoards`), panel image under `web/assets/devices/`, `DIY_PANEL_SETUPS` + `DIY_BOARD_PANELS` in `.github/scripts/firmware_release.py` |
 | Update an existing example | Yes | Only that example folder, plus matching web metadata if the UI changes |
 | Add a new platform group/category | No | Do not edit `PLATFORM_GROUPS` |
 | Manually create firmware versions or releases | No | Do not edit generated firmware output |
@@ -39,7 +41,8 @@ discussion or issue first.
 | Path | Purpose | Contributor action |
 |---|---|---|
 | `examples/` | Firmware source code | Add or update example code here |
-| `web/js/firmwares.js` | Hub groups, platform cards, firmware dropdowns, config fields | Edit when the web page must show or describe a project |
+| `web/js/firmwares.js` | Hub groups, platform cards, `DEVICES`, `BOARDS`, `PANELS`, firmware dropdowns, config fields | Edit when the web page must show hardware, panels, or a project |
+| `web/assets/devices/` | Product photos for reTerminal devices, DIY Kit boards, and ePaper panels | Add matching images when registering hardware |
 | `.github/scripts/firmware_release.py` | Build registry and release helper | Edit only for PlatformIO, multi-device, special-library, or per-device builds |
 | `.github/workflows/build-and-deploy.yml` | Shared GitHub Actions workflow | Do not edit for normal example contributions |
 | `firmware/` on `gh-pages` | Generated firmware versions, manifests, and catalog | Do not edit manually |
@@ -699,7 +702,91 @@ Official tool platforms use `installReady: false`, empty `versions`, empty
 `configFields`, and empty `firmwareOptions`. The web page hides the local flash
 panel for these platforms.
 
-## Scenario 4: update an existing example
+## Scenario 4: add a DIY Kit driver board
+
+Use this path when adding a new XIAO ePaper DIY Kit board (EE or EN series).
+
+### 1. Register the board in `BOARDS`
+
+Open `web/js/firmwares.js` and add an entry to `BOARDS`:
+
+```js
+{
+  id: "EE06",
+  kind: "board",
+  series: "EE",                 // EE = ESP32-S3 serial flash, EN = nRF52840 UF2
+  name: "XIAO ePaper DIY Kit - EE06",
+  description: "Short hardware summary for the card.",
+  chip: "ESP32-S3",
+  flashMethod: "serial",        // serial | uf2
+  connector: "24-pin",          // shown as a badge on the hardware card
+  image: "assets/devices/board-ee06.jpg",
+  imageAlt: "XIAO ePaper DIY Kit EE06 product photo",
+  specs: ["ESP32-S3", "24-pin FPC", "WiFi / BLE"],
+}
+```
+
+For EN boards set `flashMethod: "uf2"` and `uf2VolumeLabel: "XIAO-BOOT"` (unless the bootloader volume name differs).
+
+### 2. Add the board image
+
+Place a product photo at the path referenced by `image`, using lowercase ASCII filenames such as `board-ee06.jpg`.
+
+### 3. Wire the board into the Hub
+
+- Add the board id to each platform card's `supportedDevices` that should offer it.
+- Add the board id to firmware option `compatible` arrays that support it.
+- Update each related panel's `compatibleBoards` list.
+
+### 4. Register the board in the combo build matrix
+
+Add the board to `DIY_BOARD_PANELS` in `.github/scripts/firmware_release.py`
+with its chip family and supported panels. CI then builds one firmware per
+board + panel pairing:
+
+- **EE / ESP32-S3**: each combo publishes a serial-flash `.bin` set with a
+  standard `manifest.json`.
+- **EN / nRF52840**: each combo publishes one `.uf2` file at
+  `firmware/<firmware-id>/<version>/<firmware-id>.uf2`.
+
+Also add the board's pin map to Seeed_GFX
+(`User_Setups/EPaper_Board_Pins_Setups.h`, macro
+`USE_XIAO_EPAPER_DISPLAY_BOARD_<BOARD>`) if it is not already there.
+
+## Scenario 5: add an ePaper panel
+
+Use this path when adding a new panel that pairs with DIY Kit boards.
+
+### 1. Register the panel in `PANELS`
+
+```js
+{
+  id: "P060_MONO",
+  name: '6.0" Monochrome eInk',
+  size: '6.0"',
+  colorType: "mono",            // mono | quad | spectra6
+  resolution: "800x480",
+  interface: "SPI",             // SPI | TTL
+  image: "assets/devices/panel-6-0-mono.jpg",
+  imageAlt: '6.0" monochrome eInk panel',
+  compatibleBoards: ["EE04", "EN04", "EE05", "EN05"],
+}
+```
+
+### 2. Keep the compatibility matrix accurate
+
+Only list boards that physically support the panel. The Step 2 panel dropdown is filtered from `compatibleBoards` (and optionally from a firmware option's `compatiblePanels`).
+
+### 3. Firmware follow-up
+
+- Confirm Seeed_GFX has a User_Setup for the panel (driver chip + resolution)
+  and note its setup id.
+- Map the new `panel.id` to that setup id in `DIY_PANEL_SETUPS`, then list the
+  panel under each supporting board in `DIY_BOARD_PANELS`
+  (`.github/scripts/firmware_release.py`). CI builds the new combos
+  automatically.
+
+## Scenario 6: update an existing example
 
 Use this path when changing code that already exists.
 
@@ -719,7 +806,7 @@ Use this path when changing code that already exists.
 
 After merge, only the changed example's firmware targets get new versions.
 
-## Scenario 5: request a new category
+## Scenario 7: request a new category
 
 New platform groups are not accepted in normal contributions.
 
@@ -750,7 +837,7 @@ The web page is driven by `web/js/firmwares.js`.
 | `previewAlt` | Yes | Accessible image description |
 | `accent` | Yes | Existing theme color, usually `#004966` |
 | `highlight` | Yes | Existing highlight color, usually `#8FC31F` |
-| `supportedDevices` | Yes | Device IDs available in this platform |
+| `supportedDevices` | Yes | Hardware IDs available in this platform (`DEVICES` and/or `BOARDS`) |
 | `installReady` | Yes | `true` only when web flashing is available |
 | `templateMode` | Template only | `true` for configuration file output platforms |
 | `templateHeader` | No | Text always prepended to template output |
@@ -770,14 +857,48 @@ The web page is driven by `web/js/firmwares.js`.
 | Field | Required | Meaning |
 |---|---:|---|
 | `id` | Yes | Must match the firmware build ID |
+| `comboPattern` | DIY Kit only | Per-combo build id pattern such as `XIAO_EPaper_Hello_{board}_{panel}`; the Hub substitutes the selected board and panel ids |
 | `name` | Yes | Visible firmware name |
 | `description` | Yes | What the firmware does |
 | `category` | Yes | Short category label such as `Display`, `Power`, `Application` |
-| `compatible` | Yes | Device IDs that can flash this firmware |
+| `compatible` | Yes | Hardware IDs that can flash this firmware (`DEVICES` and/or `BOARDS`) |
+| `compatiblePanels` | No | Optional panel allow-list for DIY Kit firmware; omit to allow every panel compatible with the selected board |
 | `recommendedInstallMode` | No | Use `"erase"` for full-chip images; omitted firmware uses standard flash / 整片镜像使用 `"erase"`，未填写时使用标准烧录 |
 | `configFields` | No | Firmware-specific setup fields |
 | `notes` | No | Step 2 setup and preparation notes / Step 2 的配置与准备提示 |
 | `flashNotes` | No | Step 3 flashing notes, such as erase-mode or connection guidance / Step 3 的烧录提示，例如擦除模式或连接提示 |
+
+### Board fields (`BOARDS`)
+
+| Field | Required | Meaning |
+|---|---:|---|
+| `id` | Yes | Stable board id such as `EE04` or `EN05` |
+| `kind` | Yes | Must be `"board"` |
+| `series` | Yes | `EE` or `EN` |
+| `name` | Yes | Visible board name |
+| `description` | Yes | Short card description |
+| `chip` | Yes | `ESP32-S3` or `nRF52840` |
+| `flashMethod` | Yes | `serial` for EE, `uf2` for EN |
+| `connector` | Yes | FPC connector label shown on the card |
+| `uf2VolumeLabel` | EN only | Bootloader volume name, usually `XIAO-BOOT` |
+| `image` | Yes | Product photo path |
+| `imageAlt` | Yes | Accessible image description |
+| `specs` | Yes | Short badges such as chip and connector |
+
+### Panel fields (`PANELS`)
+
+| Field | Required | Meaning |
+|---|---:|---|
+| `id` | Yes | Stable panel id such as `P075_MONO` |
+| `name` | Yes | Visible panel name |
+| `size` | Yes | Diagonal size string |
+| `colorType` | Yes | `mono`, `quad`, or `spectra6` |
+| `resolution` | Yes | Pixel size such as `800x480` |
+| `interface` | Yes | `SPI` or `TTL` |
+| `compatibleBoards` | Yes | Board ids that support this panel |
+| `image` | Yes | Product photo path |
+| `imageAlt` | Yes | Accessible image description |
+| `flexible` | No | `true` for flexible panels |
 
 The firmware option `id` is the link between:
 
@@ -915,6 +1036,38 @@ Do not put build metadata in `.github/workflows/build-and-deploy.yml`.
 Use `fixed_version`, `boot_app0_offset`, or `app_offset` only for targets whose
 upstream firmware requires a non-date version or a non-default flash layout.
 
+### DIY Kit board + panel combos
+
+DIY Kit firmware is compiled once per board + panel pairing with the
+Seeed_GFX library. Two compile-time defines select the pairing:
+
+- `BOARD_SCREEN_COMBO=<setup id>` selects the panel (driver chip + resolution)
+  through a Seeed_GFX User_Setup, for example `502` for the 7.5" mono panel.
+- `USE_XIAO_EPAPER_DISPLAY_BOARD_<BOARD>` selects the board pin map from
+  `User_Setups/EPaper_Board_Pins_Setups.h`, for example
+  `USE_XIAO_EPAPER_DISPLAY_BOARD_EE04`.
+
+The combo build matrix lives in `.github/scripts/firmware_release.py`:
+
+- `DIY_PANEL_SETUPS` maps web panel ids (`web/js/firmwares.js` `PANELS`) to
+  Seeed_GFX setup ids.
+- `DIY_BOARD_PANELS` maps each board to its chip family (`esp32` or `nrf52`)
+  and the panels it can drive.
+- `diy_kit_targets()` expands the matrix into one `FirmwareTarget` per combo,
+  named `<sketch>_<BOARD>_<PANEL>`, passing the two defines through
+  `cpp_flags` (which maps to `compiler.cpp.extra_flags` and keeps the board
+  package's own build flags intact).
+
+To add a panel to the combo matrix: register it in `PANELS` (web), add its
+setup id to `DIY_PANEL_SETUPS`, and list it under each board that supports it
+in `DIY_BOARD_PANELS`. To add a board: extend `DIY_BOARD_PANELS` and register
+the board in `BOARDS` (web) with the same id.
+
+On the web side, a combo firmware option declares `comboPattern`, e.g.
+`"XIAO_EPaper_Hello_{board}_{panel}"`. The Hub resolves the concrete firmware
+id from the selected board and panel, then fetches
+`firmware/<resolved-id>/<version>/...` like any other firmware.
+
 ## Firmware packaging and flash partitions
 
 The release automation expects every firmware artifact to contain:
@@ -944,6 +1097,28 @@ PlatformIO builds are renamed by the workflow:
 | `boot_app0.bin` | `boot_app0.bin` |
 
 Do not edit generated manifests by hand.
+
+### UF2 packaging for EN boards
+
+EN series boards use the Adafruit-style UF2 bootloader volume `XIAO-BOOT`.
+The workflow compiles EN combos with the Seeed nRF52 core
+(FQBN `Seeeduino:nrf52:xiaonRF52840Plus`, SoftDevice S140 7.3.0), then
+converts the `.hex` output with the core's `uf2conv.py` using the nRF52840
+UF2 family id `0xADA52840`. Published artifacts use this layout:
+
+```
+firmware/<firmware-id>/<version>/<firmware-id>.uf2
+```
+
+Example:
+
+```
+firmware/XIAO_EPaper_Hello_EN04_P075_MONO/2026.07.17/XIAO_EPaper_Hello_EN04_P075_MONO.uf2
+```
+
+Each UF2 directory also gets a generated `manifest.json` with
+`"flashMethod": "uf2"` so the version registry lists it alongside serial
+firmware.
 
 ## Local compile checks
 
@@ -1026,7 +1201,13 @@ Use this checklist before opening a pull request.
 - `web/js/firmwares.js` was updated when the project needs a card, polished
   copy, device-specific compatibility, notes, or config fields.
 - Every `firmwareOptions[].id` matches a firmware build ID.
-- Every compatible device is listed correctly.
+- Every compatible device or board is listed correctly.
+- New boards are registered in `BOARDS` with unique ids, `flashMethod`, connector, and image.
+- New panels are registered in `PANELS` with accurate `compatibleBoards` entries.
+- Combo firmware options declare `comboPattern`, and the pattern matches the
+  build ids generated by `diy_kit_targets()`.
+- New DIY Kit boards and panels are registered in `DIY_BOARD_PANELS` /
+  `DIY_PANEL_SETUPS` so CI builds every supported pairing.
 - Full-chip images set `recommendedInstallMode: "erase"` and put erase-mode
   guidance in `flashNotes`.
 - 整片镜像设置 `recommendedInstallMode: "erase"`，并将擦除模式提示放在
@@ -1078,11 +1259,14 @@ No contributor-side release step is required.
 If you are an AI coding agent:
 
 - Read this file before editing.
-- Choose one contribution scenario before changing files.
+- Choose one contribution scenario before changing files
+  (example, platform, community project, board, panel, or update).
 - Keep changes inside the smallest relevant scope.
 - Do not create a new platform group.
 - Do not edit generated firmware output.
 - Do not add real secrets.
+- When adding boards or panels, update `BOARDS` / `PANELS`, images, compatibility,
+  and the firmware packaging path that matches `flashMethod`.
 - If testing a fake example, use a temporary directory or a disposable branch and
   do not publish firmware.
 - Run the release planning script in dry-run form when possible:
