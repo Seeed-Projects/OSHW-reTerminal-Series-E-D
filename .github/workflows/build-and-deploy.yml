@@ -119,6 +119,16 @@ jobs:
         run: |
           arduino-cli config set library.enable_unsafe_install true
           arduino-cli lib install --git-url https://github.com/Seeed-Studio/Seeed_GFX.git
+          # Seeed_GFX ships TFT_Drivers/JD79676_init.h while TFT_eSPI.cpp
+          # includes JD79676_Init.h; provide the expected filename so the
+          # build works on case-sensitive filesystems.
+          # Seeed_GFX 自带的文件名是 TFT_Drivers/JD79676_init.h，而 TFT_eSPI.cpp
+          # 引用的是 JD79676_Init.h；补一份预期文件名，保证在大小写敏感的
+          # 文件系统上可编译。
+          DRIVERS_DIR="$HOME/Arduino/libraries/Seeed_GFX/TFT_Drivers"
+          if [ -f "$DRIVERS_DIR/JD79676_init.h" ] && [ ! -f "$DRIVERS_DIR/JD79676_Init.h" ]; then
+            cp "$DRIVERS_DIR/JD79676_init.h" "$DRIVERS_DIR/JD79676_Init.h"
+          fi
 
       - name: Install Sensirion SHT4x library
         if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_sht4x
@@ -214,6 +224,19 @@ jobs:
         run: |
           arduino-cli config set library.enable_unsafe_install true
           arduino-cli lib install --git-url https://github.com/Seeed-Studio/Seeed_GFX.git
+          # Seeed_GFX on nRF52 pulls in Seeed_Arduino_FS for smooth fonts.
+          # Seeed_GFX 在 nRF52 上的平滑字体功能依赖 Seeed_Arduino_FS。
+          arduino-cli lib install "Seeed Arduino FS"
+          # Seeed_GFX ships TFT_Drivers/JD79676_init.h while TFT_eSPI.cpp
+          # includes JD79676_Init.h; provide the expected filename so the
+          # build works on case-sensitive filesystems.
+          # Seeed_GFX 自带的文件名是 TFT_Drivers/JD79676_init.h，而 TFT_eSPI.cpp
+          # 引用的是 JD79676_Init.h；补一份预期文件名，保证在大小写敏感的
+          # 文件系统上可编译。
+          DRIVERS_DIR="$HOME/Arduino/libraries/Seeed_GFX/TFT_Drivers"
+          if [ -f "$DRIVERS_DIR/JD79676_init.h" ] && [ ! -f "$DRIVERS_DIR/JD79676_Init.h" ]; then
+            cp "$DRIVERS_DIR/JD79676_init.h" "$DRIVERS_DIR/JD79676_Init.h"
+          fi
 
       - name: Compile firmware and package UF2
         if: steps.cache.outputs.cache-hit != 'true'

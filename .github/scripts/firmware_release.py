@@ -172,6 +172,10 @@ def diy_kit_targets() -> tuple[FirmwareTarget, ...]:
                         f"-DBOARD_SCREEN_COMBO={setup_id} "
                         f"-DUSE_XIAO_EPAPER_DISPLAY_BOARD_{board_id}"
                     ),
+                    rebuild_triggers=(
+                        ".github/scripts/firmware_release.py",
+                        ".github/workflows/build-and-deploy.yml",
+                    ),
                     title=f"Hello ePaper {board_id} + {panel_id}",
                 )
             )
