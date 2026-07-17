@@ -69,17 +69,34 @@ assert.deepEqual(
   ]
 );
 
+const photoframePlatform = PLATFORM_CARDS.find((platform) => platform.id === "photoframe");
+assert.ok(photoframePlatform, "PhotoFrame platform is registered");
+assert.equal(photoframePlatform.installReady, true);
+// Versions mirror the latest upstream release at deploy time; the UI must rely
+// on firmware/versions.json only, with no stale hardcoded fallback.
+assert.equal(photoframePlatform.requiresVersionManifest, true);
+assert.deepEqual(photoframePlatform.versions, []);
+
 const photoframeOptions = firmwareOptions.filter((option) =>
   option.id.startsWith("PhotoFrame_")
 );
 
 assert.deepEqual(
   photoframeOptions.map((option) => option.id).sort(),
-  ["PhotoFrame_reTerminal_E1002", "PhotoFrame_reTerminal_E1004"]
+  [
+    "PhotoFrame_reTerminal_E1002",
+    "PhotoFrame_reTerminal_E1003",
+    "PhotoFrame_reTerminal_E1004",
+  ]
 );
 
 for (const option of photoframeOptions) {
   assert.equal(option.recommendedInstallMode, "erase");
+  assert.equal(
+    option.defaultVersion,
+    undefined,
+    `${option.id} must not hardcode a fallback version`
+  );
   assert.ok(
     option.flashNotes.some((note) => note.text.includes("full-chip image at 0x0")),
     `${option.id} includes full-chip flashing guidance in flashNotes`
