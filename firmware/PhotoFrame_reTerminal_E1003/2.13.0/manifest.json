@@ -1,0 +1,16 @@
+{
+  "name": "ESP32 PhotoFrame for E1003",
+  "version": "2.13.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "photoframe-firmware-seeedstudio_reterminal_e1003-merged.bin?sha256=064f3dbfa6c9ce76",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

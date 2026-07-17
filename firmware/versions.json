@@ -75,13 +75,16 @@
     "2026.06.07"
   ],
   "PhotoFrame_reTerminal_E1002": [
+    "2.13.0",
     "2.12.0",
     "2.8.0"
   ],
   "PhotoFrame_reTerminal_E1003": [
+    "2.13.0",
     "2.12.0"
   ],
   "PhotoFrame_reTerminal_E1004": [
+    "2.13.0",
     "2.12.0",
     "2.8.0"
   ],
@@ -110,12 +113,15 @@
     "2026.06.07"
   ],
   "TRMNL_reTerminal_E1001": [
+    "1.8.10",
     "1.8.7"
   ],
   "TRMNL_reTerminal_E1002": [
+    "1.8.10",
     "1.8.7"
   ],
   "TRMNL_reTerminal_E1003": [
+    "1.8.10",
     "1.8.7"
   ],
   "UserButtons": [
