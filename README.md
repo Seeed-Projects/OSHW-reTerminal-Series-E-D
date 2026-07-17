@@ -281,7 +281,7 @@ The GitHub Actions workflow ([`build-and-deploy.yml`](.github/workflows/build-an
 
 1. **Plan** — detects which `examples/` folders changed during the push
 2. **Build** — compiles only the firmware targets mapped to changed examples
-3. **Version** — writes changed firmware to `firmware/{id}/{YYYY.MM.DD}/`, or `YYYY.MM.DD.n` for repeated builds on the same date; official external firmware targets may use their upstream version, such as TRMNL `1.8.7`
+3. **Version** — writes changed firmware to `firmware/{id}/{YYYY.MM.DD}/`, or `YYYY.MM.DD.n` for repeated builds on the same date; official external firmware targets may use their upstream version, such as TRMNL `1.8.10`
 4. **Deploy** — updates the static site, `firmware/versions.json`, `firmware/catalog.json`, and generated firmware manifests on the `gh-pages` branch
 5. **Release** — when firmware changed, creates a GitHub Release containing a full latest firmware package for all examples; unchanged firmware is reused from its previous latest published version
 

@@ -6,7 +6,7 @@ Source snapshot:
 
 - Upstream: https://github.com/usetrmnl/trmnl-firmware
 - Snapshot commit: `7abc83c`
-- Hub version: `1.8.7`
+- Hub version: `1.8.10`
 
 ## Supported Devices
 

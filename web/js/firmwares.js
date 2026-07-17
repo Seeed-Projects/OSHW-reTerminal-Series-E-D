@@ -1187,7 +1187,7 @@ deep_sleep:
     ],
     versions: [
       {
-        version: "1.8.7",
+        version: "1.8.10",
         label: "Stable",
       },
     ],
@@ -1199,7 +1199,7 @@ deep_sleep:
         description: "Install TRMNL dashboard firmware for reTerminal E1001.",
         category: "Dashboard",
         compatible: ["E1001"],
-        defaultVersion: "1.8.7",
+        defaultVersion: "1.8.10",
         notes: [
           { type: "info", text: "After flashing, follow the TRMNL setup flow to connect Wi-Fi and pair the device with your TRMNL account." },
         ],
@@ -1210,7 +1210,7 @@ deep_sleep:
         description: "Install TRMNL dashboard firmware for reTerminal E1002.",
         category: "Dashboard",
         compatible: ["E1002"],
-        defaultVersion: "1.8.7",
+        defaultVersion: "1.8.10",
         notes: [
           { type: "info", text: "After flashing, follow the TRMNL setup flow to connect Wi-Fi and pair the device with your TRMNL account." },
         ],
@@ -1221,7 +1221,7 @@ deep_sleep:
         description: "Install TRMNL dashboard firmware for reTerminal E1003.",
         category: "Dashboard",
         compatible: ["E1003"],
-        defaultVersion: "1.8.7",
+        defaultVersion: "1.8.10",
         notes: [
           { type: "info", text: "After flashing, follow the TRMNL setup flow to connect Wi-Fi and pair the device with your TRMNL account." },
         ],
