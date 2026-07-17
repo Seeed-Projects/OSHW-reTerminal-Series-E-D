@@ -1,10 +1,13 @@
 const DEVICES = [
   {
     id: "E1001",
+    kind: "device",
+    series: "reterminal",
     name: "reTerminal E1001",
     description: '7.5" monochrome ePaper display',
     image: "assets/devices/reterminal-e1001.jpg",
     imageAlt: "reTerminal E1001 product photo",
+    flashMethod: "serial",
     specs: [
       '7.5" display',
       "Monochrome",
@@ -13,10 +16,13 @@ const DEVICES = [
   },
   {
     id: "E1002",
+    kind: "device",
+    series: "reterminal",
     name: "reTerminal E1002",
     description: '7.3" full-color ePaper display',
     image: "assets/devices/reterminal-e1002.jpg",
     imageAlt: "reTerminal E1002 product photo",
+    flashMethod: "serial",
     specs: [
       '7.3" display',
       "Full color",
@@ -25,10 +31,13 @@ const DEVICES = [
   },
   {
     id: "E1003",
+    kind: "device",
+    series: "reterminal",
     name: "reTerminal E1003",
     description: '10.3" touch ePaper dashboard display',
     image: "assets/devices/reterminal-e1003.jpg",
     imageAlt: "reTerminal E1003 product photo",
+    flashMethod: "serial",
     specs: [
       '10.3" display',
       "16-level grayscale",
@@ -37,10 +46,13 @@ const DEVICES = [
   },
   {
     id: "E1004",
+    kind: "device",
+    series: "reterminal",
     name: "reTerminal E1004",
     description: '13.3" full-color ePaper display',
     image: "assets/devices/reterminal-e1004.jpg",
     imageAlt: "reTerminal E1004 product photo",
+    flashMethod: "serial",
     specs: [
       '13.3" display',
       "Full color",
@@ -48,6 +60,332 @@ const DEVICES = [
     ],
   },
 ];
+
+// XIAO ePaper DIY Kit driver boards (EE = ESP32-S3, EN = nRF52840).
+// XIAO ePaper DIY Kit 驱动板（EE = ESP32-S3，EN = nRF52840）。
+const BOARDS = [
+  {
+    id: "EE02",
+    kind: "board",
+    series: "EE",
+    name: "XIAO ePaper DIY Kit - EE02",
+    description: "60-pin FPC driver board for the 13.3\" Spectra 6 panel.",
+    chip: "ESP32-S3",
+    flashMethod: "serial",
+    connector: "60-pin",
+    image: "assets/devices/board-ee02.jpg",
+    imageAlt: "XIAO ePaper DIY Kit EE02 product photo",
+    specs: ["ESP32-S3", "60-pin FPC", "WiFi / BLE"],
+  },
+  {
+    id: "EE03",
+    kind: "board",
+    series: "EE",
+    name: "XIAO ePaper DIY Kit - EE03",
+    description: "40-pin FPC driver board for the 10.3\" TTL monochrome panel.",
+    chip: "ESP32-S3",
+    flashMethod: "serial",
+    connector: "40-pin",
+    image: "assets/devices/board-ee03.jpg",
+    imageAlt: "XIAO ePaper DIY Kit EE03 product photo",
+    specs: ["ESP32-S3", "40-pin FPC", "WiFi / BLE"],
+  },
+  {
+    id: "EE04",
+    kind: "board",
+    series: "EE",
+    name: "XIAO ePaper DIY Kit - EE04",
+    description: "50-pin + 24-pin dual-connector ESP32-S3 driver board.",
+    chip: "ESP32-S3",
+    flashMethod: "serial",
+    connector: "50-pin + 24-pin",
+    image: "assets/devices/board-ee04.jpg",
+    imageAlt: "XIAO ePaper DIY Kit EE04 product photo",
+    specs: ["ESP32-S3", "50-pin + 24-pin", "WiFi / BLE"],
+  },
+  {
+    id: "EE05",
+    kind: "board",
+    series: "EE",
+    name: "XIAO ePaper DIY Kit - EE05",
+    description: "24-pin FPC ESP32-S3 driver board for common SPI panels.",
+    chip: "ESP32-S3",
+    flashMethod: "serial",
+    connector: "24-pin",
+    image: "assets/devices/board-ee05.jpg",
+    imageAlt: "XIAO ePaper DIY Kit EE05 product photo",
+    specs: ["ESP32-S3", "24-pin FPC", "WiFi / BLE"],
+  },
+  {
+    id: "EN04",
+    kind: "board",
+    series: "EN",
+    name: "XIAO ePaper DIY Kit - EN04",
+    description: "50-pin + 24-pin dual-connector nRF52840 driver board.",
+    chip: "nRF52840",
+    flashMethod: "uf2",
+    connector: "50-pin + 24-pin",
+    uf2VolumeLabel: "XIAO-BOOT",
+    image: "assets/devices/board-en04.jpg",
+    imageAlt: "XIAO ePaper DIY Kit EN04 product photo",
+    specs: ["nRF52840", "50-pin + 24-pin", "BLE", "UF2"],
+  },
+  {
+    id: "EN05",
+    kind: "board",
+    series: "EN",
+    name: "XIAO ePaper DIY Kit - EN05",
+    description: "24-pin FPC nRF52840 driver board for common SPI panels.",
+    chip: "nRF52840",
+    flashMethod: "uf2",
+    connector: "24-pin",
+    uf2VolumeLabel: "XIAO-BOOT",
+    image: "assets/devices/board-en05.jpg",
+    imageAlt: "XIAO ePaper DIY Kit EN05 product photo",
+    specs: ["nRF52840", "24-pin FPC", "BLE", "UF2"],
+  },
+];
+
+const HARDWARE_SERIES = [
+  {
+    id: "reterminal",
+    title: "reTerminal",
+    description: "All-in-one ePaper terminals with a fixed onboard display.",
+  },
+  {
+    id: "EE",
+    title: "EE Series (ESP32-S3)",
+    description: "XIAO ESP32-S3 driver boards. Flash over USB serial.",
+  },
+  {
+    id: "EN",
+    title: "EN Series (nRF52840)",
+    description: "XIAO nRF52840 driver boards. Flash by dragging a .uf2 file to XIAO-BOOT.",
+  },
+];
+
+const SPI_COMMON_BOARDS = ["EE04", "EN04", "EE05", "EN05"];
+const SPI_WIDE_BOARDS = ["EE04", "EN04"];
+
+// ePaper panels paired with DIY Kit driver boards.
+// 与 DIY Kit 驱动板搭配的墨水屏面板。
+const PANELS = [
+  {
+    id: "P075_MONO",
+    name: '7.5" Monochrome eInk',
+    size: '7.5"',
+    colorType: "mono",
+    resolution: "800x480",
+    interface: "SPI",
+    image: "assets/devices/panel-7-5-mono.jpg",
+    imageAlt: '7.5" monochrome eInk panel',
+    compatibleBoards: [...SPI_COMMON_BOARDS],
+  },
+  {
+    id: "P073_SP6",
+    name: '7.3" spectra 6 E-Ink',
+    size: '7.3"',
+    colorType: "spectra6",
+    resolution: "800x480",
+    interface: "SPI",
+    image: "assets/devices/panel-7-3-spectra6.jpg",
+    imageAlt: '7.3" Spectra 6 eInk panel',
+    compatibleBoards: [...SPI_WIDE_BOARDS],
+  },
+  {
+    id: "P133_SP6",
+    name: '13.3" spectra 6 E-Ink',
+    size: '13.3"',
+    colorType: "spectra6",
+    resolution: "1200x1600",
+    interface: "SPI",
+    image: "assets/devices/panel-13-3-spectra6.jpg",
+    imageAlt: '13.3" Spectra 6 eInk panel',
+    compatibleBoards: ["EE02"],
+  },
+  {
+    id: "P103_MONO",
+    name: '10.3" Monochrome eInk',
+    size: '10.3"',
+    colorType: "mono",
+    resolution: "1404x1872",
+    interface: "TTL",
+    image: "assets/devices/panel-10-3-mono.jpg",
+    imageAlt: '10.3" monochrome eInk panel',
+    compatibleBoards: ["EE03"],
+  },
+  {
+    id: "P0583_MONO",
+    name: '5.83" Monochrome eInk',
+    size: '5.83"',
+    colorType: "mono",
+    resolution: "648x480",
+    interface: "SPI",
+    image: "assets/devices/panel-5-83-mono.jpg",
+    imageAlt: '5.83" monochrome eInk panel',
+    compatibleBoards: [...SPI_COMMON_BOARDS],
+  },
+  {
+    id: "P0426_MONO",
+    name: '4.26" Monochrome ePaper',
+    size: '4.26"',
+    colorType: "mono",
+    resolution: "800x480",
+    interface: "SPI",
+    image: "assets/devices/panel-4-26-mono.jpg",
+    imageAlt: '4.26" monochrome ePaper panel',
+    compatibleBoards: [...SPI_COMMON_BOARDS],
+  },
+  {
+    id: "P042_MONO",
+    name: '4.2" Monochrome eInk',
+    size: '4.2"',
+    colorType: "mono",
+    resolution: "400x300",
+    interface: "SPI",
+    image: "assets/devices/panel-4-2-mono.jpg",
+    imageAlt: '4.2" monochrome eInk panel',
+    compatibleBoards: [...SPI_COMMON_BOARDS],
+  },
+  {
+    id: "P029_MONO",
+    name: '2.9" Monochrome eInk',
+    size: '2.9"',
+    colorType: "mono",
+    resolution: "296x128",
+    interface: "SPI",
+    image: "assets/devices/panel-2-9-mono.jpg",
+    imageAlt: '2.9" monochrome eInk panel',
+    compatibleBoards: [...SPI_COMMON_BOARDS],
+  },
+  {
+    id: "P029_QUAD",
+    name: '2.9" Quadruple Color eInk',
+    size: '2.9"',
+    colorType: "quad",
+    resolution: "128x296",
+    interface: "SPI",
+    image: "assets/devices/panel-2-9-quad.jpg",
+    imageAlt: '2.9" quadruple color eInk panel',
+    compatibleBoards: [...SPI_COMMON_BOARDS],
+  },
+  {
+    id: "P029_FLEX",
+    name: '2.9" Flexible Monochrome eInk',
+    size: '2.9"',
+    colorType: "mono",
+    resolution: "296x128",
+    interface: "SPI",
+    flexible: true,
+    image: "assets/devices/panel-2-9-flex.jpg",
+    imageAlt: '2.9" flexible monochrome eInk panel',
+    compatibleBoards: [...SPI_COMMON_BOARDS],
+  },
+  {
+    id: "P0213_MONO",
+    name: '2.13" Monochrome eInk',
+    size: '2.13"',
+    colorType: "mono",
+    resolution: "122x250",
+    interface: "SPI",
+    image: "assets/devices/panel-2-13-mono.jpg",
+    imageAlt: '2.13" monochrome eInk panel',
+    compatibleBoards: [...SPI_COMMON_BOARDS],
+  },
+  {
+    id: "P0213_QUAD",
+    name: '2.13" Quadruple Color eInk',
+    size: '2.13"',
+    colorType: "quad",
+    resolution: "122x250",
+    interface: "SPI",
+    image: "assets/devices/panel-2-13-quad.jpg",
+    imageAlt: '2.13" quadruple color eInk panel',
+    compatibleBoards: [...SPI_COMMON_BOARDS],
+  },
+  {
+    id: "P0213_FLEX",
+    name: '2.13" Flexible Monochrome eInk',
+    size: '2.13"',
+    colorType: "mono",
+    resolution: "212x104",
+    interface: "SPI",
+    flexible: true,
+    image: "assets/devices/panel-2-13-flex.jpg",
+    imageAlt: '2.13" flexible monochrome eInk panel',
+    compatibleBoards: [...SPI_COMMON_BOARDS],
+  },
+  {
+    id: "P0154_MONO",
+    name: '1.54" Monochrome eInk',
+    size: '1.54"',
+    colorType: "mono",
+    resolution: "200x200",
+    interface: "SPI",
+    image: "assets/devices/panel-1-54-mono.jpg",
+    imageAlt: '1.54" monochrome eInk panel',
+    compatibleBoards: [...SPI_COMMON_BOARDS],
+  },
+];
+
+const DIY_KIT_BOARD_IDS = BOARDS.map((board) => board.id);
+
+// Looks up a reTerminal device or DIY Kit driver board by id.
+// 按 id 查找 reTerminal 整机或 DIY Kit 驱动板。
+function getHardware(hardwareId) {
+  return DEVICES.find((device) => device.id === hardwareId)
+    || BOARDS.find((board) => board.id === hardwareId)
+    || null;
+}
+
+function getBoard(boardId) {
+  return BOARDS.find((board) => board.id === boardId) || null;
+}
+
+function getPanel(panelId) {
+  return PANELS.find((panel) => panel.id === panelId) || null;
+}
+
+function isDriverBoard(hardware) {
+  return hardware?.kind === "board";
+}
+
+// Returns panels compatible with a board, optionally narrowed by firmware.
+// 返回与板子兼容的屏幕；若固件声明了 compatiblePanels，再进一步收窄。
+function getCompatiblePanels(boardId, firmwareOption) {
+  if (!boardId) return [];
+  let panels = PANELS.filter((panel) => panel.compatibleBoards.includes(boardId));
+  if (Array.isArray(firmwareOption?.compatiblePanels) && firmwareOption.compatiblePanels.length) {
+    const allowed = new Set(firmwareOption.compatiblePanels);
+    panels = panels.filter((panel) => allowed.has(panel.id));
+  }
+  return panels.slice().sort((a, b) => {
+    const sizeA = parseFloat(a.size) || 0;
+    const sizeB = parseFloat(b.size) || 0;
+    return sizeB - sizeA;
+  });
+}
+
+// Resolves the published firmware id for a board + panel combination.
+// DIY Kit firmware is compiled per pairing, e.g. XIAO_EPaper_Hello_EE04_P075_MONO.
+// 解析「板 + 屏」组合对应的固件 id。DIY Kit 固件按组合各自编译。
+function resolveComboFirmwareId(firmwareOption, boardId, panelId) {
+  if (!firmwareOption?.comboPattern) return firmwareOption?.id || "";
+  if (!boardId || !panelId) return "";
+  return firmwareOption.comboPattern
+    .replace("{board}", boardId)
+    .replace("{panel}", panelId);
+}
+
+// Groups supported hardware ids into reTerminal / EE / EN rows for Step 1.
+// 将 supportedDevices 按 reTerminal / EE / EN 分组，供 Step 1 渲染。
+function groupSupportedHardware(hardwareIds) {
+  const items = (hardwareIds || []).map(getHardware).filter(Boolean);
+  return HARDWARE_SERIES.map((series) => ({
+    ...series,
+    items: items.filter((item) => item.series === series.id),
+  })).filter((group) => group.items.length > 0);
+}
 
 const PLATFORM_GROUPS = [
   {
@@ -79,7 +417,7 @@ const PLATFORM_CARDS = [
     previewAlt: "Basic firmware setup preview",
     accent: "#004966",
     highlight: "#8FC31F",
-    supportedDevices: ["E1001", "E1002", "E1003", "E1004"],
+    supportedDevices: ["E1001", "E1002", "E1003", "E1004", ...DIY_KIT_BOARD_IDS],
     installReady: true,
     bullets: [
       "Fast product smoke tests",
@@ -94,6 +432,21 @@ const PLATFORM_CARDS = [
     ],
     configFields: [],
     firmwareOptions: [
+      {
+        id: "XIAO_EPaper_Hello",
+        comboPattern: "XIAO_EPaper_Hello_{board}_{panel}",
+        name: "Hello ePaper",
+        description:
+          "Smoke-test firmware for XIAO ePaper DIY Kit boards. Each board + panel pairing has its own pre-built firmware; select your panel in Step 2 and the Hub picks the matching build.",
+        category: "Display",
+        compatible: [...DIY_KIT_BOARD_IDS],
+        flashNotes: [
+          {
+            type: "info",
+            text: "EE boards flash over USB serial. EN boards use UF2: double-tap reset until the XIAO-BOOT drive appears, then download and copy the .uf2 file.",
+          },
+        ],
+      },
       {
         id: "RTC_PCF8563",
         name: "RTC Clock Demo",
@@ -1710,5 +2063,20 @@ deep_sleep:
 ];
 
 if (typeof module !== "undefined") {
-  module.exports = { DEVICES, PLATFORM_GROUPS, PLATFORM_CARDS };
+  module.exports = {
+    DEVICES,
+    BOARDS,
+    PANELS,
+    HARDWARE_SERIES,
+    DIY_KIT_BOARD_IDS,
+    PLATFORM_GROUPS,
+    PLATFORM_CARDS,
+    getHardware,
+    getBoard,
+    getPanel,
+    isDriverBoard,
+    getCompatiblePanels,
+    resolveComboFirmwareId,
+    groupSupportedHardware,
+  };
 }

@@ -1,6 +1,7 @@
 let expandedPlatformId = null;
 let selectedPlatform = null;
 let selectedDevice = null;
+let selectedPanel = null;
 let selectedFirmwareOption = null;
 let selectedVersion = null;
 let monitorPort = null;
@@ -43,7 +44,54 @@ function checkBrowser() {
 }
 
 function getDevice(deviceId) {
+  if (typeof getHardware === "function") return getHardware(deviceId);
   return DEVICES.find((device) => device.id === deviceId) || null;
+}
+
+function hardwareNeedsPanel(hardware = selectedDevice) {
+  return typeof isDriverBoard === "function" && isDriverBoard(hardware);
+}
+
+function getFlashMethod(hardware = selectedDevice) {
+  return hardware?.flashMethod || "serial";
+}
+
+function getSelectedCompatiblePanels() {
+  if (!hardwareNeedsPanel() || typeof getCompatiblePanels !== "function") return [];
+  return getCompatiblePanels(selectedDevice.id, selectedFirmwareOption);
+}
+
+function choosePanel(panels, preferredId = "") {
+  if (!panels.length) return null;
+  return panels.find((panel) => panel.id === preferredId) || (panels.length === 1 ? panels[0] : null);
+}
+
+// Returns the firmware id to fetch: combo builds resolve to a board+panel id.
+// 返回实际要获取的固件 id：组合构建解析为「板 + 屏」专属 id。
+function getResolvedFirmwareId() {
+  if (typeof resolveComboFirmwareId === "function" && selectedFirmwareOption?.comboPattern) {
+    return resolveComboFirmwareId(
+      selectedFirmwareOption,
+      selectedDevice?.id,
+      selectedPanel?.id
+    );
+  }
+  return selectedFirmwareOption?.id || "";
+}
+
+function getUf2DownloadUrl() {
+  if (!selectedPlatform?.installReady || !selectedFirmwareOption || !selectedDevice || !selectedPanel) {
+    return "";
+  }
+  if (getFlashMethod() !== "uf2") return "";
+  const firmwareId = getResolvedFirmwareId();
+  if (!firmwareId) return "";
+  const version = selectedVersion?.version
+    || (selectedPlatform.requiresVersionManifest ? "" : DEFAULT_FIRMWARE_VERSION);
+  if (!version) return "";
+  return withFirmwareCacheBuster(
+    `firmware/${firmwareId}/${version}/${firmwareId}.uf2`
+  );
 }
 
 function getDefaultVersion(platform) {
@@ -98,10 +146,14 @@ function chooseFirmwareOption(options, preferredGroup = "", preferredLanguage = 
 
 function getInstallManifest() {
   if (!selectedPlatform?.installReady || !selectedFirmwareOption) return "";
+  if (getFlashMethod() === "uf2") return "";
+  if (hardwareNeedsPanel() && !selectedPanel) return "";
+  const firmwareId = getResolvedFirmwareId();
+  if (!firmwareId) return "";
   const version = selectedVersion?.version
     || (selectedPlatform.requiresVersionManifest ? "" : DEFAULT_FIRMWARE_VERSION);
   if (!version) return "";
-  return withFirmwareCacheBuster(`firmware/${selectedFirmwareOption.id}/${version}/manifest.json`);
+  return withFirmwareCacheBuster(`firmware/${firmwareId}/${version}/manifest.json`);
 }
 
 function withFirmwareCacheBuster(path) {
@@ -195,7 +247,12 @@ async function loadFirmwareVersions() {
 
 function getFirmwareVersionValues(firmwareOption, platform = selectedPlatform) {
   if (!firmwareOption?.id) return [DEFAULT_FIRMWARE_VERSION];
-  const versions = firmwareVersions[firmwareOption.id];
+  // Combo builds publish versions under the resolved board+panel id.
+  // 组合构建的版本发布在解析后的「板 + 屏」id 下。
+  const lookupId = firmwareOption.comboPattern && firmwareOption === selectedFirmwareOption
+    ? getResolvedFirmwareId() || firmwareOption.id
+    : firmwareOption.id;
+  const versions = firmwareVersions[lookupId];
   if (Array.isArray(versions) && versions.length) return versions;
   // Platforms whose versions mirror an upstream release have no meaningful
   // hardcoded fallback — without the deployed manifest, flashing is disabled.
@@ -270,26 +327,52 @@ function renderPlatformCreditMeta(platform, className = "", showWiki = true) {
   return `<div class="${metaClassName}">${author}${source}${wiki}</div>`;
 }
 
+function renderHardwareOption(platform, hardware) {
+  const connectorBadge = hardware.connector
+    ? `<span class="device-connector">${hardware.connector}</span>`
+    : "";
+  return `
+    <button class="device-option" data-platform="${platform.id}" data-device="${hardware.id}" type="button">
+      <span class="device-image">
+        <img src="${hardware.image}" alt="${hardware.imageAlt}">
+        ${connectorBadge}
+      </span>
+      <span class="device-copy">
+        <strong>${hardware.name}</strong>
+        <span>${hardware.description}</span>
+        <span class="device-specs">${renderDeviceSpecs(hardware)}</span>
+      </span>
+    </button>
+  `;
+}
+
+function renderHardwareGroups(platform) {
+  const groups = typeof groupSupportedHardware === "function"
+    ? groupSupportedHardware(platform.supportedDevices)
+    : [{
+        id: "all",
+        title: "Supported hardware",
+        items: platform.supportedDevices.map(getDevice).filter(Boolean),
+      }];
+
+  if (groups.length <= 1) {
+    const items = groups[0]?.items || [];
+    return `<div class="device-options">${items.map((item) => renderHardwareOption(platform, item)).join("")}</div>`;
+  }
+
+  return groups.map((group) => `
+    <div class="hardware-series-group">
+      <div class="hardware-series-head">
+        <p class="eyebrow">${group.title}</p>
+        <p class="hardware-series-desc">${group.description || ""}</p>
+      </div>
+      <div class="device-options">${group.items.map((item) => renderHardwareOption(platform, item)).join("")}</div>
+    </div>
+  `).join("");
+}
+
 function renderPlatformCard(platform) {
   const isExpanded = platform.id === expandedPlatformId;
-  const devices = platform.supportedDevices
-    .map((deviceId) => {
-      const device = getDevice(deviceId);
-      if (!device) return "";
-      return `
-        <button class="device-option" data-platform="${platform.id}" data-device="${device.id}" type="button">
-          <span class="device-image">
-            <img src="${device.image}" alt="${device.imageAlt}">
-          </span>
-          <span class="device-copy">
-            <strong>${device.name}</strong>
-            <span>${device.description}</span>
-            <span class="device-specs">${renderDeviceSpecs(device)}</span>
-          </span>
-        </button>
-      `;
-    })
-    .join("");
   const bullets = platform.bullets
     .map((item) => `<li>${item}</li>`)
     .join("");
@@ -317,10 +400,10 @@ function renderPlatformCard(platform) {
         </figure>
         <div class="device-choice">
           <div>
-            <p class="eyebrow">Supported devices</p>
-            <h3>Select device type</h3>
+            <p class="eyebrow">Supported hardware</p>
+            <h3>Select device or driver board</h3>
           </div>
-          <div class="device-options">${devices}</div>
+          <div class="hardware-groups">${renderHardwareGroups(platform)}</div>
         </div>
       </div>
     </article>
@@ -388,6 +471,7 @@ function selectPlatformDevice(platformId, deviceId) {
   const availableOptions = getAvailableFirmwareOptions(selectedPlatform, deviceId);
   selectedFirmwareOption = chooseFirmwareOption(availableOptions);
   selectedVersion = getDefaultVersion(selectedPlatform);
+  selectedPanel = choosePanel(getSelectedCompatiblePanels());
   applyRecommendedInstallMode();
 
   renderSelectedRelease();
@@ -397,8 +481,9 @@ function selectPlatformDevice(platformId, deviceId) {
   updateFlashState();
   renderFlowState();
   resetProgress();
+  const panelLabel = selectedPanel ? ` / ${selectedPanel.name}` : "";
   appendLog(
-    `[system] Selected platform: ${selectedPlatform?.name || "None"} / ${selectedDevice?.name || "None"}`
+    `[system] Selected platform: ${selectedPlatform?.name || "None"} / ${selectedDevice?.name || "None"}${panelLabel}`
   );
 }
 
@@ -406,6 +491,7 @@ function clearPlatformSelection() {
   document.body.classList.remove("is-flash-step");
   selectedPlatform = null;
   selectedDevice = null;
+  selectedPanel = null;
   selectedFirmwareOption = null;
   selectedVersion = null;
   renderPlatformCards();
@@ -449,31 +535,84 @@ function renderSelectedRelease() {
   const firmwareName = selectedFirmwareOption?.name || selectedPlatform.name;
   const firmwareDescription =
     selectedFirmwareOption?.description || selectedPlatform.description;
+  const panelTag = selectedPanel
+    ? `<span class="tag tag-panel">${selectedPanel.name}</span>`
+    : "";
+  const panelBadges = selectedPanel
+    ? [
+        selectedPanel.size,
+        selectedPanel.resolution,
+        selectedPanel.colorType,
+        selectedPanel.interface,
+      ]
+        .filter(Boolean)
+        .map((item) => `<span class="compat-badge active">${item}</span>`)
+        .join("")
+    : "";
+  const photoSrc = selectedPanel?.image || selectedDevice.image;
+  const photoAlt = selectedPanel?.imageAlt || selectedDevice.imageAlt;
 
   container.innerHTML = `
     <div class="selected-copy">
       <div class="selected-tags">
         <span class="tag tag-platform">${selectedPlatform.name}</span>
         <span class="tag tag-device">${selectedDevice.name}</span>
+        ${panelTag}
       </div>
       <h3>${firmwareName}</h3>
       ${renderPlatformCreditMeta(selectedPlatform, "community-meta-selected", false)}
       <p>${firmwareDescription}</p>
       <div class="compat-list">
         ${renderDeviceSpecs(selectedDevice, "compat-badge active")}
+        ${panelBadges}
         ${renderPlatformDetailTags(selectedPlatform, "compat-badge active")}
       </div>
     </div>
     <div class="selected-device-photo">
-      <img src="${selectedDevice.image}" alt="${selectedDevice.imageAlt}">
+      <img src="${photoSrc}" alt="${photoAlt}">
     </div>
   `;
 }
 
 function renderSetupPanel() {
+  renderPanelSelect();
   renderFirmwareSelect();
   renderLanguageSelect();
   renderVersionPanel();
+}
+
+function renderPanelSelect() {
+  const field = document.getElementById("panelField");
+  if (!field) return;
+
+  if (!hardwareNeedsPanel()) {
+    field.classList.add("is-hidden");
+    field.innerHTML = "";
+    return;
+  }
+
+  const panels = getSelectedCompatiblePanels();
+  field.classList.remove("is-hidden");
+  field.innerHTML = `
+    <span>Screen panel</span>
+    <select id="panelSelect" required>
+      <option value="">Select a panel…</option>
+      ${panels.map((panel) => {
+        const selectedAttr = panel.id === selectedPanel?.id ? "selected" : "";
+        const colorLabel = panel.colorType === "spectra6"
+          ? "Spectra 6"
+          : panel.colorType === "quad"
+            ? "4-color"
+            : panel.flexible
+              ? "Flexible"
+              : "Mono";
+        return `<option value="${panel.id}" ${selectedAttr}>${panel.name} · ${panel.resolution} · ${colorLabel}</option>`;
+      }).join("")}
+    </select>
+    <div class="panel-preview ${selectedPanel ? "" : "is-hidden"}" id="panelPreview">
+      ${selectedPanel ? `<img src="${selectedPanel.image}" alt="${selectedPanel.imageAlt}">` : ""}
+    </div>
+  `;
 }
 
 function renderFirmwareSelect() {
@@ -710,8 +849,7 @@ function collectConfigValues() {
   const platformFields = selectedPlatform?.configFields || [];
   const fwFields = selectedFirmwareOption?.configFields || [];
   const allFields = [...platformFields, ...fwFields];
-  if (!allFields.length) return [];
-  return allFields.map((field) => {
+  const values = allFields.map((field) => {
     const el = document.getElementById(field.id);
     if (!el) return null;
     let value;
@@ -731,6 +869,8 @@ function collectConfigValues() {
     }
     return { key: field.nvsKey, type: nvsType, value: nvsValue };
   }).filter(Boolean);
+
+  return values;
 }
 
 // Reads template field values from the platform-level setup inputs.
@@ -775,8 +915,16 @@ function updateFlashState() {
   const flashBtn = document.getElementById("flashButton");
   const disabledBtn = document.getElementById("disabledFlashButton");
   const installNote = document.getElementById("installNote");
+  const flashHint = document.getElementById("flashHint");
+  const isUf2 = getFlashMethod() === "uf2";
+  const panelMissing = hardwareNeedsPanel() && !selectedPanel;
+  const uf2Url = getUf2DownloadUrl();
   const manifest = getInstallManifest();
-  const ready = Boolean(selectedPlatform?.installReady && manifest);
+  const ready = Boolean(
+    selectedPlatform?.installReady &&
+    !panelMissing &&
+    (isUf2 ? uf2Url : manifest)
+  );
   const versionListMissing = Boolean(
     selectedPlatform?.installReady &&
     selectedPlatform?.requiresVersionManifest &&
@@ -784,18 +932,32 @@ function updateFlashState() {
     !getFirmwareVersionValues(selectedFirmwareOption, selectedPlatform).length
   );
 
-  if (flashBtn) flashBtn.classList.toggle("is-hidden", !ready);
-  if (disabledBtn) disabledBtn.classList.toggle("is-hidden", ready);
+  if (flashBtn) flashBtn.classList.toggle("is-hidden", !ready || isUf2);
+  if (disabledBtn) disabledBtn.classList.toggle("is-hidden", ready || isUf2);
+  if (flashHint) {
+    flashHint.textContent = isUf2
+      ? "Double-tap the reset button until the XIAO-BOOT drive appears, then download the .uf2 file."
+      : hardwareNeedsPanel()
+        ? "Connect your DIY Kit board with a USB data cable first."
+        : "Connect your reTerminal with a USB data cable first.";
+  }
   if (installNote) {
-    installNote.classList.toggle("is-visible", !ready);
-    if (!ready) {
-      installNote.innerHTML = versionListMissing
-        ? `<strong>Version list unavailable.</strong>
-          <span>The firmware version manifest could not be loaded, so flashing is disabled. Reload the page or try again later.</span>`
-        : `<strong>Firmware not published yet.</strong>
+    const showNote = !ready && !selectedPlatform?.templateMode && !selectedPlatform?.downloadMode;
+    installNote.classList.toggle("is-visible", showNote);
+    if (showNote) {
+      if (panelMissing) {
+        installNote.innerHTML = `<strong>Select a screen panel.</strong>
+          <span>Choose the ePaper panel attached to your driver board before flashing.</span>`;
+      } else if (versionListMissing) {
+        installNote.innerHTML = `<strong>Version list unavailable.</strong>
+          <span>The firmware version manifest could not be loaded, so flashing is disabled. Reload the page or try again later.</span>`;
+      } else {
+        installNote.innerHTML = `<strong>Firmware not published yet.</strong>
           <span>This platform card is ready, but its web flashing package has not been added.</span>`;
+      }
     }
   }
+  renderUf2Panel(isUf2, ready, uf2Url);
 }
 
 // Assembles template output from platform-level header, selected snippets, and footer.
@@ -890,7 +1052,8 @@ function copyTemplateToClipboard() {
   });
 }
 
-// Toggles flash-panel child elements between flash, template preview, and download modes.
+// Toggles flash-panel child elements between flash, UF2, template, and download modes.
+// 在串口烧录、UF2、模板预览、下载模式之间切换 Step 3 面板内容。
 function renderFlashPanelMode(isTemplate, isDownload) {
   const flashPanel = document.getElementById("flashPanel");
   if (!flashPanel) return;
@@ -905,25 +1068,96 @@ function renderFlashPanelMode(isTemplate, isDownload) {
   const templateExport = document.getElementById("templateExportActions");
   const downloadGuide = document.getElementById("downloadGuide");
   const downloadActions = document.getElementById("downloadActions");
+  const uf2Panel = document.getElementById("uf2Panel");
+  const isUf2 = !isTemplate && !isDownload && getFlashMethod() === "uf2";
 
   if (heading) {
     if (isDownload) heading.textContent = "Download and build";
     else if (isTemplate) heading.textContent = "Preview and export";
+    else if (isUf2) heading.textContent = "Install via UF2";
     else heading.textContent = "Flash to device";
   }
-  const hideFlash = isTemplate || isDownload;
+  const hideFlash = isTemplate || isDownload || isUf2;
   if (installMode) installMode.classList.toggle("is-hidden", hideFlash);
-  if (flashNotes) flashNotes.classList.toggle("is-hidden", hideFlash);
+  if (flashNotes) flashNotes.classList.toggle("is-hidden", isTemplate || isDownload);
   if (progressRow) progressRow.classList.toggle("is-hidden", hideFlash);
   if (flashActions) flashActions.classList.toggle("is-hidden", hideFlash);
   if (templatePreview) templatePreview.classList.toggle("is-hidden", !isTemplate);
   if (templateExport) templateExport.classList.toggle("is-hidden", !isTemplate);
   if (downloadGuide) downloadGuide.classList.toggle("is-hidden", !isDownload);
   if (downloadActions) downloadActions.classList.toggle("is-hidden", !isDownload);
+  if (uf2Panel) uf2Panel.classList.toggle("is-hidden", !isUf2);
   if (isTemplate && installNote) installNote.classList.remove("is-visible");
   if (isTemplate && errorAlert) errorAlert.classList.remove("is-visible");
   if (isDownload && installNote) installNote.classList.remove("is-visible");
   if (isDownload && errorAlert) errorAlert.classList.remove("is-visible");
+  if (isUf2) updateFlashState();
+}
+
+function renderUf2Panel(isUf2, ready, uf2Url) {
+  const uf2Panel = document.getElementById("uf2Panel");
+  const downloadBtn = document.getElementById("uf2DownloadButton");
+  const writeBtn = document.getElementById("uf2WriteButton");
+  if (!uf2Panel) return;
+
+  const volume = selectedDevice?.uf2VolumeLabel || "XIAO-BOOT";
+  const boardName = selectedDevice?.name || "board";
+  const panelName = selectedPanel?.name || "panel";
+  uf2Panel.querySelectorAll("[data-uf2-volume]").forEach((el) => {
+    el.textContent = volume;
+  });
+  uf2Panel.querySelectorAll("[data-uf2-target]").forEach((el) => {
+    el.textContent = `${boardName} + ${panelName}`;
+  });
+
+  if (downloadBtn) {
+    downloadBtn.classList.toggle("is-disabled", !ready);
+    if (ready && uf2Url) {
+      downloadBtn.href = uf2Url;
+      downloadBtn.setAttribute("download", `${getResolvedFirmwareId()}.uf2`);
+      downloadBtn.removeAttribute("aria-disabled");
+    } else {
+      downloadBtn.href = "#";
+      downloadBtn.removeAttribute("download");
+      downloadBtn.setAttribute("aria-disabled", "true");
+    }
+  }
+  if (writeBtn) {
+    writeBtn.disabled = !ready || !("showDirectoryPicker" in window);
+    writeBtn.title = "showDirectoryPicker" in window
+      ? "Write the .uf2 file directly to the XIAO-BOOT drive"
+      : "Direct write needs Chrome or Edge";
+  }
+}
+
+async function writeUf2ToDrive() {
+  const uf2Url = getUf2DownloadUrl();
+  if (!uf2Url || !selectedFirmwareOption || !selectedDevice || !selectedPanel) return;
+  if (!("showDirectoryPicker" in window)) {
+    appendLog("[uf2] Direct write is unavailable in this browser. Download the .uf2 file instead.");
+    return;
+  }
+
+  try {
+    appendLog("[uf2] Choose the XIAO-BOOT drive…");
+    const dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+    appendLog("[uf2] Downloading firmware…");
+    const response = await fetch(uf2Url);
+    if (!response.ok) throw new Error(`UF2 download failed: ${response.status}`);
+    const data = new Uint8Array(await response.arrayBuffer());
+    const filename = `${getResolvedFirmwareId()}.uf2`;
+    const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(data);
+    await writable.close();
+    appendLog(`[uf2] Wrote ${filename} to ${selectedDevice.uf2VolumeLabel || "XIAO-BOOT"}. The board should reboot automatically.`);
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      appendLog("[uf2] Drive selection cancelled.");
+      return;
+    }
+    appendLog(`[uf2] ${error.message || error}`);
+  }
 }
 
 function renderDownloadGuide() {
@@ -1427,6 +1661,25 @@ function bindFlowEvents() {
     changeBtn.addEventListener("click", clearPlatformSelection);
   }
 
+  const panelField = document.getElementById("panelField");
+  if (panelField) {
+    panelField.addEventListener("change", (event) => {
+      if (event.target?.id !== "panelSelect") return;
+      const panelId = event.target.value;
+      selectedPanel = getSelectedCompatiblePanels().find((panel) => panel.id === panelId) || null;
+      // Combo builds publish per-panel versions, so refresh the version list.
+      // 组合构建按屏幕发布版本，因此切换屏幕后刷新版本列表。
+      selectedVersion = getDefaultVersion(selectedPlatform);
+      renderSelectedRelease();
+      renderPanelSelect();
+      renderVersionPanel();
+      updateFlashState();
+      renderFlowState();
+      resetProgress();
+      appendLog(`[system] Selected panel: ${selectedPanel?.name || "None"}`);
+    });
+  }
+
   const firmwareField = document.getElementById("firmwareField");
   if (firmwareField) {
     firmwareField.addEventListener("change", (event) => {
@@ -1437,13 +1690,16 @@ function bindFlowEvents() {
       selectedFirmwareOption =
         chooseFirmwareOption(options, firmwareSelect.value, previousLanguage);
       selectedVersion = getDefaultVersion(selectedPlatform);
+      selectedPanel = choosePanel(getSelectedCompatiblePanels(), selectedPanel?.id);
       applyRecommendedInstallMode();
       renderSelectedRelease();
+      renderPanelSelect();
       renderLanguageSelect();
       renderVersionPanel();
       renderConfigArea();
       renderFlashNotes();
       updateFlashState();
+      renderFlowState();
       resetProgress();
       appendLog(`[system] Selected demo: ${selectedFirmwareOption?.name || "None"}`);
     });
@@ -1542,6 +1798,20 @@ function bindWorkspaceEvents() {
   if (flashBtn) {
     flashBtn.addEventListener("click", flashDevice);
     flashBtn.disabled = !("serial" in navigator);
+  }
+
+  const uf2DownloadBtn = document.getElementById("uf2DownloadButton");
+  if (uf2DownloadBtn) {
+    uf2DownloadBtn.addEventListener("click", (event) => {
+      if (uf2DownloadBtn.getAttribute("aria-disabled") === "true") {
+        event.preventDefault();
+      }
+    });
+  }
+
+  const uf2WriteBtn = document.getElementById("uf2WriteButton");
+  if (uf2WriteBtn) {
+    uf2WriteBtn.addEventListener("click", writeUf2ToDrive);
   }
 
   const copyBtn = document.getElementById("copyTemplateButton");

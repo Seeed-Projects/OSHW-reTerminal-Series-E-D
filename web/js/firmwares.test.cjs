@@ -1,5 +1,14 @@
 const assert = require("node:assert/strict");
-const { PLATFORM_CARDS } = require("./firmwares.js");
+const {
+  PLATFORM_CARDS,
+  BOARDS,
+  PANELS,
+  getCompatiblePanels,
+  groupSupportedHardware,
+  isDriverBoard,
+  getHardware,
+  resolveComboFirmwareId,
+} = require("./firmwares.js");
 
 const SUPPORTED_INSTALL_MODES = new Set(["standard", "erase"]);
 
@@ -105,6 +114,49 @@ for (const option of photoframeOptions) {
     !option.notes.some((note) => note.text.includes("full-chip image at 0x0")),
     `${option.id} keeps flashing guidance out of setup notes`
   );
+}
+
+assert.equal(BOARDS.length, 6);
+assert.equal(PANELS.length, 14);
+assert.deepEqual(
+  BOARDS.map((board) => board.id),
+  ["EE02", "EE03", "EE04", "EE05", "EN04", "EN05"]
+);
+assert.equal(getHardware("EE04")?.flashMethod, "serial");
+assert.equal(getHardware("EN04")?.flashMethod, "uf2");
+assert.equal(getHardware("EN04")?.uf2VolumeLabel, "XIAO-BOOT");
+assert.equal(getHardware("EE02")?.connector, "60-pin");
+assert.ok(isDriverBoard(getHardware("EE03")));
+assert.equal(isDriverBoard(getHardware("E1001")), false);
+assert.deepEqual(getCompatiblePanels("EE02").map((panel) => panel.id), ["P133_SP6"]);
+assert.deepEqual(getCompatiblePanels("EE03").map((panel) => panel.id), ["P103_MONO"]);
+assert.ok(getCompatiblePanels("EE04").some((panel) => panel.id === "P073_SP6"));
+assert.equal(getCompatiblePanels("EE05").some((panel) => panel.id === "P073_SP6"), false);
+assert.equal(getCompatiblePanels("EN05").some((panel) => panel.id === "P103_MONO"), false);
+
+const arduino = PLATFORM_CARDS.find((platform) => platform.id === "base");
+assert.ok(arduino.supportedDevices.includes("EE04"));
+assert.ok(arduino.supportedDevices.includes("EN05"));
+const helloOption = arduino.firmwareOptions.find((option) => option.id === "XIAO_EPaper_Hello");
+assert.ok(helloOption, "Hello ePaper combo firmware is registered");
+assert.equal(helloOption.comboPattern, "XIAO_EPaper_Hello_{board}_{panel}");
+assert.equal(
+  resolveComboFirmwareId(helloOption, "EE04", "P075_MONO"),
+  "XIAO_EPaper_Hello_EE04_P075_MONO"
+);
+assert.equal(resolveComboFirmwareId(helloOption, "EE04", ""), "");
+assert.equal(
+  resolveComboFirmwareId({ id: "RTC_PCF8563" }, "E1001", ""),
+  "RTC_PCF8563"
+);
+assert.deepEqual(
+  groupSupportedHardware(arduino.supportedDevices).map((group) => group.id),
+  ["reterminal", "EE", "EN"]
+);
+
+for (const panel of PANELS) {
+  assert.ok(panel.image, `${panel.id} has an image`);
+  assert.ok(Array.isArray(panel.compatibleBoards) && panel.compatibleBoards.length, `${panel.id} has compatible boards`);
 }
 
 console.log("firmwares metadata tests passed");

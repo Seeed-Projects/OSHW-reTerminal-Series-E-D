@@ -22,8 +22,10 @@ jobs:
     outputs:
       firmware_changed: ${{ steps.plan.outputs.firmware_changed }}
       has_arduino: ${{ steps.plan.outputs.has_arduino }}
+      has_nrf52: ${{ steps.plan.outputs.has_nrf52 }}
       has_pio: ${{ steps.plan.outputs.has_pio }}
       arduino_matrix: ${{ steps.plan.outputs.arduino_matrix }}
+      nrf52_matrix: ${{ steps.plan.outputs.nrf52_matrix }}
       pio_matrix: ${{ steps.plan.outputs.pio_matrix }}
     steps:
       - name: Checkout repository
@@ -141,9 +143,11 @@ jobs:
         run: |
           set -euo pipefail
           BUILD_FLAGS="${{ matrix.sketch.build_flags }}"
+          CPP_FLAGS="${{ matrix.sketch.cpp_flags }}"
           arduino-cli compile \
             --fqbn "esp32:esp32:XIAO_ESP32S3:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=opi" \
             ${BUILD_FLAGS:+--build-property "build.extra_flags=$BUILD_FLAGS"} \
+            ${CPP_FLAGS:+--build-property "compiler.cpp.extra_flags=$CPP_FLAGS"} \
             --output-dir ./build/${{ matrix.sketch.name }} \
             ./${{ matrix.sketch.path }}
           cp ~/.arduino15/packages/esp32/hardware/esp32/*/tools/partitions/boot_app0.bin \
@@ -162,6 +166,75 @@ jobs:
               -s "${{ matrix.sketch.spiffs_image_size }}" \
               ./build/${{ matrix.sketch.name }}/${{ matrix.sketch.name }}.spiffs.bin
           fi
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.sketch.name }}
+          path: build/${{ matrix.sketch.name }}/
+          retention-days: 30
+
+  build-nrf52-firmware:
+    needs: plan-firmware-release
+    if: needs.plan-firmware-release.outputs.has_nrf52 == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sketch: ${{ fromJSON(needs.plan-firmware-release.outputs.nrf52_matrix).include }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache compiled firmware
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ./build/${{ matrix.sketch.name }}/
+          key: firmware-nrf52-v1-${{ matrix.sketch.name }}-${{ hashFiles(format('{0}/**', matrix.sketch.path)) }}
+
+      - name: Install arduino-cli
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=$HOME/.local/bin sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install Seeed nRF52 board package
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls \
+            https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
+          arduino-cli core update-index
+          arduino-cli core install Seeeduino:nrf52
+
+      - name: Install Seeed_GFX library
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          arduino-cli config set library.enable_unsafe_install true
+          arduino-cli lib install --git-url https://github.com/Seeed-Studio/Seeed_GFX.git
+
+      - name: Compile firmware and package UF2
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          CPP_FLAGS="${{ matrix.sketch.cpp_flags }}"
+          arduino-cli compile \
+            --fqbn "Seeeduino:nrf52:xiaonRF52840Plus" \
+            ${CPP_FLAGS:+--build-property "compiler.cpp.extra_flags=$CPP_FLAGS"} \
+            --output-dir ./build/${{ matrix.sketch.name }} \
+            ./${{ matrix.sketch.path }}
+
+          UF2CONV=$(find ~/.arduino15/packages/Seeeduino/hardware/nrf52 -path "*/tools/uf2conv/uf2conv.py" -print -quit)
+          if [ -z "$UF2CONV" ]; then
+            echo "::error::uf2conv.py not found in the Seeed nRF52 core"
+            exit 1
+          fi
+          HEX_FILE=$(find ./build/${{ matrix.sketch.name }} -name "*.ino.hex" -print -quit)
+          python3 "$UF2CONV" -f 0xADA52840 -c \
+            -o ./build/${{ matrix.sketch.name }}/${{ matrix.sketch.name }}.uf2 \
+            "$HEX_FILE"
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
@@ -245,11 +318,13 @@ jobs:
     needs:
       - plan-firmware-release
       - build-arduino-firmware
+      - build-nrf52-firmware
       - build-platformio-firmware
     if: >-
       always() &&
       needs.plan-firmware-release.result == 'success' &&
       needs.build-arduino-firmware.result != 'cancelled' &&
+      needs.build-nrf52-firmware.result != 'cancelled' &&
       needs.build-platformio-firmware.result != 'cancelled'
     runs-on: ubuntu-latest
     steps:

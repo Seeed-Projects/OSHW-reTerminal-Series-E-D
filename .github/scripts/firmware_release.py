@@ -46,6 +46,9 @@ class FirmwareTarget:
     id: str
     path: str
     tool: str = "arduino"
+    # Target MCU family: "esp32" builds .bin sets, "nrf52" builds a .uf2.
+    # 目标芯片家族："esp32" 产出 .bin 组合，"nrf52" 产出 .uf2。
+    chip: str = "esp32"
     devices: tuple[str, ...] = ("E1001", "E1002", "E1003", "E1004")
     needs_gfx: bool = False
     needs_gxepd2: bool = False
@@ -60,6 +63,11 @@ class FirmwareTarget:
     flash_size: str = "keep"
     fixed_version: str = ""
     build_flags: str = ""
+    # Extra C++ defines passed via compiler.cpp.extra_flags, which keeps the
+    # board's own build.extra_flags (USB / chip defines) intact.
+    # 通过 compiler.cpp.extra_flags 注入的额外 C++ 宏，
+    # 不会覆盖板卡自身的 build.extra_flags（USB / 芯片相关宏）。
+    cpp_flags: str = ""
     pio_env: str = ""
     rebuild_triggers: tuple[str, ...] = ()
     auto_discovered: bool = False
@@ -80,6 +88,7 @@ class FirmwareTarget:
             "include_filesystem": self.include_filesystem,
             "fixed_version": self.fixed_version,
             "build_flags": self.build_flags,
+            "cpp_flags": self.cpp_flags,
             "pio_env": self.pio_env,
         }
 
@@ -97,7 +106,79 @@ class FirmwareTarget:
         return item
 
 
-FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = (
+# XIAO ePaper DIY Kit combos: one firmware artifact per board + panel pairing.
+# Panel ids match web/js/firmwares.js PANELS; the setup id selects the
+# Seeed_GFX User_Setup (driver chip + resolution) at compile time.
+# XIAO ePaper DIY Kit 组合：每个「板 + 屏」搭配产出一个固件。
+# 屏幕 id 与 web/js/firmwares.js 的 PANELS 一致；setup 编号在编译期
+# 选择 Seeed_GFX 的 User_Setup（驱动芯片 + 分辨率）。
+DIY_PANEL_SETUPS: dict[str, str] = {
+    "P075_MONO": "502",
+    "P073_SP6": "509",
+    "P133_SP6": "510",
+    "P103_MONO": "511",
+    "P0583_MONO": "503",
+    "P0426_MONO": "506",
+    "P042_MONO": "507",
+    "P029_MONO": "504",
+    "P029_QUAD": "512",
+    "P0213_MONO": "508",
+    "P0213_QUAD": "513",
+    "P0154_MONO": "505",
+}
+
+DIY_SPI_PANELS: tuple[str, ...] = (
+    "P075_MONO",
+    "P0583_MONO",
+    "P0426_MONO",
+    "P042_MONO",
+    "P029_MONO",
+    "P029_QUAD",
+    "P0213_MONO",
+    "P0213_QUAD",
+    "P0154_MONO",
+)
+
+# board id -> (chip family, panels the board can drive)
+# 板子 id -> （芯片家族，可驱动的屏幕列表）
+DIY_BOARD_PANELS: dict[str, tuple[str, tuple[str, ...]]] = {
+    "EE02": ("esp32", ("P133_SP6",)),
+    "EE03": ("esp32", ("P103_MONO",)),
+    "EE04": ("esp32", ("P073_SP6",) + DIY_SPI_PANELS),
+    "EE05": ("esp32", DIY_SPI_PANELS),
+    "EN04": ("nrf52", ("P073_SP6",) + DIY_SPI_PANELS),
+    "EN05": ("nrf52", DIY_SPI_PANELS),
+}
+
+
+def diy_kit_targets() -> tuple[FirmwareTarget, ...]:
+    """Generate one Hello firmware target per DIY Kit board + panel combo.
+
+    为每个 DIY Kit「板 + 屏」组合生成一个 Hello 固件构建目标。
+    """
+
+    targets: list[FirmwareTarget] = []
+    for board_id, (chip, panel_ids) in DIY_BOARD_PANELS.items():
+        for panel_id in panel_ids:
+            setup_id = DIY_PANEL_SETUPS[panel_id]
+            targets.append(
+                FirmwareTarget(
+                    id=f"XIAO_EPaper_Hello_{board_id}_{panel_id}",
+                    path="examples/base/XIAO_EPaper_Hello",
+                    chip=chip,
+                    devices=(board_id,),
+                    needs_gfx=True,
+                    cpp_flags=(
+                        f"-DBOARD_SCREEN_COMBO={setup_id} "
+                        f"-DUSE_XIAO_EPAPER_DISPLAY_BOARD_{board_id}"
+                    ),
+                    title=f"Hello ePaper {board_id} + {panel_id}",
+                )
+            )
+    return tuple(targets)
+
+
+FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = diy_kit_targets() + (
     FirmwareTarget("RTC_PCF8563", "examples/base/RTC_PCF8563", title="RTC PCF8563"),
     FirmwareTarget("LowPower_DeepSleep", "examples/base/LowPower_DeepSleep", title="Low Power Deep Sleep"),
     FirmwareTarget(
@@ -499,7 +580,14 @@ class ReleasePlan:
                 "include": [
                     target.to_matrix()
                     for target in self.changed_targets
-                    if target.tool == "arduino"
+                    if target.tool == "arduino" and target.chip == "esp32"
+                ]
+            },
+            "nrf52_matrix": {
+                "include": [
+                    target.to_matrix()
+                    for target in self.changed_targets
+                    if target.tool == "arduino" and target.chip == "nrf52"
                 ]
             },
             "pio_matrix": {
@@ -752,6 +840,48 @@ def write_manifest(
     )
 
 
+def copy_uf2_artifact(source_dir: Path, firmware_id: str, destination: Path) -> None:
+    """Copy the built .uf2 into the published firmware directory.
+
+    将构建出的 .uf2 复制到发布目录。
+    """
+
+    destination.mkdir(parents=True, exist_ok=True)
+    matches = sorted(source_dir.glob("*.uf2"))
+    if not matches:
+        raise FileNotFoundError(f"Missing *.uf2 for {firmware_id}")
+    shutil.copy2(matches[0], destination / f"{firmware_id}.uf2")
+
+
+def write_uf2_manifest(firmware_id: str, version: str, destination: Path) -> None:
+    """Emit version metadata for a UF2 firmware directory.
+
+    为 UF2 固件目录生成版本元数据。
+    """
+
+    uf2 = destination / f"{firmware_id}.uf2"
+    manifest = {
+        "name": firmware_id,
+        "version": version,
+        "flashMethod": "uf2",
+        "builds": [
+            {
+                "chipFamily": "nRF52840",
+                "parts": [
+                    {
+                        "path": cache_busted_path(uf2, uf2.name),
+                        "offset": 0,
+                    }
+                ],
+            }
+        ],
+    }
+    (destination / "manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
 def download_binary(url: str, destination: Path) -> None:
     """Download a firmware binary to a local path.
 
@@ -925,7 +1055,8 @@ def copy_release_assets(
             continue
         current_version = firmware_versions[0]
         source_dir = firmware_root / firmware_id / current_version
-        for artifact in sorted(source_dir.glob("*.bin")):
+        artifacts = sorted(source_dir.glob("*.bin")) + sorted(source_dir.glob("*.uf2"))
+        for artifact in artifacts:
             destination = release_dir / f"{firmware_id}_{current_version}_{artifact.name}"
             shutil.copy2(artifact, destination)
 
@@ -1028,6 +1159,18 @@ def prepare_pages(
         if not artifact_dir.exists():
             skipped_targets[target.id] = "missing artifact directory"
             continue
+        if target.chip == "nrf52":
+            if not sorted(artifact_dir.glob("*.uf2")):
+                skipped_targets[target.id] = "missing *.uf2"
+                continue
+            firmware_dir = firmware_root / target.id
+            version = target.fixed_version or next_date_version(date_versions(firmware_dir), today)
+            destination = firmware_dir / version
+            copy_uf2_artifact(artifact_dir, target.id, destination)
+            write_uf2_manifest(target.id, version, destination)
+            changed_versions[target.id] = version
+            print(f"Updated firmware: {target.id} -> {version}")
+            continue
         missing_parts = missing_artifact_parts(
             artifact_dir,
             target.id,
@@ -1114,14 +1257,17 @@ def command_plan(args: argparse.Namespace) -> None:
     args.output_file.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
     arduino_matrix = payload["arduino_matrix"]
+    nrf52_matrix = payload["nrf52_matrix"]
     pio_matrix = payload["pio_matrix"]
     write_github_outputs(
         args.github_output,
         {
             "firmware_changed": "true" if payload["firmware_changed"] else "false",
             "has_arduino": "true" if arduino_matrix["include"] else "false",
+            "has_nrf52": "true" if nrf52_matrix["include"] else "false",
             "has_pio": "true" if pio_matrix["include"] else "false",
             "arduino_matrix": json.dumps(arduino_matrix, separators=(",", ":")),
+            "nrf52_matrix": json.dumps(nrf52_matrix, separators=(",", ":")),
             "pio_matrix": json.dumps(pio_matrix, separators=(",", ":")),
         },
     )

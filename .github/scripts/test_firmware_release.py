@@ -271,6 +271,83 @@ class LvglStatusPanelTargetTest(unittest.TestCase):
         self.assertTrue(all(target.group == "official" for target in targets.values()))
 
 
+class DiyKitTargetTest(unittest.TestCase):
+    def test_every_board_panel_combo_has_one_target(self) -> None:
+        expected = sum(
+            len(panels) for _, panels in firmware_release.DIY_BOARD_PANELS.values()
+        )
+        combos = [
+            target
+            for target in firmware_release.FIRMWARE_TARGETS
+            if target.id.startswith("XIAO_EPaper_Hello_")
+        ]
+        self.assertEqual(len(combos), expected)
+        self.assertEqual(len({target.id for target in combos}), expected)
+
+    def test_combo_targets_carry_setup_and_board_defines(self) -> None:
+        target = next(
+            target
+            for target in firmware_release.FIRMWARE_TARGETS
+            if target.id == "XIAO_EPaper_Hello_EE04_P075_MONO"
+        )
+        self.assertEqual(target.chip, "esp32")
+        self.assertEqual(target.devices, ("EE04",))
+        self.assertIn("-DBOARD_SCREEN_COMBO=502", target.cpp_flags)
+        self.assertIn("-DUSE_XIAO_EPAPER_DISPLAY_BOARD_EE04", target.cpp_flags)
+
+    def test_dedicated_panels_only_pair_with_their_boards(self) -> None:
+        combos = {
+            target.id
+            for target in firmware_release.FIRMWARE_TARGETS
+            if target.id.startswith("XIAO_EPaper_Hello_")
+        }
+        self.assertIn("XIAO_EPaper_Hello_EE02_P133_SP6", combos)
+        self.assertIn("XIAO_EPaper_Hello_EE03_P103_MONO", combos)
+        self.assertEqual(
+            [combo for combo in combos if "P133_SP6" in combo],
+            ["XIAO_EPaper_Hello_EE02_P133_SP6"],
+        )
+        self.assertNotIn("XIAO_EPaper_Hello_EE05_P073_SP6", combos)
+
+    def test_sketch_change_splits_esp32_and_nrf52_matrices(self) -> None:
+        plan = firmware_release.build_plan(
+            ["examples/base/XIAO_EPaper_Hello/XIAO_EPaper_Hello.ino"]
+        )
+        payload = plan.as_json()
+        arduino_ids = {item["name"] for item in payload["arduino_matrix"]["include"]}
+        nrf52_ids = {item["name"] for item in payload["nrf52_matrix"]["include"]}
+
+        self.assertIn("XIAO_EPaper_Hello_EE04_P075_MONO", arduino_ids)
+        self.assertIn("XIAO_EPaper_Hello_EN04_P075_MONO", nrf52_ids)
+        self.assertFalse(any("_EN0" in name for name in arduino_ids))
+        self.assertFalse(any("_EE0" in name for name in nrf52_ids))
+
+    def test_uf2_artifacts_publish_with_manifest(self) -> None:
+        firmware_id = "XIAO_EPaper_Hello_EN04_P075_MONO"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            artifact_dir = Path(temp_dir) / "artifact"
+            artifact_dir.mkdir()
+            (artifact_dir / "XIAO_EPaper_Hello.uf2").write_bytes(b"uf2-image")
+
+            destination = Path(temp_dir) / firmware_id / "2026.07.17"
+            firmware_release.copy_uf2_artifact(artifact_dir, firmware_id, destination)
+            firmware_release.write_uf2_manifest(firmware_id, "2026.07.17", destination)
+
+            self.assertTrue((destination / f"{firmware_id}.uf2").exists())
+            manifest = json.loads(
+                (destination / "manifest.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(manifest["flashMethod"], "uf2")
+            part = manifest["builds"][0]["parts"][0]
+            self.assertTrue(
+                path_without_query(part["path"]).endswith(f"{firmware_id}.uf2")
+            )
+            self.assertEqual(
+                firmware_release.date_versions(Path(temp_dir) / firmware_id),
+                ["2026.07.17"],
+            )
+
+
 class ExternalFirmwareTest(unittest.TestCase):
     def test_photoframe_targets_registered_for_expected_devices(self) -> None:
         external = {item.id: item for item in firmware_release.EXTERNAL_FIRMWARE}

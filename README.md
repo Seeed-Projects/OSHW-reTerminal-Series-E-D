@@ -81,7 +81,9 @@ Official platform cards include direct Seeed Studio Wiki shortcuts for platform-
 
 ## Supported Hardware
 
-All devices are built around the **XIAO ESP32-S3** with 8 MB flash and OPI PSRAM.
+### reTerminal E-Series
+
+All-in-one terminals built around the **XIAO ESP32-S3** with 8 MB flash and OPI PSRAM.
 
 | Model | Display | Size | Color | Highlights |
 |:------|:--------|:-----|:------|:-----------|
@@ -92,7 +94,22 @@ All devices are built around the **XIAO ESP32-S3** with 8 MB flash and OPI PSRAM
 
 All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support** (~14 µA). E1001–E1003 include a PDM microphone.
 
-> For full hardware specs, see the [reTerminal E-Series Wiki](https://wiki.seeedstudio.com/reterminal_e10xx_main_page/).
+### XIAO ePaper DIY Kit
+
+Driver boards that pair with interchangeable ePaper panels. Choose the board in Step 1 and the panel in Step 2.
+
+| Board | Chip | Connector | Flash method | Notes |
+|:------|:-----|:----------|:-------------|:------|
+| **EE02** | ESP32-S3 | 60-pin | USB serial | 13.3″ Spectra 6 panel |
+| **EE03** | ESP32-S3 | 40-pin | USB serial | 10.3″ TTL monochrome panel |
+| **EE04** | ESP32-S3 | 50-pin + 24-pin | USB serial | Broad SPI panel support, including 7.3″ Spectra 6 |
+| **EE05** | ESP32-S3 | 24-pin | USB serial | Common SPI panels |
+| **EN04** | nRF52840 | 50-pin + 24-pin | UF2 (`XIAO-BOOT`) | Same panel coverage as EE04 |
+| **EN05** | nRF52840 | 24-pin | UF2 (`XIAO-BOOT`) | Same panel coverage as EE05 |
+
+The Hub currently lists 14 panels from 1.54″ to 13.3″ (mono, flexible, quadruple color, and Spectra 6). Panel compatibility is filtered automatically from the selected board.
+
+> For full reTerminal hardware specs, see the [reTerminal E-Series Wiki](https://wiki.seeedstudio.com/reterminal_e10xx_main_page/).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -100,7 +117,7 @@ All models include a **PCF8563 RTC**, **MicroSD slot**, and **deep sleep support
 
 | Platform | Status | Devices | Description |
 |:---------|:-------|:--------|:------------|
-| **Base** | ✅ Ready | E1001 – E1004 | Smoke-test demos (RTC, deep sleep, mic recording, touch draw) |
+| **Base** | ✅ Ready | E1001 – E1004, EE/EN DIY Kit | Smoke-test demos (RTC, deep sleep, mic recording, touch draw) plus DIY Kit board + panel selection |
 | **ESPHome** | ✅ YAML templates | E1001 – E1002 | Smart home integration with Home Assistant |
 | **TRMNL** | ✅ Ready | E1001 – E1003 | Official TRMNL dashboard firmware for always-on ePaper panels |
 | **EEZ Studio** | ✅ Project template | E1001 – E1004 | Visual LVGL UI design with a downloadable PlatformIO project template |
@@ -239,6 +256,7 @@ the Firmware Hub or compiled manually.
 | [`SD_ImagePipeline_E1002`](examples/base/SD_ImagePipeline_E1002/) | E1002 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
 | [`SD_ImagePipeline_E1003`](examples/base/SD_ImagePipeline_E1003/) | E1003 | Display a JPEG/PNG from MicroSD in 16-level grayscale |
 | [`SD_ImagePipeline_E1004`](examples/base/SD_ImagePipeline_E1004/) | E1004 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
+| [`XIAO_EPaper_Hello`](examples/base/XIAO_EPaper_Hello/) | EE02 – EE05, EN04 – EN05 | Hello screen for XIAO ePaper DIY Kit boards, built per board + panel combo with Seeed_GFX |
 | [`TRMNL`](examples/official/TRMNL/) | E1001 – E1003 | Build the official TRMNL dashboard firmware for reTerminal E-Series |
 | [`EEZStudio`](examples/official/EEZStudio/) | E1001 – E1004 | Build an LVGL PlatformIO template generated for EEZ Studio workflows |
 | [`LVGLePaperStatusPanel`](examples/official/LVGLePaperStatusPanel/) | E1001 – E1004 | Render a static LVGL 9.5.0 status dashboard with Seeed_GFX |

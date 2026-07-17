@@ -107,6 +107,10 @@
           </div>
         </div>
         <div class="setup-grid">
+          <div class="field-block is-hidden" id="panelField">
+            <span>Screen panel</span>
+            <select id="panelSelect"></select>
+          </div>
           <div class="field-block is-hidden" id="firmwareField">
             <span>Firmware option</span>
             <select id="firmwareSelect"></select>
@@ -168,6 +172,24 @@
             Connect &amp; flash
           </button>
           <span class="flash-hint" id="flashHint">Connect your reTerminal with a USB data cable first.</span>
+        </div>
+
+        <div class="uf2-panel is-hidden" id="uf2Panel">
+          <p class="uf2-target">Target: <strong data-uf2-target>board + panel</strong></p>
+          <ol class="uf2-steps">
+            <li>Connect the board with a USB data cable.</li>
+            <li>Double-tap the reset button quickly until a drive named <strong data-uf2-volume>XIAO-BOOT</strong> appears.</li>
+            <li>Download the <code>.uf2</code> file, then copy it onto that drive. The board reboots when the copy finishes.</li>
+          </ol>
+          <div class="uf2-actions">
+            <a class="button button-flash is-disabled" id="uf2DownloadButton" href="#" aria-disabled="true">
+              Download .uf2
+            </a>
+            <button class="button button-secondary" id="uf2WriteButton" type="button" disabled>
+              Write to XIAO-BOOT
+            </button>
+          </div>
+          <p class="flash-hint">Prefer Chrome or Edge if you want the Hub to write the file directly to the drive.</p>
         </div>
 
         <div class="template-preview is-hidden" id="templatePreview">
@@ -262,9 +284,9 @@
 
   <script src="js/log-buffer.js?v=20260608-log-throttle-2"></script>
   <script src="js/serial-port-label.js?v=20260608-port-label"></script>
-  <script src="js/firmwares.js?v=20260630-zephyr-logo-png"></script>
+  <script src="js/firmwares.js?v=20260717-diy-kit-combos"></script>
   <script src="js/esphome-template.js?v=20260612-esphome-wifi-inline"></script>
-  <script src="js/app.js?v=20260630-zephyr-official-docs"></script>
+  <script src="js/app.js?v=20260717-diy-kit-combos"></script>
 
 </body>
 </html>
