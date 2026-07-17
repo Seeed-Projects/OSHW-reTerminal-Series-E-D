@@ -1,0 +1,29 @@
+{
+  "name": "XIAO_EPaper_Hello_EE04_P029_QUAD",
+  "version": "2026.07.17.1",
+  "flashSize": "keep",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "XIAO_EPaper_Hello_EE04_P029_QUAD.ino.bootloader.bin?sha256=11e0d446204ff66d",
+          "offset": 0
+        },
+        {
+          "path": "XIAO_EPaper_Hello_EE04_P029_QUAD.ino.partitions.bin?sha256=1d9cca96de0fe07a",
+          "offset": 32768
+        },
+        {
+          "path": "boot_app0.bin?sha256=f94c5d786a7a8fab",
+          "offset": 57344
+        },
+        {
+          "path": "XIAO_EPaper_Hello_EE04_P029_QUAD.ino.bin?sha256=65108917deacc1b6",
+          "offset": 65536
+        }
+      ]
+    }
+  ]
+}
