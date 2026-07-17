@@ -764,10 +764,112 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   padding-top: 16px;
 }
 
+.hardware-groups {
+  display: grid;
+  gap: 18px;
+}
+
+.hardware-series-group {
+  display: grid;
+  gap: 10px;
+}
+
+.hardware-series-head .eyebrow {
+  margin-bottom: 2px;
+}
+
+.hardware-series-desc {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .device-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 12px;
+}
+
+.device-connector {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: rgba(0, 73, 102, .88);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+.tag-panel {
+  background: rgba(143, 195, 31, .18);
+  color: #46600f;
+}
+
+.panel-preview {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(248, 251, 249, .9);
+  max-width: 220px;
+}
+
+.panel-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+}
+
+.panel-preview.is-hidden { display: none; }
+
+.uf2-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.uf2-panel.is-hidden { display: none; }
+
+.uf2-target {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.uf2-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.uf2-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.button.is-disabled,
+a.button.is-disabled {
+  opacity: .55;
+  pointer-events: none;
+}
+
+.button-secondary {
+  border: 1px solid rgba(156, 175, 170, .9);
+  background: #fff;
+  color: var(--ink);
 }
 
 .device-option {
@@ -794,6 +896,7 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   box-shadow: 0 14px 30px rgba(38, 60, 35, .09);
 }
 .device-image {
+  position: relative;
   display: block;
   min-width: 0;
   aspect-ratio: 4 / 3;

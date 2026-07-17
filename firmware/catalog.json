@@ -1,6 +1,406 @@
 {
   "firmware": [
     {
+      "id": "XIAO_EPaper_Hello_EE02_P133_SP6",
+      "name": "Hello ePaper EE02 + P133_SP6",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE02"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE03_P103_MONO",
+      "name": "Hello ePaper EE03 + P103_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE03"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE04_P073_SP6",
+      "name": "Hello ePaper EE04 + P073_SP6",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE04_P075_MONO",
+      "name": "Hello ePaper EE04 + P075_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE04_P0583_MONO",
+      "name": "Hello ePaper EE04 + P0583_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE04_P0426_MONO",
+      "name": "Hello ePaper EE04 + P0426_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE04_P042_MONO",
+      "name": "Hello ePaper EE04 + P042_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE04_P029_MONO",
+      "name": "Hello ePaper EE04 + P029_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE04_P029_QUAD",
+      "name": "Hello ePaper EE04 + P029_QUAD",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE04_P0213_MONO",
+      "name": "Hello ePaper EE04 + P0213_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE04_P0213_QUAD",
+      "name": "Hello ePaper EE04 + P0213_QUAD",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE04_P0154_MONO",
+      "name": "Hello ePaper EE04 + P0154_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE05_P075_MONO",
+      "name": "Hello ePaper EE05 + P075_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE05_P0583_MONO",
+      "name": "Hello ePaper EE05 + P0583_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE05_P0426_MONO",
+      "name": "Hello ePaper EE05 + P0426_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE05_P042_MONO",
+      "name": "Hello ePaper EE05 + P042_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE05_P029_MONO",
+      "name": "Hello ePaper EE05 + P029_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE05_P029_QUAD",
+      "name": "Hello ePaper EE05 + P029_QUAD",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE05_P0213_MONO",
+      "name": "Hello ePaper EE05 + P0213_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE05_P0213_QUAD",
+      "name": "Hello ePaper EE05 + P0213_QUAD",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EE05_P0154_MONO",
+      "name": "Hello ePaper EE05 + P0154_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN04_P073_SP6",
+      "name": "Hello ePaper EN04 + P073_SP6",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN04_P075_MONO",
+      "name": "Hello ePaper EN04 + P075_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN04_P0583_MONO",
+      "name": "Hello ePaper EN04 + P0583_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN04_P0426_MONO",
+      "name": "Hello ePaper EN04 + P0426_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN04_P042_MONO",
+      "name": "Hello ePaper EN04 + P042_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN04_P029_MONO",
+      "name": "Hello ePaper EN04 + P029_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN04_P029_QUAD",
+      "name": "Hello ePaper EN04 + P029_QUAD",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN04_P0213_MONO",
+      "name": "Hello ePaper EN04 + P0213_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN04_P0213_QUAD",
+      "name": "Hello ePaper EN04 + P0213_QUAD",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN04_P0154_MONO",
+      "name": "Hello ePaper EN04 + P0154_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN04"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN05_P075_MONO",
+      "name": "Hello ePaper EN05 + P075_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN05_P0583_MONO",
+      "name": "Hello ePaper EN05 + P0583_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN05_P0426_MONO",
+      "name": "Hello ePaper EN05 + P0426_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN05_P042_MONO",
+      "name": "Hello ePaper EN05 + P042_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN05_P029_MONO",
+      "name": "Hello ePaper EN05 + P029_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN05_P029_QUAD",
+      "name": "Hello ePaper EN05 + P029_QUAD",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN05_P0213_MONO",
+      "name": "Hello ePaper EN05 + P0213_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN05_P0213_QUAD",
+      "name": "Hello ePaper EN05 + P0213_QUAD",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN05"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "XIAO_EPaper_Hello_EN05_P0154_MONO",
+      "name": "Hello ePaper EN05 + P0154_MONO",
+      "path": "examples/base/XIAO_EPaper_Hello",
+      "tool": "arduino",
+      "compatible": [
+        "EN05"
+      ],
+      "autoDiscovered": false
+    },
+    {
       "id": "RTC_PCF8563",
       "name": "RTC PCF8563",
       "path": "examples/base/RTC_PCF8563",
