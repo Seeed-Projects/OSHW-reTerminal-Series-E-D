@@ -1,0 +1,16 @@
+{
+  "name": "XIAO_EPaper_Hello_EN04_P0213_QUAD",
+  "version": "2026.07.17",
+  "flashMethod": "uf2",
+  "builds": [
+    {
+      "chipFamily": "nRF52840",
+      "parts": [
+        {
+          "path": "XIAO_EPaper_Hello_EN04_P0213_QUAD.uf2?sha256=f00468fa1430743a",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
