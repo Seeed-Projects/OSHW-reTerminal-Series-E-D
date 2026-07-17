@@ -219,6 +219,14 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install Seeeduino:nrf52
 
+      - name: Install adafruit-nrfutil
+        if: steps.cache.outputs.cache-hit != 'true'
+        # The nRF52 core packages a DFU zip after each compile; on Linux it
+        # expects adafruit-nrfutil on the PATH.
+        # nRF52 核心在每次编译后会打包 DFU 升级包；在 Linux 上它需要
+        # PATH 里有 adafruit-nrfutil。
+        run: pipx install adafruit-nrfutil
+
       - name: Install Seeed_GFX library
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
