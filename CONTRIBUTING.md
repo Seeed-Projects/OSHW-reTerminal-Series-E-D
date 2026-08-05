@@ -868,6 +868,28 @@ The web page is driven by `web/js/firmwares.js`.
 | `notes` | No | Step 2 setup and preparation notes / Step 2 的配置与准备提示 |
 | `flashNotes` | No | Step 3 flashing notes, such as erase-mode or connection guidance / Step 3 的烧录提示，例如擦除模式或连接提示 |
 
+### Shareable workflow URLs
+
+The Hub stores the selected workflow in the page URL so a contributor or user can open the same setup directly:
+
+| URL parameter | Metadata source |
+|---|---|
+| `platform` | Platform card `id` |
+| `device` | A hardware id listed in `supportedDevices` |
+| `firmware` | The selected `firmwareOptions[].id`, including the exact language variant |
+| `version` | The selected value published in `firmware/versions.json` |
+| `panel` | The selected DIY Kit `PANELS[].id` |
+
+Treat these metadata IDs as stable public identifiers and preserve their existing values across updates. New firmware and panel entries automatically participate in shareable URLs after they are registered in `web/js/firmwares.js` and the generated firmware catalog.
+
+Example:
+
+```text
+?platform=base&device=EE04&firmware=XIAO_EPaper_Hello&version=latest&panel=P073_SP6
+```
+
+After adding or updating a platform, firmware option, language variant, board, or panel, open its direct URL and confirm that Step 2 restores the same firmware, version, and panel selections. URL state contains public selection IDs only; user-provided configuration values remain local to the page.
+
 ### Board fields (`BOARDS`)
 
 | Field | Required | Meaning |
@@ -1201,6 +1223,8 @@ Use this checklist before opening a pull request.
 - `web/js/firmwares.js` was updated when the project needs a card, polished
   copy, device-specific compatibility, notes, or config fields.
 - Every `firmwareOptions[].id` matches a firmware build ID.
+- Shareable workflow URLs restore the expected firmware, language variant,
+  version, and DIY Kit panel selections.
 - Every compatible device or board is listed correctly.
 - New boards are registered in `BOARDS` with unique ids, `flashMethod`, connector, and image.
 - New panels are registered in `PANELS` with accurate `compatibleBoards` entries.

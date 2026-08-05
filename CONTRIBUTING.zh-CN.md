@@ -710,6 +710,28 @@ python3 .github/scripts/firmware_release.py plan \
 | `configFields` | No | 固件专用设置字段 |
 | `notes` | No | 烧录前显示的警告或有帮助的说明 |
 
+### 可分享的工作流 URL
+
+Hub 会把当前选择的工作流保存到页面 URL，贡献者和用户可以通过链接直接打开相同配置：
+
+| URL 参数 | 元数据来源 |
+|---|---|
+| `platform` | 平台卡片的 `id` |
+| `device` | `supportedDevices` 中登记的硬件 id |
+| `firmware` | 当前 `firmwareOptions[].id`，包括准确的语言变体 |
+| `version` | `firmware/versions.json` 中发布的当前版本值 |
+| `panel` | 当前 DIY Kit `PANELS[].id` |
+
+这些元数据 ID 是稳定的公开标识符，后续更新应保持已有值不变。新固件和屏幕在 `web/js/firmwares.js` 及生成的固件目录中完成登记后，会自动进入可分享 URL。
+
+示例：
+
+```text
+?platform=base&device=EE04&firmware=XIAO_EPaper_Hello&version=latest&panel=P073_SP6
+```
+
+新增或更新平台、固件选项、语言变体、驱动板或屏幕后，请打开对应的直达 URL，确认 Step 2 能恢复相同的固件、版本和屏幕选择。URL 只保存公开的选择 ID，用户填写的配置值继续保留在当前页面中。
+
 ### 驱动板字段（`BOARDS`）
 
 | Field | Required | Meaning |
@@ -1022,6 +1044,7 @@ pio run -e <env-name>
 - Community Projects 包含 `author` 和 `source`。
 - 当项目需要卡片、精致文案、按设备区分的兼容性、说明或配置字段时，已更新 `web/js/firmwares.js`。
 - 每个 `firmwareOptions[].id` 都匹配一个固件构建 ID。
+- 可分享工作流 URL 能恢复预期的固件、语言变体、版本和 DIY Kit 屏幕选择。
 - 每个兼容设备或板子都已正确列出。
 - 新板子已在 `BOARDS` 中注册，且 id、`flashMethod`、接口和图片完整。
 - 新屏幕已在 `PANELS` 中注册，且 `compatibleBoards` 准确。

@@ -1,6 +1,9 @@
 (function () {
   const PLATFORM_PARAM = "platform";
   const DEVICE_PARAM = "device";
+  const FIRMWARE_PARAM = "firmware";
+  const VERSION_PARAM = "version";
+  const PANEL_PARAM = "panel";
   const DEFAULT_BASE_URL = "http://localhost/";
 
   function parseHubRoute(urlValue, baseUrl = DEFAULT_BASE_URL) {
@@ -8,8 +11,15 @@
     return {
       platformId: (url.searchParams.get(PLATFORM_PARAM) || "").trim(),
       deviceId: (url.searchParams.get(DEVICE_PARAM) || "").trim(),
+      firmwareId: (url.searchParams.get(FIRMWARE_PARAM) || "").trim(),
+      version: (url.searchParams.get(VERSION_PARAM) || "").trim(),
+      panelId: (url.searchParams.get(PANEL_PARAM) || "").trim(),
       hasRouteParams:
-        url.searchParams.has(PLATFORM_PARAM) || url.searchParams.has(DEVICE_PARAM),
+        url.searchParams.has(PLATFORM_PARAM) ||
+        url.searchParams.has(DEVICE_PARAM) ||
+        url.searchParams.has(FIRMWARE_PARAM) ||
+        url.searchParams.has(VERSION_PARAM) ||
+        url.searchParams.has(PANEL_PARAM),
     };
   }
 
@@ -45,9 +55,20 @@
     if (selection?.platformId && selection?.deviceId) {
       url.searchParams.set(PLATFORM_PARAM, selection.platformId);
       url.searchParams.set(DEVICE_PARAM, selection.deviceId);
+      [
+        [FIRMWARE_PARAM, selection.firmwareId],
+        [VERSION_PARAM, selection.version],
+        [PANEL_PARAM, selection.panelId],
+      ].forEach(([param, value]) => {
+        if (value) url.searchParams.set(param, value);
+        else url.searchParams.delete(param);
+      });
     } else {
       url.searchParams.delete(PLATFORM_PARAM);
       url.searchParams.delete(DEVICE_PARAM);
+      url.searchParams.delete(FIRMWARE_PARAM);
+      url.searchParams.delete(VERSION_PARAM);
+      url.searchParams.delete(PANEL_PARAM);
     }
     return `${url.pathname}${url.search}${url.hash}`;
   }
