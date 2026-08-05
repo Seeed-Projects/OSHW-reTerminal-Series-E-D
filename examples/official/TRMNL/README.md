@@ -2,6 +2,9 @@
 
 This folder contains the TRMNL PlatformIO firmware source used by the Firmware Hub build pipeline.
 
+reTerminal E1004 firmware is maintained in the dedicated
+[`TRMNL_E1004`](../TRMNL_E1004/) PlatformIO project.
+
 Source snapshot:
 
 - Upstream: https://github.com/usetrmnl/trmnl-firmware
