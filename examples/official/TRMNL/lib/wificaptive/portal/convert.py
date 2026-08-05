@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 import os
 import io
 import gzip
@@ -25,7 +23,7 @@ def gzip_file(file_path):
 
 web_files_content = ""
 
-for file in sorted(os.listdir(path)):
+for file in os.listdir(path):
     if file.endswith(tuple(allowed_suffix)):
         input_file = os.path.join(path, file)
         content = gzip_file(input_file)

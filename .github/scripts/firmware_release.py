@@ -694,7 +694,33 @@ def discover_default_targets(changed_files: list[str], known_targets: list[Firmw
     return discovered
 
 
-def build_plan(changed_files: list[str]) -> ReleasePlan:
+def published_fixed_version_exists(
+    target: FirmwareTarget,
+    pages_ref: str,
+    repo_dir: Path = SOURCE_REPO_DIR,
+) -> bool:
+    """Return whether a fixed firmware version is already published.
+
+    返回固定版本固件是否已经发布。
+    """
+
+    if not pages_ref or not target.fixed_version:
+        return False
+
+    manifest_path = f"firmware/{target.id}/{target.fixed_version}/manifest.json"
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(repo_dir), "cat-file", "-e", f"{pages_ref}:{manifest_path}"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        return False
+    return completed.returncode == 0
+
+
+def build_plan(changed_files: list[str], published_pages_ref: str = "") -> ReleasePlan:
     known_targets = list(FIRMWARE_TARGETS)
     all_targets = known_targets + discover_default_targets(changed_files, known_targets)
     changed_targets = [
@@ -705,6 +731,7 @@ def build_plan(changed_files: list[str]) -> ReleasePlan:
             or any(is_under(changed_file, trigger) for trigger in target.rebuild_triggers)
             for changed_file in changed_files
         )
+        and not published_fixed_version_exists(target, published_pages_ref)
     ]
     return ReleasePlan(
         changed_files=changed_files,
@@ -1273,7 +1300,7 @@ def load_plan(path: Path) -> ReleasePlan:
 
 def command_plan(args: argparse.Namespace) -> None:
     changed_files = [normalize_path(path) for path in args.changed_file if path.strip()]
-    plan = build_plan(changed_files)
+    plan = build_plan(changed_files, args.published_pages_ref)
     payload = plan.as_json()
     args.output_file.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
@@ -1317,6 +1344,7 @@ def parser() -> argparse.ArgumentParser:
 
     plan = subparsers.add_parser("plan", help="Build a firmware release plan.")
     plan.add_argument("--changed-file", action="append", default=[])
+    plan.add_argument("--published-pages-ref", default="")
     plan.add_argument("--output-file", type=Path, required=True)
     plan.add_argument("--github-output", type=Path, default=os.environ.get("GITHUB_OUTPUT"))
     plan.set_defaults(func=command_plan)

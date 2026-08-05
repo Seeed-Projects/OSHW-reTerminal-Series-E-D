@@ -6,66 +6,60 @@
 #include <Preferences.h>
 #include <preferences_persistence.h>
 #include "DEV_Config.h"
-#ifdef BOARD_SEEED_RETERMINAL_E1002
-#include "displays/spectra6.h"
-#endif
 #include "battery_small.h"
-#include "battery_hollow.h"
-#include "messages.h"
-#include "config.h"
 #define MAX_BIT_DEPTH 8
 #ifndef BOARD_X_CLASS
 #define BB_EPAPER
-#include <bb_epaper.h>
-BBEPAPER bbep;
-#ifndef DEVICE_MODEL
-#error "Must have a device model name defined in platformio.ini!"
-#endif // DEVICE_MODEL
+#include "bb_epaper.h"
 #include <SPIFFS.h>
 #define FS SPIFFS
-
-// List of supported TRMNL devices with SPI ePaper displays. The list can be in any order since the name is matched
-// The final parameter is the panel type which is from an enumerated list
-const TRMNL_DEVICE device_list[] =
-{
-// name            sck   mosi   cs   rst   dc   busy  sda   scl   intr   batt    pwr_fn    panel
-  "og",            7,    8,     6,   10,   5,   4,    21,   20,   2,     3,      EPD_75,
-  "trmnl_steam",   7,    8,     6,   10,   5,   4,    21,   20,   2,     3,      EPD_583,
-  "og_4clr",       7,    8,     6,   10,   5,   4,    21,   20,   2,     3,      EPD_75_4CLR,
-  "og_gen2",       6,    1,     4,   2,    5,   0,    11,   12,   3,     0xff,   EPD_75, // fake battery == 0xff
-  "xteink_x4",     8,    10,    21,  5,    4,   6,    0xff, 0xff, 3,     0xff,   EPD_426,
-  "waveshare",     13,   14,    15,  26,   27,  25,   0xff, 0xff, 33,    0xff,   EPD_75,
-  "waveshare_397", 11,   12,    10,  46,   9,   3,    41,   42,   0,     0xff,   EPD_397,
-  "reTerminal Sticky", 13, 14,  15,  17,   16,  18,   0xff, 0xff, 4,     0xff,   EPD_397,
-  "seeed_esp32c3", 8,    10,    3,   2,    5,   4,    0xff, 0xff, 9,     0xff,   EPD_75,
-  "seeed_esp32s3", 7,    9,     2,   1,    4,   3,    0xff, 0xff, 0,     0xff,   EPD_75,
-  "xiao_epaper_display", 7, 9,  44,  38,   10,  4,    0xff, 0xff, 5,     0xff,   EPD_75,
-  "xiao_epaper_3clr", 7, 9,     44,  38,   10,  4,    0xff, 0xff, 5,     0xff,   EPD_75_3CLR,
-  "reterminal_e1001", 7, 9,     10,  12,   11,  13,   0xff, 0xff, 3,     0xff,   EPD_75,
-  "reterminal_e1002", 7, 9,     10,  12,   11,  13,   0xff, 0xff, 3,     0xff,   EPD_75_6CLR,
-  "crowpanel42",   0,    0,     0,   0,    0,   0,    0xff, 0xff, 2,     0xff,   EPD_CROWPANEL,
-  "m5_paper_mono", 0,    0,     0,   0,    0,   0,    0xff, 0xff, 2,     0xff,   EPD_PAPER_MONO,
-  "m5_paper_color", 0,   0,     0,   0,    0,   0,    0xff, 0xff, 2,     0xff,   EPD_PAPER_COLOR,
-  "reterminal_e1004", 0, 0,     0,   0,    0,   0,    0xff, 0xff, 4,     0xff,   EPD_133_COLOR,
-  NULL,            0,    0,     0,   0,    0,   0,    0,    0,    0,     0,      0
-}; // device_list
-TRMNL_DEVICE *pDevice = NULL;
-// TRMNL SPI ePaper panel types list. The list order is fixed and based on enumerated values
-// N.B. ALWAYS ADD NEW PANELS TO THE END OF THE LIST
-const DISPLAY_PROFILE dpList[11][3] = { // 1-bit and 2-bit display types for each profile
-    {{EP75_800x480, EP75_800x480_4GRAY}, {EP75_800x480_GEN2, EP75_800x480_4GRAY_GEN2}, {EP75_800x480, EP75_800x480_4GRAY_V2}},
-    {{EP583_648x480, EP583_648x480_4GRAY}, {EP583_648x480, EP583_648x480_4GRAY}, {EP583_648x480, EP583_648x480_4GRAY}},
-    {{EP426_800x480, EP426_800x480_4GRAY}, {EP426_800x480, EP426_800x480_4GRAY}, {EP426_800x480, EP426_800x480_4GRAY}},
-    {{EP397_800x480, EP397_800x480_4GRAY}, {EP397_800x480, EP397_800x480_4GRAY}, {EP397_800x480, EP397_800x480_4GRAY}},
-    {{EP75R_800x480, EP75R_800x480}, {EP75R_800x480, EP75R_800x480}, {EP75R_800x480, EP75R_800x480}},
-    {{EP75YR_800x480, EP75YR_800x480}, {EP75YR_800x480, EP75YR_800x480}, {EP75YR_800x480, EP75YR_800x480}},
-    {{EP73_SPECTRA_800x480, EP73_SPECTRA_800x480}, {EP73_SPECTRA_800x480, EP73_SPECTRA_800x480}, {EP73_SPECTRA_800x480, EP73_SPECTRA_800x480}},
-    {{EPD_CROWPANEL42, EPD_CROWPANEL42_4GRAY},{EPD_CROWPANEL42, EPD_CROWPANEL42_4GRAY},{EPD_CROWPANEL42, EPD_CROWPANEL42_4GRAY}},
-    {{EPD_M5_PAPER_MONO, EPD_M5_PAPER_MONO_4GRAY},{EPD_M5_PAPER_MONO, EPD_M5_PAPER_MONO_4GRAY},{EPD_M5_PAPER_MONO, EPD_M5_PAPER_MONO_4GRAY}},
-    {{EPD_M5_PAPER_COLOR, EPD_M5_PAPER_COLOR},{EPD_M5_PAPER_COLOR, EPD_M5_PAPER_COLOR},{EPD_M5_PAPER_COLOR, EPD_M5_PAPER_COLOR}},
-    {{EPD_SEEED_E1004, EPD_SEEED_E1004},{EPD_SEEED_E1004, EPD_SEEED_E1004},{EPD_SEEED_E1004, EPD_SEEED_E1004}},
+const DISPLAY_PROFILE dpList[4] = { // 1-bit and 2-bit display types for each profile
+#if defined ( BOARD_XTEINK_X4 ) || defined ( MINI_EPD )
+    {EP426_800x480, EP426_800x480_4GRAY}, // default (for original EPD)
+    {EP426_800x480, EP426_800x480_4GRAY}, // a = uses built-in fast + 4-gray
+    {EP426_800x480, EP426_800x480_4GRAY}, // b = darker grays
 };
+BBEPAPER bbep(EP426_800x480);
+#elif defined(BOARD_WAVESHARE_397)
+    {EP397_800x480, EP397_800x480_4GRAY}, // default (for original EPD)
+    {EP397_800x480, EP397_800x480_4GRAY}, // a = uses built-in fast + 4-gray
+    {EP397_800x480, EP397_800x480_4GRAY}, // b = darker grays
+};
+BBEPAPER bbep(EP397_800x480);
+#elif defined(BOARD_XIAO_EPAPER_DISPLAY_3CLR)
+    {EP75R_800x480, EP75R_800x480}, // default (for original EPD)
+    {EP75R_800x480, EP75R_800x480}, // a = uses built-in fast + 4-gray
+    {EP75R_800x480, EP75R_800x480}, // b = darker grays
+};
+BBEPAPER bbep(EP75R_800x480);
+#elif defined(BOARD_TRMNL_4CLR)
+    {EP75YR_800x480, EP75YR_800x480}, // default (for original EPD)
+    {EP75YR_800x480, EP75YR_800x480}, // a = uses built-in fast + 4-gray
+    {EP75YR_800x480, EP75YR_800x480}, // b = darker grays
+};
+BBEPAPER bbep(EP75YR_800x480);
+#elif defined(BOARD_SEEED_RETERMINAL_E1002)
+    {EP73_SPECTRA_800x480, EP73_SPECTRA_800x480}, // default (for original EPD)
+    {EP73_SPECTRA_800x480, EP73_SPECTRA_800x480}, // a = uses built-in fast + 4-gray
+    {EP73_SPECTRA_800x480, EP73_SPECTRA_800x480}, // b = darker grays
+};
+BBEPAPER bbep(EP73_SPECTRA_800x480);
+#elif defined(BOARD_SEEED_RETERMINAL_E1004)
+    {EP133A_SPECTRA_1200x1600, EP133A_SPECTRA_1200x1600}, // 13.3" dual-chip Spectra6
+    {EP133A_SPECTRA_1200x1600, EP133A_SPECTRA_1200x1600},
+    {EP133A_SPECTRA_1200x1600, EP133A_SPECTRA_1200x1600},
+};
+BBEPAPER bbep(EP133A_SPECTRA_1200x1600);
+#else // TRMNL OG and GEN2
+    {EP75_800x480, EP75_800x480_4GRAY}, // default (for original EPD)
+    {EP75_800x480_GEN2, EP75_800x480_4GRAY_GEN2}, // a = uses built-in fast + 4-gray
+    {EP75_800x480, EP75_800x480_4GRAY_V2}, // b = darker grays
+};
+BBEPAPER bbep(EP75_800x480);
+#endif
+#if defined(BOARD_SEEED_RETERMINAL_E1002) || defined(BOARD_SEEED_RETERMINAL_E1004)
 uint8_t u8SpectraPal[512]; // RGB333 mapped to closest Spectra6 color
+#endif // E1002 || E1004
 
 #else // BOARD_X_CLASS
 #include "esp_sleep.h"
@@ -75,38 +69,27 @@ uint8_t u8SpectraPal[512]; // RGB333 mapped to closest Spectra6 color
 #define FS LittleFS
 #include "FastEPD.h"
 FASTEPD bbep;
-#if defined(BOARD_SEEED_RETERMINAL_E1003)
-const TRMNL_DEVICE device_list[] = {
-    {"reterminal_e1003", 0, 0, 0, 0, 0, 0, 0xff, 0xff, 3, 1, EPD_75},
-    {NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-};
-TRMNL_DEVICE *pDevice = NULL;
-#endif
 const uint8_t u8_graytable[] = {
-/* 0 */  0, 0, 0, 0, 0, 0, 1, 1, 1,
-/* 1 */  0, 0, 1, 1, 1, 2, 2, 1, 1,
+/* 0 */  0, 0, 0, 0, 0, 0, 1, 1, 1, 
+/* 1 */  0, 0, 1, 1, 1, 2, 2, 1, 1, 
 /* 2 */  0, 0, 0, 0, 1, 2, 2, 1, 1,
-/* 3 */  1, 1, 2, 2, 1, 1, 1, 1, 2,
-/* 4 */  0, 0, 0, 1, 2, 1, 1, 1, 2,
-/* 5 */  1, 2, 2, 2, 2, 1, 1, 1, 2,
-/* 6 */  0, 0, 1, 1, 2, 2, 1, 1, 2,
-/* 7 */  0, 1, 1, 2, 1, 1, 2, 1, 2,
-/* 8 */  0, 1, 1, 1, 2, 1, 2, 1, 2,
-/* 9 */  0, 1, 1, 1, 1, 2, 2, 1, 2,
-/* 10 */  1, 1, 1, 2, 1, 1, 1, 2, 2,
-/* 11 */  0, 0, 1, 2, 1, 1, 1, 2, 2,
-/* 12 */  0, 0, 0, 1, 2, 1, 1, 2, 2,
-/* 13 */  0, 0, 0, 0, 1, 2, 1, 2, 2,
-/* 14 */  0, 1, 1, 1, 2, 2, 2, 2, 2,
+/* 3 */  1, 1, 2, 2, 1, 1, 1, 1, 2, 
+/* 4 */  0, 0, 0, 1, 2, 1, 1, 1, 2, 
+/* 5 */  1, 2, 2, 2, 2, 1, 1, 1, 2, 
+/* 6 */  0, 0, 1, 1, 2, 2, 1, 1, 2, 
+/* 7 */  0, 1, 1, 2, 1, 1, 2, 1, 2, 
+/* 8 */  0, 1, 1, 1, 2, 1, 2, 1, 2, 
+/* 9 */  0, 1, 1, 1, 1, 2, 2, 1, 2, 
+/* 10 */  1, 1, 1, 2, 1, 1, 1, 2, 2, 
+/* 11 */  0, 0, 1, 2, 1, 1, 1, 2, 2, 
+/* 12 */  0, 0, 0, 1, 2, 1, 1, 2, 2, 
+/* 13 */  0, 0, 0, 0, 1, 2, 1, 2, 2, 
+/* 14 */  0, 1, 1, 1, 2, 2, 2, 2, 2, 
 /* 15 */  0, 0, 0, 0, 0, 0, 0, 0, 2
 };
-#include "BQ27427.h"
-extern BQ27427 lipo; // Use lipo.[] to interact with the library in an Arduino
 #endif
 // Counts the number of partial updates to know when to do a full update
 RTC_DATA_ATTR int iUpdateCount = 0;
-RTC_DATA_ATTR bool bCanDoPartial = false;
-
 #include "Group5.h"
 #include <config.h>
 #include "wifi_connect_qr.h"
@@ -122,47 +105,11 @@ extern char filename[];
 extern Preferences preferences;
 extern ApiDisplayResult apiDisplayResult;
 uint32_t iTempProfile;
+static int i426Workaround = 0;
 static uint8_t *pDither;
 
-#ifdef BB_EPAPER
-static bool display_update_epaper(int refreshMode, bool wait, bool writePlane = false, uint8_t plane = PLANE_0)
-{
-#ifdef BOARD_SEEED_RETERMINAL_E1002
-    return spectra6_update();
-#else
-    if (writePlane) {
-        bbep.writePlane(plane);
-    }
-    if (refreshMode == REFRESH_PARTIAL && !bCanDoPartial) {
-        refreshMode = REFRESH_FAST;
-        Log_info("Can't do partial refresh, no previous image");
-    } else {
-        Log_info("Have valid previous image in EPD memory, doing partial refresh");
-    }
-    bbep.refresh(refreshMode, wait);
-    // The next update can be a partial update because the current is 1-bpp and stays in the EPD RAM
-    bCanDoPartial = (bbep.getPanelType() == dpList[pDevice->panel_set][iTempProfile].OneBit);
-    return true;
-#endif
-}
-#endif
-
-#if defined(BB_EPAPER) || defined(BOARD_SEEED_RETERMINAL_E1003)
-void hw_config_init(void)
-{
-    int i = 0;
-    // Match the device name with the configuration in the list
-    while (device_list[i].device_name && strcmp(device_list[i].device_name, DEVICE_MODEL) != 0) {
-        i++;
-    }
-    if (device_list[i].device_name) {
-        Log_info("Found device model at index %d\n", i);
-        pDevice = (TRMNL_DEVICE *)&device_list[i];
-    } else {
-        Log_info("Device name (%s) not found in supported list!", device_list[i].device_name);
-    }
-} /* hw_config_init() */
-#endif
+// Runtime control for light sleep (true = enabled, false = disabled)
+static bool g_light_sleep_enabled = true;
 
 /**
  * @brief Function to init the display
@@ -175,22 +122,16 @@ void display_init(void)
     iTempProfile = preferences.getUInt(PREFERENCES_TEMP_PROFILE, TEMP_PROFILE_DEFAULT);
     Log_info("Saved temperature profile: %d", iTempProfile);
 #ifdef BB_EPAPER
-#ifdef BOARD_SEEED_STICKY
-    pinMode(47, OUTPUT); // enable EPD power
-    digitalWrite(47, 1);
-#endif
+    bbep.setPanelType(dpList[iTempProfile].OneBit); // must be set BEFORE calling initio
     Log_info("BB e-Paper init");
-#ifdef BOARD_SEEED_RETERMINAL_E1002
-    spectra6_init_spi();
-#else
-    if (pDevice->epd_mosi_pin != 0 || pDevice->epd_sck_pin != 0) {
-        bbep.setPanelType(dpList[pDevice->panel_set][iTempProfile].OneBit); // must be set BEFORE calling initio
-        bbep.initIO(pDevice->epd_dc_pin, pDevice->epd_rst_pin, pDevice->epd_busy_pin, pDevice->epd_cs_pin,
-        pDevice->epd_mosi_pin, pDevice->epd_sck_pin, 8000000);
-    } else { // it's a pre-defined PCB+display in bb_epaper
-        bbep.begin(dpList[pDevice->panel_set][0].OneBit);
-    }
+#ifdef BOARD_SEEED_RETERMINAL_E1004
+    // E1004 (13.3" dual-chip): enable panel power and register the second
+    // controller's chip-select BEFORE initIO so both controllers get initialised.
+    pinMode(EPD_EN_PIN, OUTPUT);
+    digitalWrite(EPD_EN_PIN, HIGH);
+    bbep.setCS2(EPD_CS1_PIN);
 #endif
+    bbep.initIO(EPD_DC_PIN, EPD_RST_PIN, EPD_BUSY_PIN, EPD_CS_PIN, EPD_MOSI_PIN, EPD_SCK_PIN, 8000000);
 #else
 #ifdef BOARD_TRMNL_X
     bbep.initPanel(BB_PANEL_TRMNL_X);
@@ -502,6 +443,17 @@ void display_set_light_sleep(uint8_t enabled)
 #endif
 }
 
+#ifdef BB_EPAPER
+static void display_apply_light_sleep_setting(void)
+{
+#ifdef DO_NOT_LIGHT_SLEEP
+    bbep.setLightSleep(false);
+#else
+    bbep.setLightSleep(true);
+#endif
+}
+#endif
+
 /**
  * @brief Function to sleep the ESP32 while saving power
  * @param u32Millis represents the sleep time in milliseconds
@@ -512,9 +464,7 @@ void display_sleep(uint32_t u32Millis)
 #ifdef DO_NOT_LIGHT_SLEEP
     delay(u32Millis);
 #else
-    // Runtime control for light sleep (true = enabled, false = disabled)
-    static bool light_sleep_enabled = true;
-    if (!light_sleep_enabled) {
+    if (!g_light_sleep_enabled) {
         delay(u32Millis);
     } else {
         esp_sleep_enable_timer_wakeup(u32Millis * 1000L);
@@ -533,11 +483,11 @@ void display_reset(void)
     Log_info("e-Paper Clear start");
     bbep.fillScreen(BBEP_WHITE);
 #ifdef BB_EPAPER
-#ifndef BOARD_SEEED_RETERMINAL_E1002
-    bbep.setLightSleep(true);
-#endif
-    if (!display_update_epaper(apiDisplayResult.response.maximum_compatibility ? REFRESH_FULL : REFRESH_FAST, true)) {
-        Log_error("display_reset: e-paper update failed");
+    display_apply_light_sleep_setting();
+    if (!apiDisplayResult.response.maximum_compatibility) {
+        bbep.refresh(REFRESH_FAST, true);
+    } else {
+        bbep.refresh(REFRESH_FULL, true); // incompatible panel
     }
 #else
     bbep.fullUpdate();
@@ -563,50 +513,6 @@ uint16_t display_width()
 {
     return bbep.width();
 }
-
-#ifdef BOARD_X_CLASS
-void display_draw_touchbar_indicator(touchbar_side_t side, bool filled)
-{
-    const int radius = 24;
-    const int margin_bottom = 20;
-    int w = bbep.width();
-    int h = bbep.height();
-    int x;
-    Log_info("Drawing touchbar indicator %d\n", (int)side);
-    switch (side) {
-        case TOUCHBAR_LEFT:   x = w / 6;     break;
-        case TOUCHBAR_MIDDLE: x = w / 2;     break;
-        case TOUCHBAR_RIGHT:  x = w * 5 / 6; break;
-        default: return;
-    }
-    int y = h - margin_bottom - radius;
-    int prev_mode = bbep.getPreviousMode();
-        const int rect_h = radius * 2;
-        const int rect_w = rect_h * 4;
-        const int border = 3;
-        int rx = x - rect_w / 2;
-        int ry = y - rect_h / 2;
-        uint8_t fill_color   = filled ? BBEP_BLACK : BBEP_WHITE;
-        uint8_t border_color = filled ? BBEP_WHITE : BBEP_BLACK;
-        if (prev_mode == BB_MODE_NONE) {
-            bbep.setMode(BB_MODE_1BPP);
-            // No previous image, so in order to get what we need in a partial update, we need to
-            // set the colors to the opposite of what we want drawn.
-            bbep.fillScreen(BBEP_WHITE);
-            bbep.drawRect(rx - border - 1, ry - border - 1, rect_w + 2 + (2*border), rect_h + 2 + (2*border), border_color);
-            bbep.fillRect(rx - border, ry - border, rect_w + (2*border), rect_h + (2*border), fill_color);
-            bbep.fillRect(rx, ry, rect_w, rect_h, border_color);
-            int sz = bbep.width() * bbep.height() / 8; // 1-bit per pixel
-            memcpy(bbep.previousBuffer(), bbep.currentBuffer(), sz);
-            bbep.setPreviousMode(BB_MODE_1BPP);
-        }
-        // Draw outline, then larger filled rect for border color and inner for fill color
-        bbep.drawRect(rx - border - 1, ry - border - 1, rect_w + 2 + (2*border), rect_h + 2 + (2*border), fill_color);
-        bbep.fillRect(rx - border, ry - border, rect_w + (2*border), rect_h + (2*border), border_color);
-        bbep.fillRect(rx, ry, rect_w, rect_h, fill_color);
-        bbep.partialUpdate(false);
-} /* display_draw_touchbar_indicator() */
-#endif
 
 /**
  * @brief Function to draw multi-line text onto the display
@@ -933,7 +839,7 @@ unsigned char GetBWYRPixel(int r, int g, int b)
 } /* GetBWYRPixel() */
 #endif // BB_EPAPER
 
-#ifdef BB_EPAPER
+#if defined(BOARD_SEEED_RETERMINAL_E1002) || defined(BOARD_SEEED_RETERMINAL_E1004)
 //
 // bb_epaper colors to map to Spectra6 colors
 // The RGB values are not correct for the panel, but for simple mapping
@@ -979,21 +885,25 @@ void CreateSpectra6Pal(void)
 //
 // Convert the RGB value into one of 6 Spectra6 colors
 //
+#endif // E1002 || E1004
+//
+// Convert an RGB pixel to a panel colour.
+// E1002 and E1004 map to the nearest of 6 Spectra colours.
+//
+#if defined(BOARD_SEEED_RETERMINAL_E1002) || defined(BOARD_SEEED_RETERMINAL_E1004)
 uint8_t GetSpectraPixel(int r, int g, int b)
 {
-uint8_t c;
-uint16_t rgb333;
-
-    rgb333 = (r>>5) + ((g & 0xe0) >> 2) + ((b & 0xe0) << 1);
-    c = u8SpectraPal[rgb333];
-    return c;
+    uint16_t rgb333 = (r>>5) + ((g & 0xe0) >> 2) + ((b & 0xe0) << 1);
+    return u8SpectraPal[rgb333];
 } /* GetSpectraPixel() */
-
+#endif // E1002 || E1004
 /**
  * @brief Callback function for each line of PNG decoded
  * @param PNGDRAW structure containing the current line and relevant info
  * @return none
  */
+#ifdef BB_EPAPER
+#if defined(BOARD_SEEED_RETERMINAL_E1002) || defined(BOARD_SEEED_RETERMINAL_E1004)
 //
 // Draw the PNG image into the local framebuffer memory using the drawPixel() method
 // to do color translation and to properly format the memory layout
@@ -1093,6 +1003,7 @@ int png_draw_6clr(PNGDRAW *pDraw)
         } // for x
     return 1; // continue decoding
 } /* png_draw_6clr() */
+#endif // E1002 || E1004 (Spectra6)
 
 #ifdef BOARD_TRMNL_4CLR
 //
@@ -1289,28 +1200,6 @@ int png_draw(PNGDRAW *pDraw)
     return 1;
 } /* png_draw() */
 #else // TRMNL_X version
-// The generic 2-bit gray update procedure is too dark on the X's 10.3" panel, so
-// we need to use the more complex 4-bit update method which has a custom pattern
-// specifically for that panel's characteristics. This loop maps 2-bit pixels to
-// 4-bit pixels by converting the values 0/1/2/3 to 0/5/10/15
-static void Expand2bppLineTo4bpp(const uint8_t *src, uint8_t *dest, int width)
-{
-    uint8_t b;
-    uint16_t u16;
-
-    for (int x = 0; x < width; x+=4) {
-        u16 = 0;
-        b = *src++;
-        for (int j=0; j<4; j++) {
-            u16 <<= 4;
-            u16 |= (((b >> 6) & 3) * 5);
-            b <<= 2;
-        } // for j
-      *dest++ = (uint8_t)(u16 >> 8);
-      *dest++ = (uint8_t)(u16 & 0xff);
-    } // for x
-} /* Expand2bppLineTo4bpp() */
-
 int png_draw(PNGDRAW *pDraw)
 {
     int x, y = pDraw->y;
@@ -1322,7 +1211,6 @@ int png_draw(PNGDRAW *pDraw)
     if (pDraw->iPixelType == PNG_PIXEL_INDEXED || pDraw->iBpp > 4) { // need to convert through the palette and/or reduce the bpp
         s = bbep.tempBuffer(); // temp space we can use
         iBpp = (pDraw->iBpp > 4) ? 4 : pDraw->iBpp;
-        if (iBpp == 2) iBpp = 4; // 2-bit indexed images -> 4bpp for calibrated gray refresh
         ReduceBpp(iBpp, pDraw->iPixelType, pDraw->pPalette, pDraw->pPixels, s, pDraw->iWidth, pDraw->iBpp);
     } else { // for grayscale images of 1/2/4-bpp we can directly use the pixels as-is
         iBpp = pDraw->iBpp;
@@ -1333,6 +1221,9 @@ int png_draw(PNGDRAW *pDraw)
         switch (iBpp) { // if this matches the new image we can do a non-flickering update
             case 1:
                 bbep.setPreviousMode(BB_MODE_1BPP);
+                break;
+            case 2:
+                bbep.setPreviousMode(BB_MODE_2BPP);
                 break;
             default:
                 bbep.setPreviousMode(BB_MODE_4BPP);
@@ -1361,13 +1252,25 @@ int png_draw(PNGDRAW *pDraw)
                 d -= iPitch;
             }
         }
-    } else {
-        if (iBpp == 2) { // expand 2-bit grayscale to 4-bit for calibrated refresh
-            Expand2bppLineTo4bpp(s, bbep.tempBuffer(), pDraw->iWidth);
-            s = bbep.tempBuffer();
-            iBpp = 4;
-        }
-        // 4-bit native format (includes expanded 2-bit)
+    } else if (iBpp == 2) {
+        iPitch = bbep.width()/4;
+        d += y * iPitch; // point to the correct line
+        if (bbep.width() == pDraw->iWidth) { // normal orientation
+            memcpy(d, s, (pDraw->iWidth+3)/4);
+        } else { // rotated
+            d += (bbep.height() - 1) * iPitch;
+            d += (y / 4);
+            ucMask = 0xc0 >> ((y & 3)*2); // destination mask
+            for (x=0; x<pDraw->iWidth; x++) {
+                if ((x & 3) == 0) uc = *s++;
+                ucPixel = d[0] & ~ucMask; // unset old pixel
+                ucPixel |= (uc & 0xc0) >> ((y & 3)*2);
+                d[0] = ucPixel;
+                uc <<= 2;
+                d -= iPitch;
+            } // for x
+        } // rotated 90 degrees
+    } else { // must be 4-bit, the native format
         if (bbep.width() == pDraw->iWidth) { // normal orientation
             d += y * iPitch; // point to the correct line
             memcpy(d, s, (pDraw->iWidth+1)/2);
@@ -1608,20 +1511,20 @@ PNG *png = new PNG();
             Log_info("%s [%d]: Decoding %d-bpp png (current)\r\n", __FILE__, __LINE__, png->getBpp());
             // Prepare target memory window (entire display)
 #ifdef BB_EPAPER
-            if (bbep.capabilities() & BBEP_7COLOR) { // Spectra6 panels
-                CreateSpectra6Pal(); // create a fast color matching palette
-                if (bbep.allocBuffer() != BBEP_SUCCESS) {
-                    Log_error("%s [%d]: bbep.AllocBuffer failed!\n\r", __FILE__, __LINE__);
-                    return -1;
-                }
-                Log_info("%s [%d]: decoding for 6-color EPD\r\n", __FILE__, __LINE__);
-                png->openRAM((uint8_t *)pPNG, iDataSize, png_draw_6clr);
-                png->decode(NULL, 0);
-                png->close();
-                delete(png); // free the decoder instance
-                bbep.writePlane(); // send the pixels to the display panel
-                return REFRESH_FULL;
+#if defined(BOARD_SEEED_RETERMINAL_E1002) || defined(BOARD_SEEED_RETERMINAL_E1004)
+            CreateSpectra6Pal(); // create a fast color matching palette (6-color only)
+            if (bbep.allocBuffer() != BBEP_SUCCESS) {
+                Log_error("%s [%d]: bbep.AllocBuffer failed!\n\r", __FILE__, __LINE__);
+                return -1;
             }
+            Log_info("%s [%d]: decoding for Spectra6 EPD\r\n", __FILE__, __LINE__);
+            png->openRAM((uint8_t *)pPNG, iDataSize, png_draw_6clr);
+            png->decode(NULL, 0);
+            png->close();
+            bbep.writePlane();
+            delete(png); // free the decoder instance
+            return REFRESH_FULL;
+#endif // E1002 || E1004
 #ifdef BOARD_TRMNL_4CLR
             Log_info("%s [%d]: decoding for 4-color EPD\r\n", __FILE__, __LINE__);
             png->openRAM((uint8_t *)pPNG, iDataSize, png_draw_4clr);
@@ -1634,7 +1537,7 @@ PNG *png = new PNG();
             bbep.setAddrWindow(0, 0, bbep.width(), bbep.height());
             if (png->getBpp() == 1 || (png->getBpp() == 2 && png_count_colors(png, pPNG, iDataSize) == 2)) { // 1-bit image (single plane)
                 png->close(); // use a different PNGDraw callback for color matching
-                bbep.setPanelType(dpList[pDevice->panel_set][iTempProfile].OneBit);
+                bbep.setPanelType(dpList[iTempProfile].OneBit);
                 rc = REFRESH_PARTIAL; // the new image is 1bpp - try a partial update
                 bbep.startWrite(PLANE_0); // start writing image data to plane 0
                 png->openRAM((uint8_t *)pPNG, iDataSize, png_draw);
@@ -1660,13 +1563,7 @@ PNG *png = new PNG();
                     png->decode(&iPlane, 0);
                 } // temp profile needs the second plane written
             } else { // 2-bpp (or greater, but reduced to 2-bpp)
-                if (pDevice->epd_mosi_pin != 0 || pDevice->epd_sck_pin != 0) {
-                    bbep.setPanelType(dpList[pDevice->panel_set][iTempProfile].TwoBit);
-                    bbep.initIO(pDevice->epd_dc_pin, pDevice->epd_rst_pin, pDevice->epd_busy_pin, pDevice->epd_cs_pin,
-                        pDevice->epd_mosi_pin, pDevice->epd_sck_pin, 8000000);
-                } else {
-                    bbep.begin(dpList[pDevice->panel_set][0].TwoBit);
-                }
+                bbep.setPanelType(dpList[iTempProfile].TwoBit);
                 rc = REFRESH_FULL; // 4gray mode must be full refresh
                 iUpdateCount = 0; // grayscale mode resets the partial update counter
                 bbep.startWrite(PLANE_0); // start writing image data to plane 0
@@ -1687,8 +1584,7 @@ PNG *png = new PNG();
                     bbep.setMode(BB_MODE_1BPP);
                 break;
                 case 2:
-                    // 2-bit PNGs are expanded to 4bpp in png_draw() so refresh uses u8_graytable
-                    bbep.setMode(BB_MODE_4BPP);
+                    bbep.setMode(BB_MODE_2BPP);
                 break;
                 default:
                     bbep.setMode(BB_MODE_4BPP);
@@ -1711,7 +1607,7 @@ PNG *png = new PNG();
  * @param reverse shows if the color scheme is reverse
  * @return none
  */
-void display_show_image(uint8_t *image_buffer, int data_size, bool bWait, bool bSkipClear)
+void display_show_image(uint8_t *image_buffer, int data_size, bool bWait)
 
 {
     bool isPNG = data_size >= 4 && MOTOLONG(image_buffer) == (int32_t)0x89504e47;
@@ -1719,7 +1615,6 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait, bool b
     auto height = display_height();
 //    uint32_t *d32;
     bool bAlloc = false;
-    static int i426Workaround = 0;
 #ifdef BB_EPAPER
     int iRefreshMode = REFRESH_FULL; // assume full (slow) refresh
 #else
@@ -1746,12 +1641,11 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait, bool b
     }
 #endif
 #ifdef BB_EPAPER
-    if (pDevice->epd_mosi_pin != 0 || pDevice->epd_sck_pin != 0) {
-        bbep.setPanelType(dpList[pDevice->panel_set][iTempProfile].OneBit);
-        bbep.initIO(pDevice->epd_dc_pin, pDevice->epd_rst_pin, pDevice->epd_busy_pin, pDevice->epd_cs_pin,
-            pDevice->epd_mosi_pin, pDevice->epd_sck_pin, 8000000);
-    } else {
-        bbep.begin(dpList[pDevice->panel_set][0].OneBit);
+    if (i426Workaround) {
+        // After a partial update, the 4.26" 800x480 needs to be 'reset' to accept writes
+        // This is only needed if the user pressed the WAKE button and there will be 2 updates
+        // while the power is on
+        bbep.initIO(EPD_DC_PIN, EPD_RST_PIN, EPD_BUSY_PIN, EPD_CS_PIN, EPD_MOSI_PIN, EPD_SCK_PIN, 8000000);
     }
 #endif // BB_EPAPER
     if (isPNG == true && data_size < MAX_IMAGE_SIZE)
@@ -1770,10 +1664,7 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait, bool b
             // G5 compressed image
             BB_BITMAP *pBBB = (BB_BITMAP *)image_buffer;
 #ifdef BB_EPAPER
-            if (bbep.allocBuffer(false) != BBEP_SUCCESS) {
-                Log_info("Error allocating bb_epaper frame buffer");
-                return;
-            }
+            bbep.allocBuffer(false);
             bAlloc = true;
 #endif
         //    int x = (width - pBBB->width)/2;
@@ -1789,21 +1680,7 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait, bool b
 #ifdef BOARD_TRMNL_X
             // Show charging indicator if the USB power is connected (whether actually charging or not)
             if (get_usb_status() == UsbStatus::CONNECTED) {
-                Log_info("Displaying 'battery is charging' icon");
                 bbep.loadG5Image(battery_small, 40, bbep.height() - 120, BBEP_WHITE, BBEP_BLACK);
-            } else { // show battery level
-                y = bbep.height() - 120;
-                bbep.loadG5Image(battery_hollow, 40, y, BBEP_WHITE, BBEP_BLACK);
-                Log_info("Displaying 'battery charge level' icon");
-                if (lipo.begin(PIN_INTERNAL_SDA, PIN_INTERNAL_SCL)) { // only report SoC if battery was detected and BQ27427 initialized successfully
-                    int batt_percent = lipo.soc();
-                    if (batt_percent >= 97) batt_percent = 100; // can sometimes report 98% when full
-                    // Draw a black rectangle to represent the battery charge level
-                    bbep.fillRect(40+10, y+18, (97 * batt_percent)/100, 39, BBEP_BLACK);
-                } else {
-                    bbep.drawLine(40+10, y+18, 10+97, y+18+39, BBEP_BLACK);
-                    bbep.drawLine(40+10+97, y+18, 10, y+18+39, BBEP_BLACK);
-                }
             }
 #endif // BOARD_TRMNL_X
         }
@@ -1812,20 +1689,17 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait, bool b
          // This work-around is due to a lack of RAM; the correct method would be to use loadBMP()
             flip_image(image_buffer+62, bbep.width(), bbep.height(), false); // fix bottom-up bitmap images
 #ifdef BB_EPAPER
-#ifdef BOARD_SEEED_RETERMINAL_E1002
-            if (spectra6_render_1bpp_bitmap(image_buffer + 62)) // uncompressed 1-bpp bitmap
-                bAlloc = true;
-#else
             bbep.setBuffer(image_buffer+62); // uncompressed 1-bpp bitmap
-#endif // BOARD_SEEED_RETERMINAL_E1002
-#endif // BB_EPAPER
+#endif
         }
 #ifdef BB_EPAPER
-#ifndef BOARD_SEEED_RETERMINAL_E1002
+#if defined( BOARD_XTEINK_X4 ) || defined( MINI_EPD )
+        bbep.writePlane(PLANE_FALSE_DIFF);
+#else
         bbep.writePlane(); // send image data to the EPD
-#endif // !BOARD_SEEED_RETERMINAL_E1002
+#endif
         iRefreshMode = REFRESH_PARTIAL;
-#endif // BB_EPAPER
+#endif
         iUpdateCount = 1; // use partial update
     }
     Log_info("Display refresh start");
@@ -1845,32 +1719,12 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait, bool b
         Log_info("%s [%d]: Forcing fast refresh (not partial) since the TRMNL refresh_rate is set to > 30 min\n", __FILE__, __LINE__);
         iRefreshMode = REFRESH_FAST;
     }
-    if (bbep.capabilities() & (BBEP_4GRAY | BBEP_4COLOR | BBEP_3COLOR | BBEP_7COLOR)) bWait = 1;
-    if (!bWait) {
-        iRefreshMode = REFRESH_FAST; // fast update when showing loading screen
-    }
+    if (bbep.capabilities() & (BBEP_4COLOR | BBEP_3COLOR | BBEP_7COLOR)) bWait = 1;
+    if (!bWait) iRefreshMode = REFRESH_PARTIAL; // fast update when showing loading screen
     Log_info("%s [%d]: EPD refresh mode: %d\r\n", __FILE__, __LINE__, iRefreshMode);
-#ifndef BOARD_SEEED_RETERMINAL_E1002
-#ifdef DO_NOT_LIGHT_SLEEP
-    bbep.setLightSleep(false);
-#else
-    bbep.setLightSleep(true);
-
-#endif // DO_NOT_LIGHT_SLEEP
-#endif // !BOARD_SEEED_RETERMINAL_E1002
-    if (bbep.getPanelType() == EP397_800x480 && iRefreshMode == REFRESH_FAST) {
-        // Seeed Sticky: fast refresh on this panel isn't working and full refresh = fast
-        iRefreshMode = REFRESH_FULL;
-    }
-    if (!display_update_epaper(iRefreshMode, bWait)) {
-        Log_error("display_show_image: e-paper update failed");
-        if (bAlloc) {
-            bbep.freeBuffer();
-        }
-        return;
-    }
-
-    if ((bbep.getPanelType() == EP426_800x480 || bbep.getPanelType() == EP426_800x480_4GRAY || bbep.getPanelType() == EP397_800x480 || bbep.getPanelType() == EP397_800x480_4GRAY) /* && iRefreshMode == REFRESH_PARTIAL*/) {
+    display_apply_light_sleep_setting();
+    bbep.refresh(iRefreshMode, bWait);
+    if ((bbep.getPanelType() == EP426_800x480 || bbep.getPanelType() == EP397_800x480) && iRefreshMode == REFRESH_PARTIAL) {
         i426Workaround = 1; // need to re-initialize the controller for another update before sleeping
     }
     if (bAlloc) {
@@ -1886,12 +1740,8 @@ void display_show_image(uint8_t *image_buffer, int data_size, bool bWait, bool b
  //       bbep.setPasses(6,6);
  //       bbep.partialUpdate(false); // we have a previous image to diff against; use a non-flickering update
  //   } else {
-        // bWait=false means loading screen: skip clearing passes so it appears
-        // faster. Ghosting from the previous image is acceptable since the
-        // real content refresh (bWait=true) immediately follows.
-        int iClearMode = bSkipClear ? CLEAR_NONE
-                                   : ((iUpdateCount & 7) == 0 || (iTempProfile > 0)) ? CLEAR_SLOW : CLEAR_FAST;
-        Log_info("fullUpdate clear mode = %d\n", iClearMode);
+        int iClearMode = ((iUpdateCount & 7) == 0 || (iTempProfile > 0)) ? CLEAR_SLOW : CLEAR_FAST;
+        Log_info("fullUpdate clear mode = %d\n", iClearMode); 
         bbep.fullUpdate(iClearMode, false);
  //   }
  }
@@ -1956,8 +1806,6 @@ void display_show_msg(uint8_t *image_buffer, MSG message_type, const char *messa
     Log_info("maximum_compatibility = %d\n", apiDisplayResult.response.maximum_compatibility);
 #ifdef BB_EPAPER
     bbep.allocBuffer(false);
-#else
-    bbep.setMode(BB_MODE_1BPP); // message screens are 1-bit
 #endif
     if (image_buffer && *(uint16_t *)image_buffer == BB_BITMAP_MARKER)
     {
@@ -2098,7 +1946,7 @@ void display_show_msg(uint8_t *image_buffer, MSG message_type, const char *messa
     case WIFI_FAILED:
     {
         String string0 = "TRMNL firmware ";
-        string0 += Messages::firmware_version();
+        string0 += FW_VERSION_STRING;
 #ifdef __BB_EPAPER__
         bbep.setCursor(40, 48); // place in upper left corner
 #else
@@ -2453,11 +2301,9 @@ void display_show_msg(uint8_t *image_buffer, MSG message_type, const char *messa
         break;
     }
 #ifdef BB_EPAPER
-    if (!display_update_epaper(REFRESH_FULL, true, true, PLANE_0)) {
-        Log_error("display_show_msg: e-paper update failed");
-        bbep.freeBuffer();
-        return;
-    }
+    bbep.writePlane(PLANE_0);
+    display_apply_light_sleep_setting();
+    bbep.refresh(REFRESH_FULL, true);
     bbep.freeBuffer();
 #else
     Serial.println("FastEPD full update");
@@ -2548,11 +2394,9 @@ void display_show_msg_qa(uint8_t *image_buffer, const float *voltage, const floa
     bbep.print(qaResultString);
 
     #ifdef BB_EPAPER
-        if (!display_update_epaper(REFRESH_FULL, true, true, PLANE_0)) {
-            Log_error("display_show_msg_qa: e-paper update failed");
-            bbep.freeBuffer();
-            return;
-        }
+        bbep.writePlane(PLANE_0);
+        display_apply_light_sleep_setting();
+        bbep.refresh(REFRESH_FULL, true);
         bbep.freeBuffer();
     #else
         bbep.fullUpdate();
@@ -2587,8 +2431,6 @@ void display_show_msg(uint8_t *image_buffer, MSG message_type, String friendly_i
 #ifdef BB_EPAPER
     bbep.allocBuffer(false);
     Log_info("Free heap after bbep.allocBuffer() - %d", ESP.getMaxAllocHeap());
-#else
-    bbep.setMode(BB_MODE_1BPP); // message screens are 1-bit
 #endif
 
     if (message_type == WIFI_CONNECT)
@@ -2596,10 +2438,12 @@ void display_show_msg(uint8_t *image_buffer, MSG message_type, String friendly_i
         Log_info("Display set to white");
         bbep.fillScreen(BBEP_WHITE);
 #ifdef BB_EPAPER
-        if (!display_update_epaper(apiDisplayResult.response.maximum_compatibility ? REFRESH_FULL : REFRESH_FAST, true, true, PLANE_0)) {
-            Log_error("display_show_msg: WiFi connect update failed");
-            bbep.freeBuffer();
-            return;
+        bbep.writePlane(PLANE_0);
+        display_apply_light_sleep_setting();
+        if (!apiDisplayResult.response.maximum_compatibility) {
+            bbep.refresh(REFRESH_FAST, true); // newer panel can handle the fast refresh
+        } else {
+            bbep.refresh(REFRESH_FULL, true); // incompatible panel (for now)
         }
 #else
         bbep.fullUpdate();
@@ -2673,9 +2517,7 @@ void display_show_msg(uint8_t *image_buffer, MSG message_type, String friendly_i
         string1 += fw_version;
         bbep.setCursor(40, 48); // place in upper left corner
         bbep.println(string1);
-        String string2 = "Connect your phone or computer to ";
-        string2 += (message.length() > 0) ? "\"" + message + "\"" : String("the TRMNL");
-        string2 += " Wi-Fi";
+        const char string2[] = "Connect your phone or computer to the TRMNL WiFi";
         bbep.getStringBox(string2, &rect);
 #ifdef __BB_EPAPER__
         bbep.setCursor((bbep.width() - rect.w) / 2, 386);
@@ -2711,11 +2553,9 @@ void display_show_msg(uint8_t *image_buffer, MSG message_type, String friendly_i
     }
     Log_info("Start drawing...");
 #ifdef BB_EPAPER
-    if (!display_update_epaper(REFRESH_FULL, true, true, PLANE_0)) {
-        Log_error("display_show_msg2: e-paper update failed");
-        bbep.freeBuffer();
-        return;
-    }
+    bbep.writePlane(PLANE_0);
+    display_apply_light_sleep_setting();
+    bbep.refresh(REFRESH_FULL, true);
     bbep.freeBuffer();
 #else
     bbep.fullUpdate();
@@ -2732,7 +2572,10 @@ void display_sleep(void)
 {
     Log_info("Goto Sleep...");
 #ifdef BB_EPAPER
-    bbep.sleep(LIGHT_SLEEP);
+    bbep.sleep(DEEP_SLEEP);
+#ifdef BOARD_SEEED_RETERMINAL_E1002
+    bbep.wait(false);
+#endif
 #else
     bbep.einkPower(0);
     bbep.deInit();

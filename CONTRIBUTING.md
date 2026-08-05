@@ -111,6 +111,8 @@ Rules:
 - Official external platform firmware may set `fixed_version` in
   `.github/scripts/firmware_release.py` when the user-facing version must match
   the upstream firmware version.
+- A published `fixed_version` is immutable. Set a new upstream version before
+  publishing updated firmware binaries for that target.
 - The web page reads `firmware/versions.json` and selects the newest version by
   default.
 - New builds do not create a separate `latest` folder.

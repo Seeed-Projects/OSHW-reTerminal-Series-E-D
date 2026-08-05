@@ -119,6 +119,29 @@ class TrmnlTargetTest(unittest.TestCase):
         self.assertIn("TRMNL_reTerminal_E1003", target_ids)
         self.assertIn("TRMNL_reTerminal_E1004", target_ids)
 
+    def test_published_fixed_versions_are_preserved(self) -> None:
+        published_ids = {
+            "TRMNL_reTerminal_E1001",
+            "TRMNL_reTerminal_E1002",
+            "TRMNL_reTerminal_E1003",
+        }
+
+        with patch.object(
+            firmware_release,
+            "published_fixed_version_exists",
+            side_effect=lambda target, pages_ref: target.id in published_ids,
+        ):
+            plan = firmware_release.build_plan(
+                [".github/scripts/firmware_release.py"],
+                published_pages_ref="origin/gh-pages",
+            )
+
+        target_ids = {target.id for target in plan.changed_targets}
+        self.assertNotIn("TRMNL_reTerminal_E1001", target_ids)
+        self.assertNotIn("TRMNL_reTerminal_E1002", target_ids)
+        self.assertNotIn("TRMNL_reTerminal_E1003", target_ids)
+        self.assertIn("TRMNL_reTerminal_E1004", target_ids)
+
     def test_trmnl_targets_use_fixed_version_and_expected_devices(self) -> None:
         targets = {
             target.id: target
@@ -189,6 +212,35 @@ class TrmnlTargetTest(unittest.TestCase):
             self.assertEqual(offsets["TRMNL_reTerminal_E1003.ino.bin"], 0x20000)
             self.assertEqual(offsets["TRMNL_reTerminal_E1003.spiffs.bin"], 0x620000)
 
+    def test_trmnl_e1004_manifest_includes_filesystem_image(self) -> None:
+        target = next(
+            target
+            for target in firmware_release.FIRMWARE_TARGETS
+            if target.id == "TRMNL_reTerminal_E1004"
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            firmware_dir = Path(temp_dir)
+            create_manifest_artifacts(firmware_dir, target.id)
+            (firmware_dir / f"{target.id}.spiffs.bin").write_bytes(b"littlefs")
+            firmware_release.write_manifest(
+                target.id,
+                target.fixed_version,
+                firmware_dir,
+                target.spiffs_offset,
+                target.boot_app0_offset,
+                target.app_offset,
+            )
+
+            manifest = json.loads((firmware_dir / "manifest.json").read_text(encoding="utf-8"))
+            parts = manifest["builds"][0]["parts"]
+            offsets = {path_without_query(part["path"]): part["offset"] for part in parts}
+
+            self.assertEqual(len(parts), 5)
+            self.assertEqual(offsets["boot_app0.bin"], 0x13000)
+            self.assertEqual(offsets[f"{target.id}.ino.bin"], 0x20000)
+            self.assertEqual(offsets[f"{target.id}.spiffs.bin"], 0x620000)
+
     def test_manifest_adds_file_hash_queries(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             firmware_dir = Path(temp_dir)
@@ -230,35 +282,6 @@ class TrmnlTargetTest(unittest.TestCase):
             offsets = {path_without_query(part["path"]): part["offset"] for part in parts}
 
             self.assertEqual(offsets["TRMNL_reTerminal_E1003.spiffs.bin"], 0x620000)
-
-    def test_trmnl_e1004_manifest_includes_filesystem_image(self) -> None:
-        target = next(
-            target
-            for target in firmware_release.FIRMWARE_TARGETS
-            if target.id == "TRMNL_reTerminal_E1004"
-        )
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            firmware_dir = Path(temp_dir)
-            create_manifest_artifacts(firmware_dir, target.id)
-            (firmware_dir / f"{target.id}.spiffs.bin").write_bytes(b"littlefs")
-            firmware_release.write_manifest(
-                target.id,
-                target.fixed_version,
-                firmware_dir,
-                target.spiffs_offset,
-                target.boot_app0_offset,
-                target.app_offset,
-            )
-
-            manifest = json.loads((firmware_dir / "manifest.json").read_text(encoding="utf-8"))
-            parts = manifest["builds"][0]["parts"]
-            offsets = {path_without_query(part["path"]): part["offset"] for part in parts}
-
-            self.assertEqual(len(parts), 5)
-            self.assertEqual(offsets["boot_app0.bin"], 0x13000)
-            self.assertEqual(offsets[f"{target.id}.ino.bin"], 0x20000)
-            self.assertEqual(offsets[f"{target.id}.spiffs.bin"], 0x620000)
 
     def test_missing_artifact_parts_requires_filesystem_image(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

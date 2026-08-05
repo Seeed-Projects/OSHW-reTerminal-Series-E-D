@@ -5,7 +5,7 @@ This folder contains the TRMNL PlatformIO firmware source used by the Firmware H
 Source snapshot:
 
 - Upstream: https://github.com/usetrmnl/trmnl-firmware
-- Snapshot commit: `64ae0ac`
+- Snapshot commit: `7abc83c`
 - Hub version: `1.8.10`
 
 ## Supported Devices
@@ -20,6 +20,6 @@ Source snapshot:
 ## CI Build
 
 GitHub Actions builds these targets through `.github/scripts/firmware_release.py`.
-The workflow publishes generated firmware files, manifests, the version index,
-and GitHub Release assets. Repository changes stay focused on source and
-configuration files.
+The generated firmware files, manifests, version index, and GitHub Release assets are published automatically from the workflow.
+
+Do not commit generated `.bin` files or generated `web/firmware/` output from this folder.
