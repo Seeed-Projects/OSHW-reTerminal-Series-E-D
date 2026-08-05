@@ -762,7 +762,7 @@
     {
       "id": "TRMNL_reTerminal_E1004",
       "name": "TRMNL for reTerminal E1004",
-      "path": "examples/official/TRMNL",
+      "path": "examples/official/TRMNL_E1004",
       "tool": "platformio",
       "compatible": [
         "E1004"
