@@ -185,7 +185,12 @@
   }
 
   function collectTemplateParts(platform, selectedOptionIds, deviceId) {
-    const expandedIds = expandEsphomeTemplateOptionIds(platform, selectedOptionIds);
+    const optionMap = getOptionMap(platform);
+    const supportedSelectedIds = (selectedOptionIds || []).filter((id) => {
+      const option = optionMap.get(id);
+      return option && (!option.supportedDevices || option.supportedDevices.includes(deviceId));
+    });
+    const expandedIds = expandEsphomeTemplateOptionIds(platform, supportedSelectedIds);
     const selected = new Set(expandedIds);
     const tokens = getDeviceConfig(platform, deviceId);
     const sections = {
@@ -204,6 +209,7 @@
 
     (platform.templateOptions || []).forEach((option) => {
       if (!selected.has(option.id)) return;
+      if (option.supportedDevices && !option.supportedDevices.includes(deviceId)) return;
       const contributes = resolveContributes(option, deviceId);
       asArray(contributes.buses).forEach((bus) => sections.buses.add(bus));
       appendArray(sections, "outputs", contributes.outputs);
@@ -224,10 +230,21 @@
   }
 
   function buildEsphomeTemplateContent(platform, selectedOptionIds, deviceId, userValues = {}) {
-    const { tokens, sections } = collectTemplateParts(platform, selectedOptionIds, deviceId);
+    const { selected, tokens, sections } = collectTemplateParts(platform, selectedOptionIds, deviceId);
+    const sharesWakePin = selected.has("buttons") && selected.has("deep_sleep");
+    const sharedWakeButton = tokens.deepSleepWakeButton || "button_1";
     const templateTokens = {
       ...tokens,
       ...buildWifiValueTokens(userValues),
+      buttonKey0SharedPin:
+        sharesWakePin && sharedWakeButton === "button_1"
+          ? "      allow_other_uses: true\n"
+          : "",
+      buttonKey1SharedPin:
+        sharesWakePin && sharedWakeButton === "button_2"
+          ? "      allow_other_uses: true\n"
+          : "",
+      deepSleepWakeSharedPin: sharesWakePin ? "        allow_other_uses: true\n" : "",
     };
     const sectionOrder = platform.templateSectionOrder || {};
     const parts = [];
@@ -259,7 +276,7 @@
         sections[sectionKey],
         sectionOrder[sectionKey] || []
       );
-      if (block) parts.push(block);
+      if (block) parts.push(replaceTokens(block, templateTokens));
     });
 
     const blockOrder = new Map((sectionOrder.blocks || []).map((id, index) => [id, index]));
