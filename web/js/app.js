@@ -620,7 +620,9 @@ function renderFirmwareSelect() {
   if (!field || !selectedPlatform || !selectedDevice) return;
 
   if (selectedPlatform?.templateMode) {
-    const options = selectedPlatform.templateOptions || [];
+    const options = (selectedPlatform.templateOptions || []).filter((option) =>
+      !option.supportedDevices || option.supportedDevices.includes(selectedDevice.id)
+    );
     field.classList.add("field-block--template-options");
     field.classList.toggle("is-hidden", options.length === 0);
     field.innerHTML = `
@@ -640,7 +642,9 @@ function renderFirmwareSelect() {
     `;
     if (!field.dataset.templateListener) {
       field.addEventListener("change", (e) => {
-        if (e.target?.type === "checkbox") renderTemplatePreview();
+        if (e.target?.type !== "checkbox") return;
+        synchronizeTemplateOptionDependencies(e.target);
+        renderTemplatePreview();
       });
       field.dataset.templateListener = "true";
     }
@@ -1001,21 +1005,67 @@ function getCheckedTemplateOptionIds() {
     .map((option) => option.id);
 }
 
+// Keeps visible checkbox state aligned with the dependency-expanded YAML output.
+// 让界面勾选状态与依赖展开后的 YAML 输出保持一致。
+function synchronizeTemplateOptionDependencies(changedInput) {
+  const options = selectedPlatform?.templateOptions || [];
+  const optionMap = new Map(options.map((option) => [option.id, option]));
+
+  if (changedInput.checked) {
+    const pending = [changedInput.id];
+    while (pending.length) {
+      const option = optionMap.get(pending.pop());
+      (option?.requires || []).forEach((requiredId) => {
+        const requiredInput = document.getElementById(requiredId);
+        if (!requiredInput?.checked) {
+          requiredInput.checked = true;
+          pending.push(requiredId);
+        }
+      });
+    }
+    return;
+  }
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    options.forEach((option) => {
+      const input = document.getElementById(option.id);
+      if (!input?.checked) return;
+      const hasMissingRequirement = (option.requires || []).some((requiredId) => {
+        const requiredInput = document.getElementById(requiredId);
+        return !requiredInput?.checked;
+      });
+      if (hasMissingRequirement) {
+        input.checked = false;
+        changed = true;
+      }
+    });
+  }
+}
+
+// Builds the current template once for preview, copy, and download.
+// 为预览、复制和下载统一生成当前模板。
+function getCurrentTemplateContent() {
+  if (!selectedPlatform?.templateMode || !selectedDevice) return "";
+  const ids = getCheckedTemplateOptionIds();
+  const userValues = getTemplateFieldValues();
+  return buildTemplateContent(selectedPlatform, ids, selectedDevice.id, userValues);
+}
+
 // Updates the Step 3 template code preview with the current checkbox selection.
 function renderTemplatePreview() {
   const codeEl = document.getElementById("templateCode");
-  if (!codeEl || !selectedPlatform?.templateMode) return;
-  const ids = getCheckedTemplateOptionIds();
-  const userValues = getTemplateFieldValues();
-  codeEl.textContent = buildTemplateContent(selectedPlatform, ids, selectedDevice?.id, userValues);
+  if (!codeEl) return;
+  codeEl.textContent = getCurrentTemplateContent();
 }
 
 // Downloads the generated template as a file.
 function generateTemplateFile() {
   if (!selectedPlatform?.templateMode || !selectedDevice) return;
-  const ids = getCheckedTemplateOptionIds();
-  const userValues = getTemplateFieldValues();
-  const content = buildTemplateContent(selectedPlatform, ids, selectedDevice.id, userValues);
+  const content = getCurrentTemplateContent();
+  const codeEl = document.getElementById("templateCode");
+  if (codeEl) codeEl.textContent = content;
   const ext = selectedPlatform.templateFileExtension || "txt";
   const mime = selectedPlatform.templateFileMimeType || "text/plain";
   const pattern = selectedPlatform.templateFilePattern || "{platformId}-{deviceId}";
@@ -1038,8 +1088,9 @@ function generateTemplateFile() {
 function copyTemplateToClipboard() {
   const codeEl = document.getElementById("templateCode");
   const btn = document.getElementById("copyTemplateButton");
-  if (!codeEl) return;
-  const text = codeEl.textContent;
+  const text = getCurrentTemplateContent();
+  if (!text) return;
+  if (codeEl) codeEl.textContent = text;
   navigator.clipboard.writeText(text).then(() => {
     if (btn) {
       const original = btn.innerHTML;

@@ -224,10 +224,13 @@
   }
 
   function buildEsphomeTemplateContent(platform, selectedOptionIds, deviceId, userValues = {}) {
-    const { tokens, sections } = collectTemplateParts(platform, selectedOptionIds, deviceId);
+    const { selected, tokens, sections } = collectTemplateParts(platform, selectedOptionIds, deviceId);
+    const sharesKey0WakePin = selected.has("buttons") && selected.has("deep_sleep");
     const templateTokens = {
       ...tokens,
       ...buildWifiValueTokens(userValues),
+      buttonKey0SharedPin: sharesKey0WakePin ? "      allow_other_uses: true\n" : "",
+      deepSleepKey0SharedPin: sharesKey0WakePin ? "        allow_other_uses: true\n" : "",
     };
     const sectionOrder = platform.templateSectionOrder || {};
     const parts = [];
@@ -259,7 +262,7 @@
         sections[sectionKey],
         sectionOrder[sectionKey] || []
       );
-      if (block) parts.push(block);
+      if (block) parts.push(replaceTokens(block, templateTokens));
     });
 
     const blockOrder = new Map((sectionOrder.blocks || []).map((id, index) => [id, index]));

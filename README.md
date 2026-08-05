@@ -118,7 +118,7 @@ The Hub currently lists 14 panels from 1.54″ to 13.3″ (mono, flexible, quadr
 | Platform | Status | Devices | Description |
 |:---------|:-------|:--------|:------------|
 | **Base** | ✅ Ready | E1001 – E1004, EE/EN DIY Kit | Smoke-test demos (RTC, deep sleep, mic recording, touch draw) plus DIY Kit board + panel selection |
-| **ESPHome** | ✅ YAML templates | E1001 – E1002 | Smart home integration with Home Assistant |
+| **ESPHome** | ✅ YAML templates | E1001 – E1003 | Smart home integration with Home Assistant |
 | **TRMNL** | ✅ Ready | E1001 – E1003 | Official TRMNL dashboard firmware for always-on ePaper panels |
 | **EEZ Studio** | ✅ Project template | E1001 – E1004 | Visual LVGL UI design with a downloadable PlatformIO project template |
 | **LVGL** | ✅ Ready | E1001 – E1004 | Ready-to-run LVGL 9.5.0 status dashboard rendered through Seeed_GFX |
