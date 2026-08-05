@@ -22,6 +22,7 @@ let pendingSerialText = "";
 let pendingSerialTrimmed = false;
 let firmwareVersions = {};
 let firmwareCatalogLoaded = false;
+let firmwareRouteDataLoaded = false;
 const monitorDecoder = new TextDecoder();
 const DEFAULT_FIRMWARE_VERSION = "latest";
 const FIRMWARE_CACHE_BUSTER = String(Date.now());
@@ -34,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindFlowEvents();
   bindWorkspaceEvents();
   bindBlankAreaCollapse();
+  restoreSelectionFromUrl();
 });
 
 function checkBrowser() {
@@ -235,13 +237,11 @@ async function loadFirmwareVersions() {
   }
 
   await loadFirmwareCatalog();
+  firmwareRouteDataLoaded = true;
   renderPlatformCards();
 
   if (selectedPlatform) {
-    selectedVersion = getDefaultVersion(selectedPlatform);
-    renderLanguageSelect();
-    renderVersionPanel();
-    updateFlashState();
+    restoreSelectionFromUrl({ logSelection: false });
   }
 }
 
@@ -461,17 +461,97 @@ function bindBlankAreaCollapse() {
   });
 }
 
+function getCurrentRouteSelection() {
+  if (!selectedPlatform || !selectedDevice) return null;
+
+  const hasFirmwareSelection = Boolean(
+    selectedFirmwareOption &&
+    !selectedPlatform.templateMode &&
+    !selectedPlatform.downloadMode &&
+    !selectedPlatform.externalTool
+  );
+  return {
+    platformId: selectedPlatform.id,
+    deviceId: selectedDevice.id,
+    firmwareId: hasFirmwareSelection ? selectedFirmwareOption.id : "",
+    version: hasFirmwareSelection ? selectedVersion?.version || "" : "",
+    panelId: selectedPanel?.id || "",
+  };
+}
+
+// Synchronizes the selected workflow with browser history.
+// 将选中的工作流同步到浏览器历史记录。
+function syncSelectionUrl(selection, historyMode = "push") {
+  const nextUrl = buildHubRouteUrl(window.location.href, selection);
+  const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (nextUrl === currentUrl) return;
+
+  const method = historyMode === "replace" ? "replaceState" : "pushState";
+  window.history[method](selection, "", nextUrl);
+}
+
+// Restores the shared workflow route after page load or history navigation.
+// 页面加载或浏览历史变化时，恢复分享链接中的完整工作流。
+function restoreSelectionFromUrl(options = {}) {
+  const route = parseHubRoute(window.location.href);
+  const selection = resolveHubRouteSelection(route, PLATFORM_CARDS);
+
+  if (!selection) {
+    clearPlatformSelection({ updateUrl: false });
+    if (route.hasRouteParams) syncSelectionUrl(null, "replace");
+    return false;
+  }
+
+  const routeDetails = firmwareRouteDataLoaded
+    ? {
+        firmwareId: route.firmwareId,
+        version: route.version,
+        panelId: route.panelId,
+      }
+    : {};
+  selectPlatformDevice(selection.platformId, selection.deviceId, {
+    ...routeDetails,
+    updateUrl: false,
+    logSelection: options.logSelection,
+  });
+
+  const canonicalSelection = getCurrentRouteSelection();
+  if (!firmwareRouteDataLoaded) {
+    canonicalSelection.firmwareId = route.firmwareId;
+    canonicalSelection.version = route.version;
+    canonicalSelection.panelId = route.panelId;
+  }
+  syncSelectionUrl(canonicalSelection, "replace");
+  return true;
+}
+
 // Selects the platform-device pair that drives the remaining setup flow.
 // 选择平台和设备组合，用来驱动后续配置流程。
-function selectPlatformDevice(platformId, deviceId) {
+function selectPlatformDevice(platformId, deviceId, options = {}) {
+  const selection = resolveHubRouteSelection({ platformId, deviceId }, PLATFORM_CARDS);
+  if (!selection) return false;
+
   document.body.classList.remove("is-flash-step");
   selectedPlatform =
-    PLATFORM_CARDS.find((platform) => platform.id === platformId) || null;
-  selectedDevice = getDevice(deviceId);
-  const availableOptions = getAvailableFirmwareOptions(selectedPlatform, deviceId);
-  selectedFirmwareOption = chooseFirmwareOption(availableOptions);
-  selectedVersion = getDefaultVersion(selectedPlatform);
-  selectedPanel = choosePanel(getSelectedCompatiblePanels());
+    PLATFORM_CARDS.find((platform) => platform.id === selection.platformId) || null;
+  selectedDevice = getDevice(selection.deviceId);
+  const availableOptions = getAvailableFirmwareOptions(selectedPlatform, selection.deviceId);
+  const routedFirmwareId = String(options.firmwareId || "").toLowerCase();
+  selectedFirmwareOption =
+    availableOptions.find((firmware) => firmware.id.toLowerCase() === routedFirmwareId) ||
+    chooseFirmwareOption(availableOptions);
+  const compatiblePanels = getSelectedCompatiblePanels();
+  const routedPanelId = String(options.panelId || "").toLowerCase();
+  const canonicalPanelId = compatiblePanels.find((panel) =>
+    panel.id.toLowerCase() === routedPanelId
+  )?.id;
+  selectedPanel = choosePanel(compatiblePanels, canonicalPanelId);
+  const versions = getVersionOptions(selectedPlatform);
+  const routedVersion = String(options.version || "").toLowerCase();
+  selectedVersion =
+    versions.find((item) => item.version.toLowerCase() === routedVersion) ||
+    versions[0] ||
+    null;
   applyRecommendedInstallMode();
 
   renderSelectedRelease();
@@ -482,12 +562,18 @@ function selectPlatformDevice(platformId, deviceId) {
   renderFlowState();
   resetProgress();
   const panelLabel = selectedPanel ? ` / ${selectedPanel.name}` : "";
-  appendLog(
-    `[system] Selected platform: ${selectedPlatform?.name || "None"} / ${selectedDevice?.name || "None"}${panelLabel}`
-  );
+  if (options.logSelection !== false) {
+    appendLog(
+      `[system] Selected platform: ${selectedPlatform?.name || "None"} / ${selectedDevice?.name || "None"}${panelLabel}`
+    );
+  }
+  if (options.updateUrl !== false) {
+    syncSelectionUrl(getCurrentRouteSelection(), options.historyMode);
+  }
+  return true;
 }
 
-function clearPlatformSelection() {
+function clearPlatformSelection(options = {}) {
   document.body.classList.remove("is-flash-step");
   selectedPlatform = null;
   selectedDevice = null;
@@ -499,6 +585,9 @@ function clearPlatformSelection() {
   renderFlashNotes();
   updateFlashState();
   resetProgress();
+  if (options.updateUrl !== false) {
+    syncSelectionUrl(null, options.historyMode);
+  }
 }
 
 function renderFlowState() {
@@ -1707,9 +1796,11 @@ function saveLog() {
 }
 
 function bindFlowEvents() {
+  window.addEventListener("popstate", () => restoreSelectionFromUrl());
+
   const changeBtn = document.getElementById("changePlatformButton");
   if (changeBtn) {
-    changeBtn.addEventListener("click", clearPlatformSelection);
+    changeBtn.addEventListener("click", () => clearPlatformSelection());
   }
 
   const panelField = document.getElementById("panelField");
@@ -1728,6 +1819,7 @@ function bindFlowEvents() {
       renderFlowState();
       resetProgress();
       appendLog(`[system] Selected panel: ${selectedPanel?.name || "None"}`);
+      syncSelectionUrl(getCurrentRouteSelection());
     });
   }
 
@@ -1753,6 +1845,7 @@ function bindFlowEvents() {
       renderFlowState();
       resetProgress();
       appendLog(`[system] Selected demo: ${selectedFirmwareOption?.name || "None"}`);
+      syncSelectionUrl(getCurrentRouteSelection());
     });
   }
 
@@ -1778,6 +1871,7 @@ function bindFlowEvents() {
       updateFlashState();
       resetProgress();
       appendLog(`[system] Selected language: ${selectedFirmwareOption?.languageLabel || "None"}`);
+      syncSelectionUrl(getCurrentRouteSelection());
     });
   }
 
@@ -1790,6 +1884,7 @@ function bindFlowEvents() {
       updateFlashState();
       resetProgress();
       appendLog(`[system] Selected version: ${selectedVersion?.version || "None"}`);
+      syncSelectionUrl(getCurrentRouteSelection());
     });
   }
 
