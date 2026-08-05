@@ -59,6 +59,8 @@ assert.match(e1001All, /# --- SHT4x temperature & humidity \(I2C\) ---/);
 assert.match(e1001All, /# Turn on SD card power rail \/ 打开 SD 卡供电\n      - output\.turn_on: bsp_sd_enable/);
 assert.match(e1001All, /^  ssid: !secret wifi_ssid$/m);
 assert.match(e1001All, /^  password: !secret wifi_password$/m);
+assert.match(e1001All, /pin: GPIO6\n    id: bsp_led/);
+assert.doesNotMatch(e1001All, /pin: GPIO16\n    id: bsp_led/);
 assert.doesNotMatch(e1001All, /id\(font_large\), RED, "Temp:/);
 assert.doesNotMatch(e1001All, /^psram:$/m);
 assertNoDuplicateTopLevelKeys(e1001All);
@@ -94,6 +96,8 @@ assert.match(e1002All, /id\(font_large\), RED, "Temp: %\.1f C"/);
 assert.match(e1002All, /it\.line\(20, 55, 780, 55, BLACK\)/);
 assert.match(e1002All, /需要 ESPHome >= 2025\.11\.1 才能使用 epaper_spi 平台/);
 assert.match(e1002All, /\/\/ ---- Title \(BLUE\) \/ 标题（蓝色）----/);
+assert.match(e1002All, /pin: GPIO6\n    id: bsp_led/);
+assert.doesNotMatch(e1002All, /pin: GPIO16\n    id: bsp_led/);
 assert.doesNotMatch(e1002All, /^psram:$/m);
 assertNoDuplicateTopLevelKeys(e1002All);
 
@@ -250,6 +254,19 @@ assert.doesNotMatch(
   buildEsphomeTemplateContent(esphome, ["buzzer_led"], "E1003"),
   /^binary_sensor:|id: button_[123]/m
 );
+
+const ledPinByDevice = {
+  E1001: "GPIO6",
+  E1002: "GPIO6",
+  E1003: "GPIO16",
+};
+
+Object.entries(ledPinByDevice).forEach(([deviceId, pin]) => {
+  const yaml = buildEsphomeTemplateContent(esphome, ["buzzer_led"], deviceId);
+  assert.match(yaml, new RegExp(`pin: ${pin}\\n    id: bsp_led`));
+  assert.equal((yaml.match(/id: bsp_led/g) || []).length, 1);
+  assertNoDuplicateTopLevelKeys(yaml);
+});
 
 let testedCombinationCount = 0;
 for (const deviceId of esphome.supportedDevices) {
