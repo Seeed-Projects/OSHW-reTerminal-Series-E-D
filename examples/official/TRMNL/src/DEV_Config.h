@@ -75,7 +75,14 @@ enum {
 #define UWORD   uint16_t
 #define UDOUBLE uint32_t
 
-#if defined (BOARD_SEEED_RETERMINAL_E1003)
+#if defined (BOARD_SEEED_RETERMINAL_E1002)
+   #define EPD_SCK_PIN  7
+   #define EPD_MOSI_PIN 9
+   #define EPD_CS_PIN   10
+   #define EPD_RST_PIN  12
+   #define EPD_DC_PIN   11
+   #define EPD_BUSY_PIN 13
+#elif defined (BOARD_SEEED_RETERMINAL_E1003)
    #define EPD_SCK_PIN  7
    #define EPD_MOSI_PIN 9
    #define EPD_MISO_PIN 8

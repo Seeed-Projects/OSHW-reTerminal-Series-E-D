@@ -75,6 +75,13 @@ uint8_t u8SpectraPal[512]; // RGB333 mapped to closest Spectra6 color
 #define FS LittleFS
 #include "FastEPD.h"
 FASTEPD bbep;
+#if defined(BOARD_SEEED_RETERMINAL_E1003)
+const TRMNL_DEVICE device_list[] = {
+    {"reterminal_e1003", 0, 0, 0, 0, 0, 0, 0xff, 0xff, 3, 1, EPD_75},
+    {NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+};
+TRMNL_DEVICE *pDevice = NULL;
+#endif
 const uint8_t u8_graytable[] = {
 /* 0 */  0, 0, 0, 0, 0, 0, 1, 1, 1,
 /* 1 */  0, 0, 1, 1, 1, 2, 2, 1, 1,
@@ -138,7 +145,9 @@ static bool display_update_epaper(int refreshMode, bool wait, bool writePlane = 
     return true;
 #endif
 }
+#endif
 
+#if defined(BB_EPAPER) || defined(BOARD_SEEED_RETERMINAL_E1003)
 void hw_config_init(void)
 {
     int i = 0;
@@ -924,6 +933,7 @@ unsigned char GetBWYRPixel(int r, int g, int b)
 } /* GetBWYRPixel() */
 #endif // BB_EPAPER
 
+#ifdef BB_EPAPER
 //
 // bb_epaper colors to map to Spectra6 colors
 // The RGB values are not correct for the panel, but for simple mapping
@@ -984,7 +994,6 @@ uint16_t rgb333;
  * @param PNGDRAW structure containing the current line and relevant info
  * @return none
  */
-#ifdef BB_EPAPER
 //
 // Draw the PNG image into the local framebuffer memory using the drawPixel() method
 // to do color translation and to properly format the memory layout
