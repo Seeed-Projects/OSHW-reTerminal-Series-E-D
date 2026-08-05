@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindFlowEvents();
   bindWorkspaceEvents();
   bindBlankAreaCollapse();
+  restoreSelectionFromUrl();
 });
 
 function checkBrowser() {
@@ -461,14 +462,46 @@ function bindBlankAreaCollapse() {
   });
 }
 
+// Synchronizes the selected platform and device with browser history.
+// 将选中的平台和设备同步到浏览器历史记录。
+function syncSelectionUrl(platformId, deviceId, historyMode = "push") {
+  const selection = platformId && deviceId ? { platformId, deviceId } : null;
+  const nextUrl = buildHubRouteUrl(window.location.href, selection);
+  const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (nextUrl === currentUrl) return;
+
+  const method = historyMode === "replace" ? "replaceState" : "pushState";
+  window.history[method](selection, "", nextUrl);
+}
+
+// Restores the shared platform-device route after page load or history navigation.
+// 页面加载或浏览历史变化时，恢复分享链接中的平台和设备。
+function restoreSelectionFromUrl() {
+  const route = parseHubRoute(window.location.href);
+  const selection = resolveHubRouteSelection(route, PLATFORM_CARDS);
+
+  if (!selection) {
+    clearPlatformSelection({ updateUrl: false });
+    if (route.hasRouteParams) syncSelectionUrl("", "", "replace");
+    return false;
+  }
+
+  selectPlatformDevice(selection.platformId, selection.deviceId, { updateUrl: false });
+  syncSelectionUrl(selection.platformId, selection.deviceId, "replace");
+  return true;
+}
+
 // Selects the platform-device pair that drives the remaining setup flow.
 // 选择平台和设备组合，用来驱动后续配置流程。
-function selectPlatformDevice(platformId, deviceId) {
+function selectPlatformDevice(platformId, deviceId, options = {}) {
+  const selection = resolveHubRouteSelection({ platformId, deviceId }, PLATFORM_CARDS);
+  if (!selection) return false;
+
   document.body.classList.remove("is-flash-step");
   selectedPlatform =
-    PLATFORM_CARDS.find((platform) => platform.id === platformId) || null;
-  selectedDevice = getDevice(deviceId);
-  const availableOptions = getAvailableFirmwareOptions(selectedPlatform, deviceId);
+    PLATFORM_CARDS.find((platform) => platform.id === selection.platformId) || null;
+  selectedDevice = getDevice(selection.deviceId);
+  const availableOptions = getAvailableFirmwareOptions(selectedPlatform, selection.deviceId);
   selectedFirmwareOption = chooseFirmwareOption(availableOptions);
   selectedVersion = getDefaultVersion(selectedPlatform);
   selectedPanel = choosePanel(getSelectedCompatiblePanels());
@@ -485,9 +518,13 @@ function selectPlatformDevice(platformId, deviceId) {
   appendLog(
     `[system] Selected platform: ${selectedPlatform?.name || "None"} / ${selectedDevice?.name || "None"}${panelLabel}`
   );
+  if (options.updateUrl !== false) {
+    syncSelectionUrl(selectedPlatform.id, selectedDevice.id, options.historyMode);
+  }
+  return true;
 }
 
-function clearPlatformSelection() {
+function clearPlatformSelection(options = {}) {
   document.body.classList.remove("is-flash-step");
   selectedPlatform = null;
   selectedDevice = null;
@@ -499,6 +536,9 @@ function clearPlatformSelection() {
   renderFlashNotes();
   updateFlashState();
   resetProgress();
+  if (options.updateUrl !== false) {
+    syncSelectionUrl("", "", options.historyMode);
+  }
 }
 
 function renderFlowState() {
@@ -1707,9 +1747,11 @@ function saveLog() {
 }
 
 function bindFlowEvents() {
+  window.addEventListener("popstate", restoreSelectionFromUrl);
+
   const changeBtn = document.getElementById("changePlatformButton");
   if (changeBtn) {
-    changeBtn.addEventListener("click", clearPlatformSelection);
+    changeBtn.addEventListener("click", () => clearPlatformSelection());
   }
 
   const panelField = document.getElementById("panelField");
