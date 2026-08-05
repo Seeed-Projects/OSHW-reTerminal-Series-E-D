@@ -51,9 +51,9 @@ assert.equal(
   resolveHubRouteSelection(parseHubRoute("/?platform=esphome&device=E9999"), PLATFORM_CARDS),
   null
 );
-assert.equal(
+assert.deepEqual(
   resolveHubRouteSelection(parseHubRoute("/?platform=trmnl&device=E1004"), PLATFORM_CARDS),
-  null
+  { platformId: "trmnl", deviceId: "E1004" }
 );
 assert.equal(
   resolveHubRouteSelection(parseHubRoute("/?platform=esphome"), PLATFORM_CARDS),
