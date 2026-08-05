@@ -98,8 +98,18 @@ class TrmnlTargetTest(unittest.TestCase):
         self.assertIn("TRMNL_reTerminal_E1001", target_ids)
         self.assertIn("TRMNL_reTerminal_E1002", target_ids)
         self.assertIn("TRMNL_reTerminal_E1003", target_ids)
-        self.assertIn("TRMNL_reTerminal_E1004", target_ids)
+        self.assertNotIn("TRMNL_reTerminal_E1004", target_ids)
         self.assertTrue(all(target.tool == "platformio" for target in plan.changed_targets))
+
+    def test_trmnl_e1004_source_change_builds_only_e1004(self) -> None:
+        plan = firmware_release.build_plan(["examples/official/TRMNL_E1004/src/main.cpp"])
+        target_ids = {
+            target.id
+            for target in plan.changed_targets
+            if target.id.startswith("TRMNL_reTerminal_")
+        }
+
+        self.assertEqual(target_ids, {"TRMNL_reTerminal_E1004"})
 
     def test_trmnl_packaging_change_rebuilds_supported_platformio_targets(self) -> None:
         plan = firmware_release.build_plan([".github/scripts/firmware_release.py"])
@@ -153,16 +163,14 @@ class TrmnlTargetTest(unittest.TestCase):
         self.assertEqual(targets["TRMNL_reTerminal_E1002"].devices, ("E1002",))
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].devices, ("E1003",))
         self.assertEqual(targets["TRMNL_reTerminal_E1004"].devices, ("E1004",))
+        self.assertEqual(targets["TRMNL_reTerminal_E1004"].path, "examples/official/TRMNL_E1004")
         self.assertTrue(all(target.fixed_version == "1.8.10" for target in targets.values()))
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].app_offset, 0x20000)
         self.assertEqual(targets["TRMNL_reTerminal_E1004"].pio_env, "seeed_reTerminal_E1004")
         self.assertEqual(targets["TRMNL_reTerminal_E1004"].boot_app0_offset, 0x13000)
         self.assertEqual(targets["TRMNL_reTerminal_E1004"].app_offset, 0x20000)
         self.assertEqual(targets["TRMNL_reTerminal_E1004"].spiffs_offset, 0x620000)
-        self.assertEqual(
-            targets["TRMNL_reTerminal_E1004"].filesystem_image_url,
-            "https://trmnl-fw.s3.us-east-2.amazonaws.com/littlefs.bin",
-        )
+        self.assertEqual(targets["TRMNL_reTerminal_E1004"].filesystem_image_url, "")
         self.assertTrue(targets["TRMNL_reTerminal_E1003"].include_filesystem)
         self.assertTrue(targets["TRMNL_reTerminal_E1004"].include_filesystem)
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].flash_size, "keep")

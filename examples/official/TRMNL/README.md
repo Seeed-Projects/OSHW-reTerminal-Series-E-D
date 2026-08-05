@@ -15,7 +15,6 @@ Source snapshot:
 | reTerminal E1001 | `seeed_reTerminal_E1001` | `TRMNL_reTerminal_E1001` |
 | reTerminal E1002 | `seeed_reTerminal_E1002` | `TRMNL_reTerminal_E1002` |
 | reTerminal E1003 | `TRMNL_X_E1003` | `TRMNL_reTerminal_E1003` |
-| reTerminal E1004 | `seeed_reTerminal_E1004` | `TRMNL_reTerminal_E1004` |
 
 ## CI Build
 

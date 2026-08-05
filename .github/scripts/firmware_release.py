@@ -410,7 +410,7 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = diy_kit_targets() + (
     ),
     FirmwareTarget(
         "TRMNL_reTerminal_E1004",
-        "examples/official/TRMNL",
+        "examples/official/TRMNL_E1004",
         tool="platformio",
         devices=("E1004",),
         pio_env="seeed_reTerminal_E1004",
@@ -421,7 +421,6 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = diy_kit_targets() + (
         boot_app0_offset=0x13000,
         app_offset=0x20000,
         spiffs_offset=0x620000,
-        filesystem_image_url="https://trmnl-fw.s3.us-east-2.amazonaws.com/littlefs.bin",
         fixed_version="1.8.10",
         title="TRMNL for reTerminal E1004",
         group="official",

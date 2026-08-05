@@ -220,10 +220,12 @@ pio run -d examples/official/LVGLePaperStatusPanel -e reterminal_e1001
 pio run -d examples/official/EEZStudio -e reterminal_e1004
 
 # TRMNL firmware for E1004
-pio run -d examples/official/TRMNL -e seeed_reTerminal_E1004
+pio run -d examples/official/TRMNL_E1004 -e seeed_reTerminal_E1004
 ```
 
-TRMNL firmware uses the PlatformIO environments defined in `examples/official/TRMNL/platformio.ini`.
+TRMNL firmware uses the PlatformIO environments defined in
+`examples/official/TRMNL/platformio.ini` for E1001–E1003 and
+`examples/official/TRMNL_E1004/platformio.ini` for E1004.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -262,7 +264,8 @@ the Firmware Hub or compiled manually.
 | [`SD_ImagePipeline_E1003`](examples/base/SD_ImagePipeline_E1003/) | E1003 | Display a JPEG/PNG from MicroSD in 16-level grayscale |
 | [`SD_ImagePipeline_E1004`](examples/base/SD_ImagePipeline_E1004/) | E1004 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
 | [`XIAO_EPaper_Hello`](examples/base/XIAO_EPaper_Hello/) | EE02 – EE05, EN04 – EN05 | Hello screen for XIAO ePaper DIY Kit boards, built per board + panel combo with Seeed_GFX |
-| [`TRMNL`](examples/official/TRMNL/) | E1001 – E1004 | Build the official TRMNL dashboard firmware for reTerminal E-Series |
+| [`TRMNL`](examples/official/TRMNL/) | E1001 – E1003 | Build the official TRMNL dashboard firmware for existing reTerminal E-Series targets |
+| [`TRMNL_E1004`](examples/official/TRMNL_E1004/) | E1004 | Build the isolated official TRMNL dashboard firmware for reTerminal E1004 |
 | [`EEZStudio`](examples/official/EEZStudio/) | E1001 – E1004 | Build an LVGL PlatformIO template generated for EEZ Studio workflows |
 | [`LVGLePaperStatusPanel`](examples/official/LVGLePaperStatusPanel/) | E1001 – E1004 | Render a static LVGL 9.5.0 status dashboard with Seeed_GFX |
 | [`ePaper-Voice-Memo`](examples/community/ePaper-Voice-Memo/) | E1001 – E1003 | AI voice memo to compact/card ePaper reminder lists with English/Chinese firmware options |

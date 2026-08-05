@@ -298,11 +298,20 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.13"
 
       - name: Install PlatformIO
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install platformio
+        run: |
+          pip install platformio \
+            'bitstring>=3.1.6,!=4.2.0' \
+            'cryptography>=43.0.0' \
+            'pyserial>=3.3' \
+            'reedsolo>=1.5.3,<1.8' \
+            'PyYAML>=5.1' \
+            intelhex \
+            'rich_click<2' \
+            'click<9'
 
       - name: Build firmware
         if: steps.cache.outputs.cache-hit != 'true'
