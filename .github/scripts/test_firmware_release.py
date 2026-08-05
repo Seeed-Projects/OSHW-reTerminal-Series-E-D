@@ -159,6 +159,10 @@ class TrmnlTargetTest(unittest.TestCase):
         self.assertEqual(targets["TRMNL_reTerminal_E1004"].boot_app0_offset, 0x13000)
         self.assertEqual(targets["TRMNL_reTerminal_E1004"].app_offset, 0x20000)
         self.assertEqual(targets["TRMNL_reTerminal_E1004"].spiffs_offset, 0x620000)
+        self.assertEqual(
+            targets["TRMNL_reTerminal_E1004"].filesystem_image_url,
+            "https://trmnl-fw.s3.us-east-2.amazonaws.com/littlefs.bin",
+        )
         self.assertTrue(targets["TRMNL_reTerminal_E1003"].include_filesystem)
         self.assertTrue(targets["TRMNL_reTerminal_E1004"].include_filesystem)
         self.assertEqual(targets["TRMNL_reTerminal_E1003"].flash_size, "keep")
