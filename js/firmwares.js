@@ -2019,12 +2019,12 @@ deep_sleep:
     previewAlt: "TRMNL dashboard firmware preview",
     accent: "#3D3D3E",
     highlight: "#F8654B",
-    supportedDevices: ["E1001", "E1002", "E1003"],
+    supportedDevices: ["E1001", "E1002", "E1003", "E1004"],
     installReady: true,
     bullets: [
       "Official TRMNL firmware workflow",
       "Web-flashable device builds",
-      "Available for E1001, E1002, and E1003",
+      "Available for E1001, E1002, E1003, and E1004",
     ],
     versions: [
       {
@@ -2062,6 +2062,17 @@ deep_sleep:
         description: "Install TRMNL dashboard firmware for reTerminal E1003.",
         category: "Dashboard",
         compatible: ["E1003"],
+        defaultVersion: "1.8.10",
+        notes: [
+          { type: "info", text: "After flashing, follow the TRMNL setup flow to connect Wi-Fi and pair the device with your TRMNL account." },
+        ],
+      },
+      {
+        id: "TRMNL_reTerminal_E1004",
+        name: "TRMNL Firmware",
+        description: "Install TRMNL dashboard firmware for reTerminal E1004.",
+        category: "Dashboard",
+        compatible: ["E1004"],
         defaultVersion: "1.8.10",
         notes: [
           { type: "info", text: "After flashing, follow the TRMNL setup flow to connect Wi-Fi and pair the device with your TRMNL account." },

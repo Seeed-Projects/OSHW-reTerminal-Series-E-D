@@ -760,6 +760,17 @@
       "group": "official"
     },
     {
+      "id": "TRMNL_reTerminal_E1004",
+      "name": "TRMNL for reTerminal E1004",
+      "path": "examples/official/TRMNL",
+      "tool": "platformio",
+      "compatible": [
+        "E1004"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
       "id": "LVGL_StatusPanel_E1001",
       "name": "LVGL ePaper Status Panel for E1001",
       "path": "examples/official/LVGLePaperStatusPanel",
