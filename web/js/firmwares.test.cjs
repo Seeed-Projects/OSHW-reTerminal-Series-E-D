@@ -37,6 +37,23 @@ for (const [platformId, wikiUrl] of officialWikiUrls) {
   assert.equal(platform.wiki?.url, wikiUrl, `${platformId} wiki URL is registered`);
 }
 
+const trmnlPlatform = PLATFORM_CARDS.find((platform) => platform.id === "trmnl");
+assert.ok(trmnlPlatform, "TRMNL platform is registered");
+assert.equal(trmnlPlatform.installReady, true);
+assert.deepEqual(trmnlPlatform.supportedDevices, ["E1001", "E1002", "E1003", "E1004"]);
+assert.deepEqual(
+  trmnlPlatform.firmwareOptions.map((option) => option.id),
+  [
+    "TRMNL_reTerminal_E1001",
+    "TRMNL_reTerminal_E1002",
+    "TRMNL_reTerminal_E1003",
+    "TRMNL_reTerminal_E1004",
+  ]
+);
+assert.ok(
+  trmnlPlatform.firmwareOptions.every((option) => option.defaultVersion === "1.8.10")
+);
+
 const zephyrPlatform = PLATFORM_CARDS.find((platform) => platform.id === "zephyr");
 assert.ok(zephyrPlatform, "Zephyr platform is registered");
 assert.equal(zephyrPlatform.group, "official");

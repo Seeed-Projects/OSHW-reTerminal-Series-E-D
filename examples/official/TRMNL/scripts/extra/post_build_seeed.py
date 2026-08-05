@@ -4,13 +4,10 @@ from pathlib import Path
 
 def post_build(source, target, env):
     build_dir = Path(env.subst("$BUILD_DIR"))
-    python = env.subst("$PYTHONEXE")
-    esptool_dir = Path(env.PioPlatform().get_package_dir("tool-esptoolpy"))
-    esptool = esptool_dir / "esptool.py"
     output = build_dir / "merged_firmware.bin"
 
     subprocess.run([
-        python, str(esptool),
+        "pio", "pkg", "exec", "-p", "tool-esptoolpy", "esptool.py", "--",
         "--chip", "ESP32S3",
         "merge_bin",
         "-o", str(output),

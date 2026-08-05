@@ -8,8 +8,20 @@
 .vscode/ipch
 .idea
 .vscode/settings.json
-sdkconfig.*
-!sdkconfig.defaults
-!sdkconfig.TRMNL_X_E1003
+
+# Per-target ESP-IDF sdkconfigs are committed under sdkconfigs/.
+# Root-level sdkconfig files remain local build output.
+/sdkconfig.*
+
+# Menuconfig backup files remain local build output.
+/sdkconfigs/*.old
+
+# These target configs are generated during their respective builds.
+/sdkconfigs/sdkconfig.trmnl
+/sdkconfigs/sdkconfig.trmnl_4clr
+/sdkconfigs/sdkconfig.trmnl_gen2
+/sdkconfigs/sdkconfig.local
+
 managed_components/
 test/integration/test_config.h
+dependencies.lock

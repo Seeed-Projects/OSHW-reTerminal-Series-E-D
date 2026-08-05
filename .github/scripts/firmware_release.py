@@ -409,6 +409,23 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = diy_kit_targets() + (
         group="official",
     ),
     FirmwareTarget(
+        "TRMNL_reTerminal_E1004",
+        "examples/official/TRMNL",
+        tool="platformio",
+        devices=("E1004",),
+        pio_env="seeed_reTerminal_E1004",
+        rebuild_triggers=(
+            ".github/scripts/firmware_release.py",
+            ".github/workflows/build-and-deploy.yml",
+        ),
+        boot_app0_offset=0x13000,
+        app_offset=0x20000,
+        spiffs_offset=0x620000,
+        fixed_version="1.8.10",
+        title="TRMNL for reTerminal E1004",
+        group="official",
+    ),
+    FirmwareTarget(
         "LVGL_StatusPanel_E1001",
         "examples/official/LVGLePaperStatusPanel",
         tool="platformio",

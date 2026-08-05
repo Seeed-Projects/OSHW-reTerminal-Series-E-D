@@ -121,7 +121,7 @@ The Hub currently lists 14 panels from 1.54″ to 13.3″ (mono, flexible, quadr
 |:---------|:-------|:--------|:------------|
 | **Base** | ✅ Ready | E1001 – E1004, EE/EN DIY Kit | Smoke-test demos (RTC, deep sleep, mic recording, touch draw) plus DIY Kit board + panel selection |
 | **ESPHome** | ✅ YAML templates | E1001 – E1004 | Smart home integration with Home Assistant |
-| **TRMNL** | ✅ Ready | E1001 – E1003 | Official TRMNL dashboard firmware for always-on ePaper panels |
+| **TRMNL** | ✅ Ready | E1001 – E1004 | Official TRMNL dashboard firmware for always-on ePaper panels |
 | **EEZ Studio** | ✅ Project template | E1001 – E1004 | Visual LVGL UI design with a downloadable PlatformIO project template |
 | **LVGL** | ✅ Ready | E1001 – E1004 | Ready-to-run LVGL 9.5.0 status dashboard rendered through Seeed_GFX |
 | **Zephyr** | ✅ Official docs | E1001 – E1003 | Official Zephyr RTOS board documentation and local west build/flash workflow |
@@ -218,6 +218,9 @@ pio run -d examples/official/LVGLePaperStatusPanel -e reterminal_e1001
 
 # EEZ Studio template for E1004
 pio run -d examples/official/EEZStudio -e reterminal_e1004
+
+# TRMNL firmware for E1004
+pio run -d examples/official/TRMNL -e seeed_reTerminal_E1004
 ```
 
 TRMNL firmware uses the PlatformIO environments defined in `examples/official/TRMNL/platformio.ini`.
@@ -259,7 +262,7 @@ the Firmware Hub or compiled manually.
 | [`SD_ImagePipeline_E1003`](examples/base/SD_ImagePipeline_E1003/) | E1003 | Display a JPEG/PNG from MicroSD in 16-level grayscale |
 | [`SD_ImagePipeline_E1004`](examples/base/SD_ImagePipeline_E1004/) | E1004 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
 | [`XIAO_EPaper_Hello`](examples/base/XIAO_EPaper_Hello/) | EE02 – EE05, EN04 – EN05 | Hello screen for XIAO ePaper DIY Kit boards, built per board + panel combo with Seeed_GFX |
-| [`TRMNL`](examples/official/TRMNL/) | E1001 – E1003 | Build the official TRMNL dashboard firmware for reTerminal E-Series |
+| [`TRMNL`](examples/official/TRMNL/) | E1001 – E1004 | Build the official TRMNL dashboard firmware for reTerminal E-Series |
 | [`EEZStudio`](examples/official/EEZStudio/) | E1001 – E1004 | Build an LVGL PlatformIO template generated for EEZ Studio workflows |
 | [`LVGLePaperStatusPanel`](examples/official/LVGLePaperStatusPanel/) | E1001 – E1004 | Render a static LVGL 9.5.0 status dashboard with Seeed_GFX |
 | [`ePaper-Voice-Memo`](examples/community/ePaper-Voice-Memo/) | E1001 – E1003 | AI voice memo to compact/card ePaper reminder lists with English/Chinese firmware options |
@@ -318,7 +321,7 @@ Configure GitHub Pages to serve from the `gh-pages` branch. The deployed site is
 - [x] CI/CD pipeline for automated builds and deployment
 - [x] ESPHome YAML template generation for Home Assistant workflows
 - [x] EEZ Studio PlatformIO project template download
-- [x] Official TRMNL firmware entries for E1001, E1002, and E1003
+- [x] Official TRMNL firmware entries for E1001, E1002, E1003, and E1004
 - [x] Official LVGL 9.5.0 status panel firmware entries for E1001, E1002, E1003, and E1004
 - [x] Chinese text demos for E1001, E1002, E1003, and E1004
 - [x] MicroSD image pipeline demos with browser-configurable image options

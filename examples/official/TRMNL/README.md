@@ -5,7 +5,7 @@ This folder contains the TRMNL PlatformIO firmware source used by the Firmware H
 Source snapshot:
 
 - Upstream: https://github.com/usetrmnl/trmnl-firmware
-- Snapshot commit: `7abc83c`
+- Snapshot commit: `64ae0ac`
 - Hub version: `1.8.10`
 
 ## Supported Devices
@@ -15,12 +15,11 @@ Source snapshot:
 | reTerminal E1001 | `seeed_reTerminal_E1001` | `TRMNL_reTerminal_E1001` |
 | reTerminal E1002 | `seeed_reTerminal_E1002` | `TRMNL_reTerminal_E1002` |
 | reTerminal E1003 | `TRMNL_X_E1003` | `TRMNL_reTerminal_E1003` |
-
-reTerminal E1004 is intentionally not enabled for TRMNL in the Firmware Hub.
+| reTerminal E1004 | `seeed_reTerminal_E1004` | `TRMNL_reTerminal_E1004` |
 
 ## CI Build
 
 GitHub Actions builds these targets through `.github/scripts/firmware_release.py`.
-The generated firmware files, manifests, version index, and GitHub Release assets are published automatically from the workflow.
-
-Do not commit generated `.bin` files or generated `web/firmware/` output from this folder.
+The workflow publishes generated firmware files, manifests, the version index,
+and GitHub Release assets. Repository changes stay focused on source and
+configuration files.
