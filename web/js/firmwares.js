@@ -767,7 +767,7 @@ const PLATFORM_CARDS = [
     previewAlt: "ESPHome dashboard preview",
     accent: "#004966",
     highlight: "#8FC31F",
-    supportedDevices: ["E1001", "E1002", "E1003"],
+    supportedDevices: ["E1001", "E1002", "E1003", "E1004"],
     installReady: false,
     bullets: [
       "Home Assistant friendly",
@@ -777,7 +777,7 @@ const PLATFORM_CARDS = [
     versions: [
       {
         version: "2026.7.0",
-        label: "E1003 support",
+        label: "E1003 and E1004 support",
       },
     ],
     configFields: [
@@ -802,8 +802,12 @@ const PLATFORM_CARDS = [
         apSsid: "reTerminal-E1001",
         board: "esp32-s3-devkitc-1",
         framework: "arduino",
+        frameworkOptions: "",
         onBootPriority: 600,
         psramConfig: "",
+        button1Name: "KEY0 Right Green Button",
+        button2Name: "KEY1 Middle Button",
+        button3Name: "KEY2 Left Button",
         headerBanner: `# =============================================================================
 # reTerminal E1001 — ESPHome Full Hardware Example
 # All onboard peripherals enabled in the most basic way
@@ -833,8 +837,12 @@ const PLATFORM_CARDS = [
         apSsid: "reTerminal-E1002",
         board: "esp32-s3-devkitc-1",
         framework: "arduino",
+        frameworkOptions: "",
         onBootPriority: 600,
         psramConfig: "",
+        button1Name: "KEY0 Right Green Button",
+        button2Name: "KEY1 Middle Button",
+        button3Name: "KEY2 Left Button",
         headerBanner: `# =============================================================================
 # reTerminal E1002 — ESPHome Full Hardware Example
 # All onboard peripherals enabled in the most basic way
@@ -869,11 +877,15 @@ const PLATFORM_CARDS = [
         apSsid: "reTerminal-E1003",
         board: "seeed_xiao_esp32s3",
         framework: "esp-idf",
+        frameworkOptions: "",
         onBootPriority: -100,
         psramConfig: `# OPI PSRAM stores the full 16-level grayscale framebuffer.
 # The IT8951 display requires this external memory on E1003.
 psram:
   mode: octal`,
+        button1Name: "KEY0 Right Green Button",
+        button2Name: "KEY1 Middle Button",
+        button3Name: "KEY2 Left Button",
         headerBanner: `# =============================================================================
 # reTerminal E1003 - ESPHome Full Hardware Example
 # All ESPHome-supported onboard peripherals enabled in the most basic way
@@ -897,6 +909,45 @@ psram:
 # Serial debug: UART0 via CH340K USB bridge
 # =============================================================================`,
       },
+      E1004: {
+        deviceName: "reterminal-e1004",
+        friendlyName: "reTerminal_E1004",
+        apSsid: "reTerminal-E1004",
+        board: "seeed_xiao_esp32s3",
+        framework: "esp-idf",
+        frameworkOptions: `    sdkconfig_options:
+      CONFIG_ESP_CONSOLE_UART_NUM: "0"
+      CONFIG_ESP_CONSOLE_UART_TX_GPIO: "43"
+      CONFIG_ESP_CONSOLE_UART_RX_GPIO: "44"`,
+        onBootPriority: -100,
+        psramConfig: `# OPI PSRAM stores the 6-color display framebuffer.
+psram:
+  mode: octal`,
+        button1Name: "KEY0 Right Direction Button",
+        button2Name: "KEY1 Left Direction Button",
+        button3Name: "KEY2 Refresh Button",
+        deepSleepWakeButton: "button_2",
+        headerBanner: `# =============================================================================
+# reTerminal E1004 - ESPHome Full Hardware Example
+# All ESPHome-supported onboard peripherals enabled in the most basic way
+# =============================================================================
+#
+# Hardware list:
+#   1. 13.3" 6-color ePaper display (1200x1600, T133A01)
+#   2. 3x front buttons (GPIO3, GPIO4, GPIO5)
+#   3. Buzzer (GPIO45, PWM)
+#   4. Onboard LED (GPIO48)
+#   5. Battery voltage (GPIO1 ADC + GPIO21 EN)
+#   6. SHT4x temp & humidity sensor (I2C)
+#   7. PCF8563 RTC (I2C addr 0x51, CR1220 backup)
+#   8. MicroSD card slot (SPI + DET=15, EN=16)
+#   9. Deep sleep with GPIO4 button wake-up
+#
+# Requires ESPHome >= 2026.7.0 for the epaper_spi E1004 model.
+#
+# Serial debug: UART0 via CH340K USB bridge
+# =============================================================================`,
+      },
     },
     templateHeader: `{{headerBanner}}
 substitutions:
@@ -915,6 +966,7 @@ esp32:
   board: {{board}}
   framework:
     type: {{framework}}
+{{frameworkOptions}}
 
 {{psramConfig}}
 
@@ -1147,6 +1199,39 @@ display:
           mode: GC16`],
             },
           },
+          E1004: {
+            contributes: {
+              display: `# =============================================================================
+# [1] ePaper display (13.3" 6-color, 1200x1600, T133A01)
+# Requires ESPHome >= 2026.7.0
+# =============================================================================
+
+display:
+  - platform: epaper_spi
+    id: epaper_display
+    spi_id: epaper_spi_bus
+    model: seeed-reterminal-e1004
+    update_interval: 300s
+    lambda: |-
+      const auto BLACK   = Color(0,   0,   0,   0);
+      const auto RED     = Color(255, 0,   0,   0);
+      const auto GREEN   = Color(0,   255, 0,   0);
+      const auto BLUE    = Color(0,   0,   255, 0);
+      const auto YELLOW  = Color(255, 255, 0,   0);
+
+      ESP_LOGD("display", "=== ePaper display refresh ===");
+      it.fill(Color::WHITE);
+
+      it.printf(600, 35, id(font_large), BLUE, TextAlign::TOP_CENTER,
+                "reTerminal E1004 Dashboard");
+      it.line(60, 110, 1140, 110, BLACK);
+
+{{displayLambda}}
+
+      it.printf(600, 1540, id(font_small), BLUE, TextAlign::TOP_CENTER,
+                "Selected reTerminal hardware features enabled");`,
+            },
+          },
         },
       },
       {
@@ -1156,40 +1241,40 @@ display:
         description: "Three active-low GPIO buttons exposed as binary sensors",
         requires: [],
         contributes: {
-          binarySensors: [`  # KEY0: right green button / 右侧绿色按键
+          binarySensors: [`  # KEY0 (GPIO3)
   - platform: gpio
     pin:
       number: GPIO3
 {{buttonKey0SharedPin}}      mode: INPUT
       inverted: true
     id: button_1
-    name: "KEY0 Right Green Button"
+    name: "{{button1Name}}"
     filters:
       - delayed_on: 20ms
       - delayed_off: 20ms
     on_press:
       then:
-        - logger.log: "KEY0 (GPIO3) pressed"`, `  # KEY1: middle button / 中间按键
+        - logger.log: "KEY0 (GPIO3) pressed"`, `  # KEY1 (GPIO4)
   - platform: gpio
     pin:
       number: GPIO4
-      mode: INPUT
+{{buttonKey1SharedPin}}      mode: INPUT
       inverted: true
     id: button_2
-    name: "KEY1 Middle Button"
+    name: "{{button2Name}}"
     filters:
       - delayed_on: 20ms
       - delayed_off: 20ms
     on_press:
       then:
-        - logger.log: "KEY1 (GPIO4) pressed"`, `  # KEY2: left button / 左侧按键
+        - logger.log: "KEY1 (GPIO4) pressed"`, `  # KEY2 (GPIO5)
   - platform: gpio
     pin:
       number: GPIO5
       mode: INPUT
       inverted: true
     id: button_3
-    name: "KEY2 Left Button"
+    name: "{{button3Name}}"
     filters:
       - delayed_on: 20ms
       - delayed_off: 20ms
@@ -1218,6 +1303,14 @@ display:
       it.printf(100, 1110, id(font_small), Color::BLACK, "KEY0 GPIO3: Right green button");
       it.printf(100, 1150, id(font_small), Color::BLACK, "KEY1 GPIO4: Middle button");
       it.printf(100, 1190, id(font_small), Color::BLACK, "KEY2 GPIO5: Left button");`,
+            },
+          },
+          E1004: {
+            contributes: {
+              displayLambda: `      it.line(60, 1180, 1140, 1180, BLACK);
+      it.printf(80, 1220, id(font_medium), BLACK, "GPIO3: Right direction button");
+      it.printf(80, 1280, id(font_medium), BLACK, "GPIO4: Left direction button");
+      it.printf(80, 1340, id(font_medium), BLACK, "GPIO5: Refresh button");`,
             },
           },
         },
@@ -1282,6 +1375,19 @@ display:
               outputs: [`  # [4] Onboard LED (active low) / 板载 LED（低电平有效）
   - platform: gpio
     pin: GPIO16
+    id: bsp_led
+    inverted: true`, `  # [3] Buzzer PWM output
+  - platform: ledc
+    pin: GPIO45
+    id: buzzer_pwm
+    frequency: 1000Hz`],
+            },
+          },
+          E1004: {
+            contributes: {
+              outputs: [`  # [4] Onboard LED (active low)
+  - platform: gpio
+    pin: GPIO48
     id: bsp_led
     inverted: true`, `  # [3] Buzzer PWM output
   - platform: ledc
@@ -1401,6 +1507,24 @@ display:
       }`,
             },
           },
+          E1004: {
+            contributes: {
+              outputs: [`  # [5] Battery measurement enable
+  - platform: gpio
+    pin: GPIO21
+    id: bsp_battery_enable`],
+              onBoot: [`      # Turn on battery measurement circuit
+      - output.turn_on: bsp_battery_enable`],
+              displayLambda: `      if (id(battery_level).has_state()) {
+        ESP_LOGD("display", "Battery: %.0f%%  Voltage: %.2fV",
+                 id(battery_level).state, id(battery_voltage).state);
+        it.printf(80, 500, id(font_medium), YELLOW, "Battery: %.0f%%  (%.2fV)",
+                  id(battery_level).state, id(battery_voltage).state);
+      } else {
+        it.printf(80, 500, id(font_medium), YELLOW, "Battery: --");
+      }`,
+            },
+          },
         },
       },
       {
@@ -1487,6 +1611,31 @@ display:
       }`,
             },
           },
+          E1004: {
+            contributes: {
+              onBoot: [`      # Take the first temperature and humidity reading
+      - component.update: sht4x_sensor
+      - wait_until:
+          condition:
+            lambda: return id(temp_sensor).has_state() && id(hum_sensor).has_state();
+          timeout: 5s`],
+              displayLambda: `      if (id(temp_sensor).has_state()) {
+        ESP_LOGD("display", "Temperature: %.1f C", id(temp_sensor).state);
+        it.printf(80, 260, id(font_large), RED, "Temp: %.1f C", id(temp_sensor).state);
+      } else {
+        ESP_LOGW("display", "Temperature: NO DATA");
+        it.printf(80, 260, id(font_large), RED, "Temp: -- C");
+      }
+
+      if (id(hum_sensor).has_state()) {
+        ESP_LOGD("display", "Humidity: %.1f %%", id(hum_sensor).state);
+        it.printf(80, 370, id(font_large), GREEN, "Hum:  %.1f %%", id(hum_sensor).state);
+      } else {
+        ESP_LOGW("display", "Humidity: NO DATA");
+        it.printf(80, 370, id(font_large), GREEN, "Hum:  -- %%");
+      }`,
+            },
+          },
         },
       },
       {
@@ -1559,6 +1708,21 @@ display:
       }`,
             },
           },
+          E1004: {
+            contributes: {
+              displayLambda: `      auto now = id(rtc_time).now();
+      if (now.is_valid()) {
+        it.strftime(600, 140, id(font_medium), BLACK, TextAlign::TOP_CENTER,
+                    "%Y-%m-%d  %H:%M", now);
+        ESP_LOGD("display", "RTC time: %04d-%02d-%02d %02d:%02d",
+                 now.year, now.month, now.day_of_month, now.hour, now.minute);
+      } else {
+        it.printf(600, 140, id(font_medium), BLACK, TextAlign::TOP_CENTER,
+                  "RTC: waiting for sync...");
+        ESP_LOGW("display", "RTC: not synced yet");
+      }`,
+            },
+          },
         },
       },
       {
@@ -1566,6 +1730,7 @@ display:
         label: "PDM microphone",
         defaultChecked: true,
         description: "Onboard PDM microphone power and I2S audio input",
+        supportedDevices: ["E1001", "E1002", "E1003"],
         requires: [],
         contributes: {
           buses: ["i2s_audio"],
@@ -1689,6 +1854,10 @@ touchscreen:
         perDevice: {
           E1002: {
             contributes: {
+              outputs: [`  # [9] SD card power enable / SD 卡供电使能
+  - platform: gpio
+    pin: GPIO16
+    id: bsp_sd_enable`],
               displayLambda: `      // ---- SD card status (BLACK) / SD 卡状态（黑色）----
       if (id(sd_card_detect).state) {
         it.printf(30, 305, id(font_small), BLACK, "SD Card: inserted");
@@ -1718,13 +1887,26 @@ touchscreen:
       }`,
             },
           },
+          E1004: {
+            contributes: {
+              outputs: [`  # [9] SD card power enable
+  - platform: gpio
+    pin: GPIO16
+    id: bsp_sd_enable`],
+              displayLambda: `      if (id(sd_card_detect).state) {
+        it.printf(80, 620, id(font_medium), BLACK, "SD Card: inserted");
+      } else {
+        it.printf(80, 620, id(font_medium), BLACK, "SD Card: not detected");
+      }`,
+            },
+          },
         },
       },
       {
         id: "deep_sleep",
         label: "Deep sleep",
         defaultChecked: true,
-        description: "Deep sleep with KEY0 (GPIO3) ext1 wake-up",
+        description: "Deep sleep with the device-specific front-button wake source",
         requires: [],
         contributes: {},
         perDevice: {
@@ -1746,7 +1928,7 @@ deep_sleep:
   esp32_ext1_wakeup:
     pins:
       - number: GPIO3
-{{deepSleepKey0SharedPin}}        mode: INPUT_PULLUP
+{{deepSleepWakeSharedPin}}        mode: INPUT_PULLUP
     mode: ANY_LOW`,
             },
           },
@@ -1770,7 +1952,7 @@ deep_sleep:
   esp32_ext1_wakeup:
     pins:
       - number: GPIO3
-{{deepSleepKey0SharedPin}}        mode: INPUT_PULLUP
+{{deepSleepWakeSharedPin}}        mode: INPUT_PULLUP
     mode: ANY_LOW`,
             },
           },
@@ -1789,7 +1971,26 @@ deep_sleep:
   esp32_ext1_wakeup:
     pins:
       - number: GPIO3
-{{deepSleepKey0SharedPin}}        mode: INPUT_PULLUP
+{{deepSleepWakeSharedPin}}        mode: INPUT_PULLUP
+    mode: ANY_LOW`,
+            },
+          },
+          E1004: {
+            contributes: {
+              deepSleep: `# =============================================================================
+# [9] Deep sleep
+# The device wakes, updates sensors and display, then sleeps.
+# Press the front GPIO4 direction button to wake manually at any time.
+# =============================================================================
+
+deep_sleep:
+  id: deep_sleep_1
+  run_duration: 150s
+  sleep_duration: 5min
+  esp32_ext1_wakeup:
+    pins:
+      - number: GPIO4
+{{deepSleepWakeSharedPin}}        mode: INPUT_PULLUP
     mode: ANY_LOW`,
             },
           },

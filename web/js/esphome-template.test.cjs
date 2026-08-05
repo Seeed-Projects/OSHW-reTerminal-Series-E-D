@@ -7,7 +7,7 @@ const {
 
 const esphome = PLATFORM_CARDS.find((platform) => platform.id === "esphome");
 assert.ok(esphome, "ESPHome platform exists");
-assert.deepEqual(esphome.supportedDevices, ["E1001", "E1002", "E1003"]);
+assert.deepEqual(esphome.supportedDevices, ["E1001", "E1002", "E1003", "E1004"]);
 
 const allOptionIds = esphome.templateOptions.map((option) => option.id);
 
@@ -150,6 +150,39 @@ assert.doesNotMatch(e1003All, /pin: GPIO16\n    id: bsp_sd_enable/);
 assert.doesNotMatch(e1003All, /pin: GPIO21\n    id: bsp_battery_enable/);
 assertNoDuplicateTopLevelKeys(e1003All);
 
+const e1004All = buildEsphomeTemplateContent(esphome, allOptionIds, "E1004");
+assert.match(e1004All, /^  board: seeed_xiao_esp32s3$/m);
+assert.match(e1004All, /^    type: esp-idf$/m);
+assert.match(e1004All, /^    priority: -100$/m);
+assert.match(e1004All, /CONFIG_ESP_CONSOLE_UART_NUM: "0"/);
+assert.match(e1004All, /CONFIG_ESP_CONSOLE_UART_TX_GPIO: "43"/);
+assert.match(e1004All, /CONFIG_ESP_CONSOLE_UART_RX_GPIO: "44"/);
+assert.match(e1004All, /^psram:\n  mode: octal$/m);
+assert.match(e1004All, /platform: epaper_spi/);
+assert.match(e1004All, /model: seeed-reterminal-e1004/);
+assert.match(e1004All, /update_interval: 300s/);
+assert.match(e1004All, /pin: GPIO48\n    id: bsp_led/);
+assert.match(e1004All, /pin: GPIO16\n    id: bsp_sd_enable/);
+assert.match(e1004All, /pin: GPIO21\n    id: bsp_battery_enable/);
+assert.match(e1004All, /pin: GPIO45\n    id: buzzer_pwm/);
+assert.match(e1004All, /number: GPIO3\n      mode: INPUT[\s\S]*id: button_1/);
+assert.match(e1004All, /number: GPIO4\n      allow_other_uses: true\n      mode: INPUT[\s\S]*id: button_2/);
+assert.match(e1004All, /name: "KEY0 Right Direction Button"/);
+assert.match(e1004All, /name: "KEY1 Left Direction Button"/);
+assert.match(e1004All, /name: "KEY2 Refresh Button"/);
+assert.match(
+  e1004All,
+  /esp32_ext1_wakeup:\n    pins:\n      - number: GPIO4\n        allow_other_uses: true/
+);
+assert.equal((e1004All.match(/allow_other_uses: true/g) || []).length, 2);
+assert.match(e1004All, /it\.printf\(600, 35, id\(font_large\), BLUE/);
+assert.match(e1004All, /it\.printf\(80, 260, id\(font_large\), RED, "Temp: %\.1f C"/);
+assert.doesNotMatch(e1004All, /^i2s_audio:$/m);
+assert.doesNotMatch(e1004All, /^microphone:$/m);
+assert.doesNotMatch(e1004All, /^touchscreen:$/m);
+assert.doesNotMatch(e1004All, /id: mic_power_enable/);
+assertNoDuplicateTopLevelKeys(e1004All);
+
 const e1003DashboardOnly = buildEsphomeTemplateContent(
   esphome,
   ["wifi_ota", "ha_api", "display"],
@@ -215,6 +248,25 @@ assert.match(
   /number: GPIO3\n        allow_other_uses: true\n        mode: INPUT_PULLUP/
 );
 
+const e1004ButtonsWithDeepSleep = buildEsphomeTemplateContent(
+  esphome,
+  ["buttons", "deep_sleep"],
+  "E1004"
+);
+assert.equal((e1004ButtonsWithDeepSleep.match(/allow_other_uses: true/g) || []).length, 2);
+assert.match(
+  e1004ButtonsWithDeepSleep,
+  /number: GPIO4\n      allow_other_uses: true\n      mode: INPUT/
+);
+assert.match(
+  e1004ButtonsWithDeepSleep,
+  /number: GPIO4\n        allow_other_uses: true\n        mode: INPUT_PULLUP/
+);
+assert.doesNotMatch(
+  e1004ButtonsWithDeepSleep,
+  /number: GPIO3\n      allow_other_uses: true/
+);
+
 const e1003SingleOptionExpectations = {
   wifi_ota: [/^ota:/m, /^wifi:/m, /^captive_portal:/m],
   ha_api: [/^api:/m],
@@ -246,6 +298,38 @@ Object.entries(e1003SingleOptionExpectations).forEach(([optionId, patterns]) => 
   assertNoDuplicateTopLevelKeys(yaml);
 });
 
+const e1004SingleOptionExpectations = {
+  wifi_ota: [/^ota:/m, /^wifi:/m, /^captive_portal:/m],
+  ha_api: [/^api:/m],
+  display: [/^spi:/m, /^display:/m, /model: seeed-reterminal-e1004/],
+  buttons: [/^binary_sensor:/m, /id: button_1/, /id: button_2/, /id: button_3/],
+  buzzer_led: [
+    /^output:/m,
+    /^light:/m,
+    /pin: GPIO48\n    id: bsp_led/,
+    /pin: GPIO45\n    id: buzzer_pwm/,
+  ],
+  battery: [/^output:/m, /^sensor:/m, /pin: GPIO21\n    id: bsp_battery_enable/],
+  temp_humidity: [/^i2c:/m, /^sensor:/m, /platform: sht4x/],
+  rtc: [/^i2c:/m, /^time:/m, /^api:/m, /platform: pcf8563/],
+  sd_detect: [/^spi:/m, /^output:/m, /^binary_sensor:/m, /pin: GPIO16\n    id: bsp_sd_enable/],
+  deep_sleep: [/^deep_sleep:/m, /number: GPIO4/],
+};
+
+Object.entries(e1004SingleOptionExpectations).forEach(([optionId, patterns]) => {
+  const yaml = buildEsphomeTemplateContent(esphome, [optionId], "E1004");
+  patterns.forEach((pattern) => assert.match(yaml, pattern, `${optionId} is missing ${pattern}`));
+  assertNoDuplicateTopLevelKeys(yaml);
+});
+
+const e1004UnsupportedOptions = buildEsphomeTemplateContent(
+  esphome,
+  ["microphone", "touchscreen"],
+  "E1004"
+);
+assert.doesNotMatch(e1004UnsupportedOptions, /^i2s_audio:|^microphone:|^touchscreen:|^display:/m);
+assertNoDuplicateTopLevelKeys(e1004UnsupportedOptions);
+
 assert.doesNotMatch(
   buildEsphomeTemplateContent(esphome, ["buttons"], "E1003"),
   /^light:|id: bsp_led|id: buzzer_pwm/m
@@ -259,6 +343,7 @@ const ledPinByDevice = {
   E1001: "GPIO6",
   E1002: "GPIO6",
   E1003: "GPIO16",
+  E1004: "GPIO48",
 };
 
 Object.entries(ledPinByDevice).forEach(([deviceId, pin]) => {
@@ -283,7 +368,7 @@ for (const deviceId of esphome.supportedDevices) {
     testedCombinationCount += 1;
   }
 }
-assert.equal(testedCombinationCount, 8192);
+assert.equal(testedCombinationCount, 9216);
 
 const tempWithoutDisplay = buildEsphomeTemplateContent(esphome, ["temp_humidity"], "E1001");
 assert.match(tempWithoutDisplay, /platform: sht4x\n    id: sht4x_sensor/);
