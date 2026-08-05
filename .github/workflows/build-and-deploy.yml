@@ -301,7 +301,7 @@ jobs:
 
       - name: Install PlatformIO
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install platformio
+        run: pip install platformio rich-click
 
       - name: Build firmware
         if: steps.cache.outputs.cache-hit != 'true'
