@@ -211,6 +211,13 @@ empty, and provide `externalTool`. The Hub shows a Step 2 button that opens the
 official firmware, documentation, or toolbox page and skips the local flashing step. See
 [Official tool platforms](#official-tool-platforms) for the field reference.
 
+Flash-mode cards automatically show an anonymous install count for each
+platform and device combination. The Hub reports the event after Web Serial
+finishes writing successfully, or after a UF2 file is written directly to the
+selected `XIAO-BOOT` drive. Template, download, and official-tool workflows
+keep their existing card presentation because the Hub cannot confirm the final
+device installation inside those external workflows.
+
 Most official platforms that require per-user customization (such as ESPHome,
 where every user's display layout and sensor setup is different) should use
 template mode.
@@ -445,6 +452,9 @@ register build targets. The Hub builds and flashes the binary.
 `templateOptions` with `snippet` fields. The Hub generates a configuration file
 for the user to preview, copy, or download. See
 [Template mode platforms](#template-mode-platforms) for the full reference.
+
+Flash-mode cards automatically receive the same per-platform, per-device
+successful-install count used by official flash-mode cards.
 
 ### 1. Add source code
 

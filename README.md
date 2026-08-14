@@ -79,6 +79,12 @@ Each selected workflow has a shareable URL. Platform and device links use `?plat
 
 Compatible platform cards include direct Seeed Studio Wiki shortcuts for platform-specific setup tutorials where available.
 
+Cards for workflows that the Hub can install directly show a compact anonymous
+install count. The count increases after a successful browser flash or a
+successful direct write to `XIAO-BOOT`; each platform and device combination
+has its own total. Statistics are served by the shared firmware install stats
+service and stay hidden when that service is unavailable.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Supported Hardware
@@ -290,6 +296,7 @@ OSHW-reTerminal-Series-E-D/
 │   ├── js/
 │   │   ├── app.js              # UI logic, Web Serial monitor, flash events
 │   │   ├── esphome-template.js # ESPHome YAML template generator
+│   │   ├── firmware-install-stats.js # Anonymous successful-install counters
 │   │   └── firmwares.js        # Device and platform data definitions
 │   └── assets/
 │       ├── brand/              # Logo and icons
@@ -320,6 +327,7 @@ Configure GitHub Pages to serve from the `gh-pages` branch. The deployed site is
 - [x] Base demo firmware (RTC, deep sleep, mic, touch draw)
 - [x] Browser-based flashing via ESP Web Tools
 - [x] Standard flash and erase-then-flash install modes
+- [x] Anonymous successful-install counts on supported firmware cards
 - [x] Built-in serial monitor
 - [x] CI/CD pipeline for automated builds and deployment
 - [x] ESPHome YAML template generation for Home Assistant workflows
