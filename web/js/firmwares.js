@@ -387,6 +387,15 @@ function groupSupportedHardware(hardwareIds) {
   })).filter((group) => group.items.length > 0);
 }
 
+// Returns the platform workflows available for one hardware id.
+// 返回指定硬件可使用的平台工作流。
+function getCompatiblePlatforms(hardwareId) {
+  if (!hardwareId) return [];
+  return PLATFORM_CARDS.filter((platform) =>
+    platform.supportedDevices.includes(hardwareId)
+  );
+}
+
 const PLATFORM_GROUPS = [
   {
     id: "official",
@@ -2577,5 +2586,6 @@ if (typeof module !== "undefined") {
     getCompatiblePanels,
     resolveComboFirmwareId,
     groupSupportedHardware,
+    getCompatiblePlatforms,
   };
 }

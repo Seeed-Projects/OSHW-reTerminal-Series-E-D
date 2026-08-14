@@ -4,6 +4,7 @@ const {
   BOARDS,
   PANELS,
   getCompatiblePanels,
+  getCompatiblePlatforms,
   groupSupportedHardware,
   isDriverBoard,
   getHardware,
@@ -170,6 +171,25 @@ assert.deepEqual(
   groupSupportedHardware(arduino.supportedDevices).map((group) => group.id),
   ["reterminal", "EE", "EN"]
 );
+
+assert.deepEqual(
+  getCompatiblePlatforms("E1004").map((platform) => platform.id),
+  ["base", "esphome", "trmnl", "eezstudio", "lvgl-epaper-status-panel", "photoframe"]
+);
+assert.deepEqual(
+  getCompatiblePlatforms("EE04").map((platform) => platform.id),
+  ["base"]
+);
+assert.deepEqual(getCompatiblePlatforms("UNKNOWN"), []);
+
+for (const platform of PLATFORM_CARDS) {
+  for (const hardwareId of platform.supportedDevices) {
+    assert.ok(
+      getCompatiblePlatforms(hardwareId).includes(platform),
+      `${hardwareId} resolves back to ${platform.id}`
+    );
+  }
+}
 
 for (const panel of PANELS) {
   assert.ok(panel.image, `${panel.id} has an image`);
