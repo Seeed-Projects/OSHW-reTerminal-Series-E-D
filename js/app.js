@@ -23,6 +23,7 @@ let pendingSerialTrimmed = false;
 let firmwareVersions = {};
 let firmwareCatalogLoaded = false;
 let firmwareRouteDataLoaded = false;
+let firmwareInstallStats = null;
 const monitorDecoder = new TextDecoder();
 const DEFAULT_FIRMWARE_VERSION = "latest";
 const FIRMWARE_CACHE_BUSTER = String(Date.now());
@@ -30,6 +31,7 @@ const FIRMWARE_CACHE_BUSTER = String(Date.now());
 document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
   void loadFirmwareVersions();
+  initializeFirmwareInstallStats();
   renderHardwareCards();
   renderFlowState();
   bindFlowEvents();
@@ -43,6 +45,52 @@ function checkBrowser() {
     const el = document.getElementById("browserWarning");
     if (el) el.classList.add("is-visible");
   }
+}
+
+function initializeFirmwareInstallStats() {
+  const config = document.getElementById("firmwareStatsConfig");
+  const apiUrl = config?.dataset.apiUrl || "";
+  if (typeof createFirmwareInstallStatsClient !== "function") return;
+  firmwareInstallStats = createFirmwareInstallStatsClient({ apiUrl });
+}
+
+function loadRenderedFirmwareInstallCounts(root = document) {
+  if (!firmwareInstallStats) return;
+  void firmwareInstallStats.loadCounts(root);
+}
+
+function getCurrentInstallStatsIdentity() {
+  if (
+    !firmwareInstallStats
+    || typeof supportsFirmwareInstallStats !== "function"
+    || typeof createFirmwareStatsId !== "function"
+    || !supportsFirmwareInstallStats(selectedPlatform, selectedDevice)
+  ) {
+    return null;
+  }
+
+  const firmwareId = createFirmwareStatsId(selectedPlatform.id, selectedDevice.id);
+  if (!firmwareId) return null;
+  return {
+    firmwareId,
+    version: selectedVersion?.version
+      || selectedFirmwareOption?.defaultVersion
+      || DEFAULT_FIRMWARE_VERSION,
+  };
+}
+
+// Starts a signed session before writing and completes it only after a confirmed install.
+// 在写入前创建签名会话，并且只在确认安装成功后完成计数。
+function beginCurrentInstallStats() {
+  const identity = getCurrentInstallStatsIdentity();
+  return identity ? firmwareInstallStats.beginInstall(identity) : null;
+}
+
+function completeCurrentInstallStats(sessionPromise) {
+  if (!sessionPromise || !firmwareInstallStats) return;
+  void Promise.resolve(sessionPromise).then((token) =>
+    firmwareInstallStats?.completeInstall(token)
+  );
 }
 
 function getDevice(deviceId) {
@@ -327,6 +375,28 @@ function renderPlatformCreditMeta(platform, className = "", showWiki = true) {
   return `<div class="${metaClassName}">${author}${source}${wiki}</div>`;
 }
 
+function renderFirmwareInstallCount(platform, hardware) {
+  if (
+    typeof supportsFirmwareInstallStats !== "function"
+    || typeof createFirmwareStatsId !== "function"
+    || !supportsFirmwareInstallStats(platform, hardware)
+  ) {
+    return "";
+  }
+
+  const firmwareId = createFirmwareStatsId(platform.id, hardware.id);
+  if (!firmwareId) return "";
+  return `
+    <span class="firmware-install-count" data-firmware-install-count data-firmware-id="${firmwareId}" aria-hidden="true" aria-live="polite">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span data-firmware-install-value>0</span>
+      <span data-firmware-install-label>installs</span>
+    </span>
+  `;
+}
+
 function renderCompatiblePlatformCard(platform, hardware) {
   return `
     <article class="compatible-platform-card" style="--platform-accent:${platform.accent};--platform-highlight:${platform.highlight};">
@@ -340,6 +410,7 @@ function renderCompatiblePlatformCard(platform, hardware) {
         </span>
         <span class="compatible-platform-action">Choose</span>
       </button>
+      ${renderFirmwareInstallCount(platform, hardware)}
       ${renderPlatformCreditMeta(platform, "compatible-platform-meta")}
     </article>
   `;
@@ -452,6 +523,9 @@ function renderHardwareCards() {
       selectPlatformDevice(btn.dataset.platform, btn.dataset.device);
     });
   });
+
+  const expandedCard = container.querySelector(".hardware-card.is-expanded");
+  if (expandedCard) loadRenderedFirmwareInstallCounts(expandedCard);
 }
 
 function collapseHardwareCards() {
@@ -1291,6 +1365,7 @@ async function writeUf2ToDrive() {
   try {
     appendLog("[uf2] Choose the XIAO-BOOT drive…");
     const dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+    const installSessionPromise = beginCurrentInstallStats();
     appendLog("[uf2] Downloading firmware…");
     const response = await fetch(uf2Url);
     if (!response.ok) throw new Error(`UF2 download failed: ${response.status}`);
@@ -1300,6 +1375,7 @@ async function writeUf2ToDrive() {
     const writable = await fileHandle.createWritable();
     await writable.write(data);
     await writable.close();
+    completeCurrentInstallStats(installSessionPromise);
     appendLog(`[uf2] Wrote ${filename} to ${selectedDevice.uf2VolumeLabel || "XIAO-BOOT"}. The board should reboot automatically.`);
   } catch (error) {
     if (error?.name === "AbortError") {
@@ -1366,6 +1442,7 @@ async function flashDevice() {
   if (flashBtn) flashBtn.disabled = true;
 
   let transport = null;
+  let installSessionPromise = null;
   try {
     // Reuse the monitor port if already connected; otherwise prompt the user.
     // Validate that a cached port is still physically present before reusing it.
@@ -1437,6 +1514,7 @@ async function flashDevice() {
     setProgress("flash", 8, "Connecting to device");
     await esploader.main();
     await esploader.flashId();
+    installSessionPromise = beginCurrentInstallStats();
     const chip = esploader.chip.CHIP_NAME;
     appendLog(`[flash] Connected: ${chip}`);
 
@@ -1509,6 +1587,7 @@ async function flashDevice() {
     });
 
     appendLog("[flash] Firmware installed successfully!");
+    completeCurrentInstallStats(installSessionPromise);
     setProgress("flash", 98, "Resetting device");
 
     // Hard reset asserts RTS, then releases the chip through esptool-js.

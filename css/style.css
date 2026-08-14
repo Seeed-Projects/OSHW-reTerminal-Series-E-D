@@ -864,6 +864,35 @@ body:not(.has-selection) .hero-step[data-step="1"] small,
   font-weight: 750;
   white-space: nowrap;
 }
+.firmware-install-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  visibility: hidden;
+  opacity: 0;
+  margin: -3px 14px 8px;
+  padding-left: 64px;
+  color: #617074;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  transform: translateY(2px);
+  transition: opacity .18s ease, transform .18s ease;
+}
+.firmware-install-count svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+.firmware-install-count.is-visible {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
+.firmware-install-count.is-unavailable {
+  display: none;
+}
 .compatible-platform-meta {
   margin: -3px 14px 13px;
   margin-top: auto;
@@ -1485,7 +1514,7 @@ pre#log {
   :root { --frame: min(90%, 1280px); }
 }
 
-@media (max-width: 1080px), (max-height: 680px) {
+@media (max-width: 1180px), (max-height: 680px) {
   :root { --frame: 90%; }
   .app {
     grid-template-columns: 1fr;
@@ -1581,6 +1610,7 @@ pre#log {
     margin-top: -5px;
     padding-left: 60px;
   }
+  .firmware-install-count { padding-left: 60px; }
   .platform-group-head {
     align-items: flex-start;
     flex-direction: column;
