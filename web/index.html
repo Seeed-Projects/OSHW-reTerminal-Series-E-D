@@ -6,7 +6,7 @@
   <title>reTerminal E-Series Firmware Hub</title>
   <meta name="description" content="Flash ESP32-S3 firmware to your reTerminal E-Series device directly from the browser. No IDE setup required.">
   <meta name="google-site-verification" content="Co1JUCd0H_hWpJomDLHoAQ5Pp_xolIw13Jx7ItUyc2o" />
-  <link rel="stylesheet" href="css/style.css?v=20260630-zephyr-official-docs">
+  <link rel="stylesheet" href="css/style.css?v=20260814-device-first-platforms">
 </head>
 <body>
   <div class="page-backdrop" aria-hidden="true"></div>
@@ -50,7 +50,7 @@
         <div class="hero-copy">
           <p class="eyebrow">Browser firmware console</p>
           <h1 id="pageTitle">Flash reTerminal E-Series demos without leaving the browser.</h1>
-          <p class="hero-sub">Choose a product path, prepare the matching firmware, and monitor serial output from one focused workspace.</p>
+          <p class="hero-sub">Choose your device, select a compatible platform, and monitor serial output from one focused workspace.</p>
           <div class="hero-steps" aria-label="Firmware Hub workflow">
             <span class="hero-step" data-step="1"><b>01</b><small>Choose</small></span>
             <span class="hero-step" data-step="2"><b>02</b><small>Configure</small></span>
@@ -76,8 +76,8 @@
         <div class="col-head">
           <div class="col-head-titles">
             <p class="eyebrow">Step 1</p>
-            <h2>Select platform</h2>
-            <p class="col-sub">Choose the product experience you want to start with. Device and firmware options appear inside each platform.</p>
+            <h2>Select device</h2>
+            <p class="col-sub">Choose your reTerminal or driver board first. Compatible platform workflows appear inside each device.</p>
           </div>
         </div>
 
@@ -86,15 +86,15 @@
           <span>Open this page over HTTPS or localhost in desktop Chrome or Edge.</span>
         </div>
 
-        <div class="platform-grid" id="platformGrid"></div>
+        <div class="hardware-grid" id="hardwareGrid"></div>
       </article>
 
       <article class="panel selected-panel step-panel is-hidden" id="selectedPanel">
         <div class="panel-heading">
           <div>
-            <h2>Selected platform</h2>
+            <h2>Selected setup</h2>
           </div>
-          <button class="button button-secondary button-small" id="changePlatformButton" type="button">Back</button>
+          <button class="button button-secondary button-small" id="changeSelectionButton" type="button">Change selection</button>
         </div>
         <div class="selected-release" id="selectedRelease"></div>
       </article>
@@ -285,9 +285,9 @@
   <script src="js/log-buffer.js?v=20260608-log-throttle-2"></script>
   <script src="js/serial-port-label.js?v=20260608-port-label"></script>
   <script src="js/route-state.js?v=20260805-shareable-workflow-routes"></script>
-  <script src="js/firmwares.js?v=20260805-esphome-e1004"></script>
+  <script src="js/firmwares.js?v=20260814-device-first-platforms"></script>
   <script src="js/esphome-template.js?v=20260805-esphome-e1004"></script>
-  <script src="js/app.js?v=20260805-shareable-workflow-routes"></script>
+  <script src="js/app.js?v=20260814-device-first-platforms"></script>
 
 </body>
 </html>

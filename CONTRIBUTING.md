@@ -686,7 +686,7 @@ the source project into the file referenced by `downloadUrl`.
 
 Use official tool mode when an upstream platform maintains the firmware
 installer, documentation, browser toolbox, or configuration flow. The Hub shows the selected
-platform and device, then uses Step 2 to link users to that official workflow.
+device and platform, then uses Step 2 to link users to that official workflow.
 
 ### Official tool platform fields
 

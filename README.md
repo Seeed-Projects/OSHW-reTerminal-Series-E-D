@@ -67,8 +67,8 @@
 
 The **reTerminal E-Series Firmware Hub** is a browser-based tool that lets you flash firmware, export templates, download project templates, or open official platform tools for Seeed Studio's reTerminal E-Series ePaper devices in a focused guided flow:
 
-1. **Select a platform** — choose from official platforms, Base demos, or community projects
-2. **Configure the workflow** — pick a device, firmware version, template options, install mode, downloadable project template, or official toolbox
+1. **Select a device** — choose a reTerminal E-Series product or XIAO ePaper DIY Kit driver board
+2. **Choose a compatible platform and configure the workflow** — select an official or community platform, then pick firmware, template options, install mode, a downloadable project template, or an official toolbox
 3. **Flash, export, build locally, or continue with the official tool** — write firmware over USB, export an ESPHome YAML file, download a PlatformIO project template, or open an upstream platform toolbox
 
 A built-in **serial monitor** lets you view real-time device logs, choose the baud rate, pause the visible stream, and save the retained recent log without leaving the page.
@@ -77,7 +77,7 @@ Browser-flashable workflows run directly from the page. Template and download wo
 
 Each selected workflow has a shareable URL. Platform and device links use `?platform=esphome&device=E1004`; flashable workflows also preserve the selected firmware, version, and DIY Kit panel, for example `?platform=base&device=EE04&firmware=XIAO_EPaper_Hello&version=latest&panel=P073_SP6`. Opening the link restores the same workflow directly.
 
-Official platform cards include direct Seeed Studio Wiki shortcuts for platform-specific setup tutorials where available.
+Compatible platform cards include direct Seeed Studio Wiki shortcuts for platform-specific setup tutorials where available.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -152,11 +152,11 @@ Firmware projects are built with Arduino CLI or PlatformIO, depending on the tar
 
 ### Use the Firmware Hub
 
-The quickest way to get started is to follow the path shown by the selected platform:
+The quickest way to get started is to follow the path shown for your device:
 
 1. Open the **[Firmware Hub](https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/)** in **Chrome** or **Edge** (desktop only)
 2. Connect your reTerminal E-Series device via USB
-3. Select a platform and device
+3. Select your device, then choose one of its compatible platforms
 4. Pick a firmware demo and version; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**; for EEZ Studio, click **Download project template** and build locally with PlatformIO; for OpenDisplay, click **Open OpenDisplay Toolbox** and continue with the official toolbox; for Zephyr, click **Open Zephyr Board Docs** and follow the selected board's official west workflow
 5. For flashable firmware, choose **Standard flash** or **Erase flash + flash**, click **Connect & flash**, select the serial port, and wait for the flash to complete
 

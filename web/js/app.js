@@ -1,4 +1,4 @@
-let expandedPlatformId = null;
+let expandedHardwareId = null;
 let selectedPlatform = null;
 let selectedDevice = null;
 let selectedPanel = null;
@@ -30,7 +30,7 @@ const FIRMWARE_CACHE_BUSTER = String(Date.now());
 document.addEventListener("DOMContentLoaded", () => {
   checkBrowser();
   void loadFirmwareVersions();
-  renderPlatformCards();
+  renderHardwareCards();
   renderFlowState();
   bindFlowEvents();
   bindWorkspaceEvents();
@@ -238,7 +238,7 @@ async function loadFirmwareVersions() {
 
   await loadFirmwareCatalog();
   firmwareRouteDataLoaded = true;
-  renderPlatformCards();
+  renderHardwareCards();
 
   if (selectedPlatform) {
     restoreSelectionFromUrl({ logSelection: false });
@@ -327,137 +327,146 @@ function renderPlatformCreditMeta(platform, className = "", showWiki = true) {
   return `<div class="${metaClassName}">${author}${source}${wiki}</div>`;
 }
 
-function renderHardwareOption(platform, hardware) {
-  const connectorBadge = hardware.connector
-    ? `<span class="device-connector">${hardware.connector}</span>`
-    : "";
+function renderCompatiblePlatformCard(platform, hardware) {
   return `
-    <button class="device-option" data-platform="${platform.id}" data-device="${hardware.id}" type="button">
-      <span class="device-image">
-        <img src="${hardware.image}" alt="${hardware.imageAlt}">
-        ${connectorBadge}
-      </span>
-      <span class="device-copy">
-        <strong>${hardware.name}</strong>
-        <span>${hardware.description}</span>
-        <span class="device-specs">${renderDeviceSpecs(hardware)}</span>
-      </span>
-    </button>
-  `;
-}
-
-function renderHardwareGroups(platform) {
-  const groups = typeof groupSupportedHardware === "function"
-    ? groupSupportedHardware(platform.supportedDevices)
-    : [{
-        id: "all",
-        title: "Supported hardware",
-        items: platform.supportedDevices.map(getDevice).filter(Boolean),
-      }];
-
-  if (groups.length <= 1) {
-    const items = groups[0]?.items || [];
-    return `<div class="device-options">${items.map((item) => renderHardwareOption(platform, item)).join("")}</div>`;
-  }
-
-  return groups.map((group) => `
-    <div class="hardware-series-group">
-      <div class="hardware-series-head">
-        <p class="eyebrow">${group.title}</p>
-        <p class="hardware-series-desc">${group.description || ""}</p>
-      </div>
-      <div class="device-options">${group.items.map((item) => renderHardwareOption(platform, item)).join("")}</div>
-    </div>
-  `).join("");
-}
-
-function renderPlatformCard(platform) {
-  const isExpanded = platform.id === expandedPlatformId;
-  const bullets = platform.bullets
-    .map((item) => `<li>${item}</li>`)
-    .join("");
-
-  return `
-    <article class="platform-card ${isExpanded ? "is-expanded" : ""}" style="--platform-accent:${platform.accent};--platform-highlight:${platform.highlight};">
-      <button class="platform-card-main" data-expand-platform="${platform.id}" type="button">
-        <span class="platform-logo-wrap">
+    <article class="compatible-platform-card" style="--platform-accent:${platform.accent};--platform-highlight:${platform.highlight};">
+      <button class="compatible-platform-main" data-platform="${platform.id}" data-device="${hardware.id}" type="button">
+        <span class="compatible-platform-logo">
           <img src="${platform.logo}" alt="${platform.name} logo">
         </span>
-        <span class="platform-card-copy">
+        <span class="compatible-platform-copy">
           <strong>${platform.name}</strong>
           <span>${platform.tagline}</span>
         </span>
-        <span class="platform-card-action">${isExpanded ? "Expanded" : "View"}</span>
+        <span class="compatible-platform-action">Choose</span>
       </button>
-      ${renderPlatformCreditMeta(platform)}
-      <div class="platform-detail">
-        <div class="platform-detail-copy">
-          <p>${platform.description}</p>
-          <ul>${bullets}</ul>
+      ${renderPlatformCreditMeta(platform, "compatible-platform-meta")}
+    </article>
+  `;
+}
+
+function renderCompatiblePlatformGroups(hardware) {
+  const compatiblePlatforms = typeof getCompatiblePlatforms === "function"
+    ? getCompatiblePlatforms(hardware.id)
+    : PLATFORM_CARDS.filter((platform) => platform.supportedDevices.includes(hardware.id));
+
+  if (!compatiblePlatforms.length) {
+    return `
+      <div class="compatible-platform-empty">
+        <strong>No platform workflows available</strong>
+        <span>Platform options will appear here after they are registered for this hardware.</span>
+      </div>
+    `;
+  }
+
+  return PLATFORM_GROUPS.map((group) => {
+    const platforms = compatiblePlatforms.filter((platform) => platform.group === group.id);
+    if (!platforms.length) return "";
+    return `
+      <section class="compatible-platform-group" aria-labelledby="hardware-${hardware.id}-${group.id}">
+        <div class="compatible-platform-group-head">
+          <h4 id="hardware-${hardware.id}-${group.id}">${group.title}</h4>
+          <span>${platforms.length} available</span>
         </div>
-        <figure class="platform-preview">
-          <img src="${platform.preview}" alt="${platform.previewAlt}">
-        </figure>
-        <div class="device-choice">
+        <div class="compatible-platform-grid">
+          ${platforms.map((platform) => renderCompatiblePlatformCard(platform, hardware)).join("")}
+        </div>
+      </section>
+    `;
+  }).join("");
+}
+
+function renderHardwareCard(hardware) {
+  const isExpanded = hardware.id === expandedHardwareId;
+  const connectorBadge = hardware.connector
+    ? `<span class="device-connector">${hardware.connector}</span>`
+    : "";
+
+  return `
+    <article class="platform-card hardware-card ${isExpanded ? "is-expanded" : ""}" style="--platform-accent:#004966;--platform-highlight:#8FC31F;">
+      <button class="platform-card-main hardware-card-main" data-expand-hardware="${hardware.id}" type="button" aria-expanded="${isExpanded}" aria-controls="hardwareDetail-${hardware.id}">
+        <span class="hardware-card-photo">
+          <img src="${hardware.image}" alt="${hardware.imageAlt}">
+          ${connectorBadge}
+        </span>
+        <span class="platform-card-copy">
+          <strong>${hardware.name}</strong>
+          <span>${hardware.description}</span>
+          <span class="hardware-card-specs">${renderDeviceSpecs(hardware)}</span>
+        </span>
+        <span class="platform-card-action">${isExpanded ? "Expanded" : "View platforms"}</span>
+      </button>
+      <div class="platform-detail hardware-detail" id="hardwareDetail-${hardware.id}">
+        <div class="platform-choice-head">
           <div>
-            <p class="eyebrow">Supported hardware</p>
-            <h3>Select device or driver board</h3>
+            <p class="eyebrow">Available platforms</p>
+            <h3>Select platform</h3>
           </div>
-          <div class="hardware-groups">${renderHardwareGroups(platform)}</div>
+          <p>Choose the firmware, template, or development workflow for ${hardware.name}.</p>
+        </div>
+        <div class="compatible-platform-groups">
+          ${renderCompatiblePlatformGroups(hardware)}
         </div>
       </div>
     </article>
   `;
 }
 
-function renderPlatformCards() {
-  const container = document.getElementById("platformGrid");
+function renderHardwareCards() {
+  const container = document.getElementById("hardwareGrid");
   if (!container) return;
 
-  container.innerHTML = PLATFORM_GROUPS.map((group) => {
-    const platforms = PLATFORM_CARDS.filter((platform) => platform.group === group.id);
-    if (!platforms.length) return "";
+  const hardwareIds = [...DEVICES, ...BOARDS].map((hardware) => hardware.id);
+  const groups = typeof groupSupportedHardware === "function"
+    ? groupSupportedHardware(hardwareIds)
+    : [{
+        id: "all",
+        title: "Supported hardware",
+        description: "Select your hardware to see compatible platform workflows.",
+        items: hardwareIds.map(getDevice).filter(Boolean),
+      }];
 
-    return `
-      <section class="platform-group" aria-labelledby="platformGroup-${group.id}">
-        <div class="platform-group-head">
-          <h3 id="platformGroup-${group.id}">${group.title}</h3>
-          <p>${group.description}</p>
-        </div>
-        <div class="platform-group-grid">
-          ${platforms.map(renderPlatformCard).join("")}
-        </div>
-      </section>
-    `;
-  }).join("");
+  container.innerHTML = groups.map((group) => `
+    <section class="platform-group" aria-labelledby="hardwareGroup-${group.id}">
+      <div class="platform-group-head">
+        <h3 id="hardwareGroup-${group.id}">${group.title}</h3>
+        <p>${group.description || ""}</p>
+      </div>
+      <div class="platform-group-grid">
+        ${group.items.map(renderHardwareCard).join("")}
+      </div>
+    </section>
+  `).join("");
 
-  container.querySelectorAll("[data-expand-platform]").forEach((btn) => {
+  container.querySelectorAll("[data-expand-hardware]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      expandedPlatformId = btn.dataset.expandPlatform;
-      renderPlatformCards();
+      expandedHardwareId = expandedHardwareId === btn.dataset.expandHardware
+        ? null
+        : btn.dataset.expandHardware;
+      renderHardwareCards();
     });
   });
 
-  container.querySelectorAll("[data-device]").forEach((btn) => {
+  container.querySelectorAll("[data-platform][data-device]").forEach((btn) => {
     btn.addEventListener("click", () => {
       selectPlatformDevice(btn.dataset.platform, btn.dataset.device);
     });
   });
 }
 
-function collapsePlatformCards() {
-  if (!expandedPlatformId) return;
-  expandedPlatformId = null;
-  renderPlatformCards();
+function collapseHardwareCards() {
+  if (!expandedHardwareId) return;
+  expandedHardwareId = null;
+  renderHardwareCards();
 }
 
 function bindBlankAreaCollapse() {
   document.addEventListener("click", (event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
-    if (target.closest(".platform-card")) return;
+    if (target.closest(".hardware-card")) return;
     if (target.closest("button, a, input, select, textarea")) return;
-    collapsePlatformCards();
+    collapseHardwareCards();
   });
 }
 
@@ -532,6 +541,7 @@ function selectPlatformDevice(platformId, deviceId, options = {}) {
   if (!selection) return false;
 
   document.body.classList.remove("is-flash-step");
+  expandedHardwareId = selection.deviceId;
   selectedPlatform =
     PLATFORM_CARDS.find((platform) => platform.id === selection.platformId) || null;
   selectedDevice = getDevice(selection.deviceId);
@@ -564,7 +574,7 @@ function selectPlatformDevice(platformId, deviceId, options = {}) {
   const panelLabel = selectedPanel ? ` / ${selectedPanel.name}` : "";
   if (options.logSelection !== false) {
     appendLog(
-      `[system] Selected platform: ${selectedPlatform?.name || "None"} / ${selectedDevice?.name || "None"}${panelLabel}`
+      `[system] Selected device: ${selectedDevice?.name || "None"} / Platform: ${selectedPlatform?.name || "None"}${panelLabel}`
     );
   }
   if (options.updateUrl !== false) {
@@ -580,7 +590,7 @@ function clearPlatformSelection(options = {}) {
   selectedPanel = null;
   selectedFirmwareOption = null;
   selectedVersion = null;
-  renderPlatformCards();
+  renderHardwareCards();
   renderFlowState();
   renderFlashNotes();
   updateFlashState();
@@ -644,8 +654,8 @@ function renderSelectedRelease() {
   container.innerHTML = `
     <div class="selected-copy">
       <div class="selected-tags">
-        <span class="tag tag-platform">${selectedPlatform.name}</span>
         <span class="tag tag-device">${selectedDevice.name}</span>
+        <span class="tag tag-platform">${selectedPlatform.name}</span>
         ${panelTag}
       </div>
       <h3>${firmwareName}</h3>
@@ -1557,7 +1567,7 @@ async function autoConnectMonitor(port) {
 }
 
 function resetProgress() {
-  setProgress("flash", 0, "Select platform, device, and firmware to begin");
+  setProgress("flash", 0, "Select device, platform, and firmware to begin");
   hideError();
 }
 
@@ -1798,7 +1808,7 @@ function saveLog() {
 function bindFlowEvents() {
   window.addEventListener("popstate", () => restoreSelectionFromUrl());
 
-  const changeBtn = document.getElementById("changePlatformButton");
+  const changeBtn = document.getElementById("changeSelectionButton");
   if (changeBtn) {
     changeBtn.addEventListener("click", () => clearPlatformSelection());
   }
