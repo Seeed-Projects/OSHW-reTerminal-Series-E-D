@@ -142,6 +142,9 @@
   "SenseCraft_HMI_EE04_P0213_MONO": [
     "1.1.5"
   ],
+  "SenseCraft_HMI_EE04_P0213_QUAD": [
+    "1.1.5"
+  ],
   "SenseCraft_HMI_EE04_P029_MONO": [
     "1.1.5"
   ],
@@ -161,6 +164,9 @@
     "1.1.5"
   ],
   "SenseCraft_HMI_EE05_P0213_MONO": [
+    "1.1.5"
+  ],
+  "SenseCraft_HMI_EE05_P0213_QUAD": [
     "1.1.5"
   ],
   "SenseCraft_HMI_EE05_P029_MONO": [
