@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import runpy
 import subprocess
 import sys
 import tempfile
@@ -407,6 +408,50 @@ class SenseCraftHmiTargetTest(unittest.TestCase):
             self.assertEqual(len(parts), 4)
             self.assertEqual(offsets["boot_app0.bin"], 0xE000)
             self.assertEqual(offsets[f"{firmware_id}.ino.bin"], 0x90000)
+
+
+class SenseCraftHmiBuildPatchTest(unittest.TestCase):
+    def test_seeed_gfx_jd79676_include_matches_linux_filename(self) -> None:
+        class FakePlatformioEnvironment(dict):
+            def Replace(self, **values) -> None:
+                self.update(values)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_dir = Path(temp_dir)
+            library_root = (
+                project_dir
+                / ".pio"
+                / "libdeps"
+                / "linux_case_test"
+                / "Seeed_GFX"
+            )
+            driver_dir = library_root / "TFT_Drivers"
+            driver_dir.mkdir(parents=True)
+            (driver_dir / "JD79676_init.h").write_text("// driver\n", encoding="utf-8")
+            tft_source = library_root / "TFT_eSPI.cpp"
+            tft_source.write_text(
+                '#include "TFT_Drivers/JD79676_Init.h"\n' * 2,
+                encoding="utf-8",
+            )
+
+            environment = FakePlatformioEnvironment(
+                PROJECT_DIR=str(project_dir),
+                PIOENV="linux_case_test",
+            )
+            runpy.run_path(
+                str(
+                    REPO_ROOT
+                    / "examples"
+                    / "official"
+                    / "SenseCraft_HMI"
+                    / "littlefsbuilder.py"
+                ),
+                init_globals={"Import": lambda _: None, "env": environment},
+            )
+
+            patched_source = tft_source.read_text(encoding="utf-8")
+            self.assertNotIn("JD79676_Init.h", patched_source)
+            self.assertEqual(patched_source.count("JD79676_init.h"), 2)
 
 
 class DiyKitTargetTest(unittest.TestCase):
