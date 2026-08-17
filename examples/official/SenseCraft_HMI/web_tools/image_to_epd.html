@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Image to EPD Converter</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --panel-soft: #eef2f5;
+      --text: #111827;
+      --muted: #5f6b7a;
+      --border: #d7dde4;
+      --accent: #1769aa;
+      --accent-strong: #0f4f86;
+      --danger: #b42318;
+      --ok: #067647;
+      --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      color: var(--text);
+      background: var(--bg);
+      font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+            "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 32px));
+      margin: 28px auto;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.2;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      padding: 16px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    button {
+      font: inherit;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select {
+      width: 100%;
+      min-height: 44px;
+      padding: 9px 10px;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(23, 105, 170, 0.16);
+    }
+
+    .file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .drop-zone {
+      display: grid;
+      place-items: center;
+      min-height: 128px;
+      padding: 16px;
+      text-align: center;
+      background: #fff;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .drop-zone:hover,
+    .drop-zone:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(23, 105, 170, 0.12);
+      outline: none;
+    }
+
+    .drop-zone.dragging {
+      background: #eef6fc;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(23, 105, 170, 0.16);
+    }
+
+    .drop-main {
+      font-weight: 700;
+    }
+
+    .drop-sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .file-name {
+      margin-top: 8px;
+      color: var(--accent-strong);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      word-break: break-all;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      gap: 10px;
+      padding: 8px 0;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .check input {
+      width: 18px;
+      height: 18px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    button {
+      min-height: 44px;
+      padding: 9px 14px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover { background: var(--accent-strong); }
+
+    button.secondary {
+      background: #fff;
+      color: var(--accent);
+    }
+
+    button.secondary:hover {
+      background: #eef6fc;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .status {
+      min-height: 22px;
+      margin-top: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      word-break: break-word;
+    }
+
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--danger); }
+
+    .preview-panel {
+      overflow: hidden;
+    }
+
+    .preview-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 52px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel-soft);
+    }
+
+    .preview-title {
+      font-weight: 700;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .canvas-wrap {
+      display: grid;
+      place-items: center;
+      min-height: 520px;
+      padding: 16px;
+      background:
+        linear-gradient(45deg, #dce3ea 25%, transparent 25%),
+        linear-gradient(-45deg, #dce3ea 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #dce3ea 75%),
+        linear-gradient(-45deg, transparent 75%, #dce3ea 75%);
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+      background-size: 20px 20px;
+    }
+
+    canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 75dvh;
+      background: #fff;
+      border: 1px solid #c6cdd5;
+      image-rendering: pixelated;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 32px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+    }
+
+    .hint {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      header {
+        display: block;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .canvas-wrap {
+        min-height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div>
+        <h1>Image to EPD Converter</h1>
+        <p class="sub">将 PNG、JPG、WebP 等浏览器可解码图片转换为固件可读取的 .epd 文件。</p>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="panel controls" aria-label="转换设置">
+        <div class="field">
+          <label for="file">图片文件</label>
+          <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="选择或拖拽图片文件">
+            <div>
+              <div class="drop-main">拖拽图片到这里</div>
+              <div class="drop-sub">或点击选择 PNG、JPG、WebP 等图片</div>
+              <div id="fileName" class="file-name">未选择文件</div>
+            </div>
+          </div>
+          <input id="file" class="file-input" type="file" accept="image/*" />
+        </div>
+
+        <div class="field">
+          <label for="preset">屏幕尺寸</label>
+          <select id="preset">
+            <option value="800x480">reTerminal E1001 / E1002 / 7.5 / 7.3 / 4.26 / 3.97 - 800x480</option>
+            <option value="1872x1404">reTerminal E1003 / Xiao EE03 - 1872x1404</option>
+            <option value="1200x1600">reTerminal E1004 / Xiao EE02 - 1200x1600</option>
+            <option value="200x200">1.54 inch - 200x200</option>
+            <option value="250x122">2.13 inch - 250x122</option>
+            <option value="296x128">2.9 inch - 296x128</option>
+            <option value="custom">自定义</option>
+          </select>
+        </div>
+
+        <div class="field field-row">
+          <div>
+            <label for="width">宽度</label>
+            <input id="width" type="number" min="1" max="4096" value="800" />
+          </div>
+          <div>
+            <label for="height">高度</label>
+            <input id="height" type="number" min="1" max="4096" value="480" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="mode">EPD 模式</label>
+          <select id="mode">
+            <option value="bw">BW 1-bit</option>
+            <option value="gray4">Gray4 4-bit</option>
+            <option value="gray16">Gray16 4-bit</option>
+            <option value="color6">Color6 4-bit</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="fit">图片适配</label>
+          <select id="fit">
+            <option value="contain">完整显示，空白补底色</option>
+            <option value="cover">铺满画布，裁剪边缘</option>
+            <option value="stretch">强制拉伸</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="background">透明区域底色</label>
+          <select id="background">
+            <option value="white">白色</option>
+            <option value="black">黑色</option>
+          </select>
+        </div>
+
+        <label class="check" for="dither">
+          <input id="dither" type="checkbox" />
+          网页端 Floyd-Steinberg 抖动
+        </label>
+
+        <div class="field">
+          <label for="filename">输出文件名</label>
+          <input id="filename" type="text" value="image.epd" />
+        </div>
+
+        <div class="actions">
+          <button id="convert">转换</button>
+          <button id="download" class="secondary" disabled>下载 .epd</button>
+        </div>
+
+        <div id="status" class="status"></div>
+        <p class="hint">默认不做网页端抖动，只做尺寸适配、颜色量化和 EPD 打包。BW 使用 1bpp，其它模式使用 4bpp packed pixel buffer。</p>
+      </section>
+
+      <section class="panel preview-panel" aria-label="转换预览">
+        <div class="preview-head">
+          <div class="preview-title">预览</div>
+          <div id="meta" class="meta">未生成</div>
+        </div>
+        <div id="canvasWrap" class="canvas-wrap">
+          <div class="empty">选择图片后点击转换</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const fileInput = document.getElementById('file');
+    const presetInput = document.getElementById('preset');
+    const widthInput = document.getElementById('width');
+    const heightInput = document.getElementById('height');
+    const modeInput = document.getElementById('mode');
+    const fitInput = document.getElementById('fit');
+    const backgroundInput = document.getElementById('background');
+    const ditherInput = document.getElementById('dither');
+    const filenameInput = document.getElementById('filename');
+    const convertButton = document.getElementById('convert');
+    const downloadButton = document.getElementById('download');
+    const statusEl = document.getElementById('status');
+    const metaEl = document.getElementById('meta');
+    const canvasWrap = document.getElementById('canvasWrap');
+    const dropZone = document.getElementById('dropZone');
+    const fileNameEl = document.getElementById('fileName');
+
+    let epdBlobUrl = '';
+    let selectedFile = null;
+
+    const palettes = {
+      bw: [
+        { r: 0, g: 0, b: 0, idx: 0 },
+        { r: 255, g: 255, b: 255, idx: 1 }
+      ],
+      gray4: [
+        { r: 0, g: 0, b: 0, idx: 0x00 },
+        { r: 85, g: 85, b: 85, idx: 0x01 },
+        { r: 170, g: 170, b: 170, idx: 0x02 },
+        { r: 255, g: 255, b: 255, idx: 0x03 }
+      ],
+      gray16: Array.from({ length: 16 }, (_, i) => ({ r: i * 17, g: i * 17, b: i * 17, idx: i })),
+      color6: [
+        { r: 0, g: 0, b: 0, idx: 0x0F },
+        { r: 255, g: 255, b: 255, idx: 0x00 },
+        { r: 255, g: 0, b: 0, idx: 0x06 },
+        { r: 0, g: 255, b: 0, idx: 0x02 },
+        { r: 0, g: 0, b: 255, idx: 0x0D },
+        { r: 255, g: 255, b: 0, idx: 0x0B }
+      ]
+    };
+
+    const modeHeader = {
+      bw: { bitDepth: 1, mode: 0 },
+      gray4: { bitDepth: 4, mode: 1 },
+      color6: { bitDepth: 4, mode: 2 },
+      gray16: { bitDepth: 4, mode: 3 }
+    };
+
+    presetInput.addEventListener('change', () => {
+      if (presetInput.value === 'custom') {
+        return;
+      }
+      const [w, h] = presetInput.value.split('x').map(Number);
+      widthInput.value = String(w);
+      heightInput.value = String(h);
+    });
+
+    fileInput.addEventListener('change', () => {
+      setSelectedFile(fileInput.files && fileInput.files[0]);
+    });
+
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    dropZone.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
+
+    dropZone.addEventListener('dragenter', event => {
+      preventDragDefault(event);
+      dropZone.classList.add('dragging');
+    });
+
+    dropZone.addEventListener('dragover', event => {
+      preventDragDefault(event);
+      dropZone.classList.add('dragging');
+    });
+
+    dropZone.addEventListener('dragleave', event => {
+      preventDragDefault(event);
+      if (!dropZone.contains(event.relatedTarget)) {
+        dropZone.classList.remove('dragging');
+      }
+    });
+
+    dropZone.addEventListener('drop', event => {
+      preventDragDefault(event);
+      dropZone.classList.remove('dragging');
+      const file = event.dataTransfer.files && event.dataTransfer.files[0];
+      if (!file) {
+        return;
+      }
+      if (!isImageFile(file)) {
+        setSelectedFile(null);
+        setStatus('请拖入图片文件。', false);
+        return;
+      }
+      setSelectedFile(file);
+    });
+
+    window.addEventListener('dragover', preventDragDefault);
+    window.addEventListener('drop', preventDragDefault);
+
+    downloadButton.addEventListener('click', () => {
+      if (!epdBlobUrl) {
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = epdBlobUrl;
+      a.download = normalizedFilename(filenameInput.value);
+      a.click();
+    });
+
+    convertButton.addEventListener('click', async () => {
+      setStatus('', true);
+      downloadButton.disabled = true;
+      revokeBlobUrl();
+
+      const file = selectedFile || (fileInput.files && fileInput.files[0]);
+      if (!file) {
+        setStatus('请先选择图片文件。', false);
+        return;
+      }
+
+      const width = Number(widthInput.value);
+      const height = Number(heightInput.value);
+      if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
+        setStatus('宽度和高度必须是正整数。', false);
+        return;
+      }
+
+      try {
+        const image = await loadImage(file);
+        const sourceCanvas = drawSource(image, width, height, fitInput.value, backgroundInput.value);
+        const imageData = sourceCanvas.getContext('2d').getImageData(0, 0, width, height);
+        const converted = quantize(imageData, width, height, modeInput.value, ditherInput.checked);
+        const packed = packPixels(converted.indices, width, height, modeHeader[modeInput.value].bitDepth);
+        const epdFile = await buildEpd(width, height, modeInput.value, packed);
+
+        epdBlobUrl = URL.createObjectURL(new Blob([epdFile], { type: 'application/octet-stream' }));
+        downloadButton.disabled = false;
+        showPreview(converted.preview, width, height);
+        setStatus('转换完成。', true);
+
+        metaEl.innerHTML = [
+          `${width}x${height}`,
+          `${modeHeader[modeInput.value].bitDepth}bpp`,
+          `raw ${(packed.byteLength / 1024).toFixed(1)} KB`,
+          `epd ${(epdFile.byteLength / 1024).toFixed(1)} KB`
+        ].join('<br>');
+      } catch (err) {
+        console.error(err);
+        setStatus(String(err && err.message ? err.message : err), false);
+      }
+    });
+
+    window.addEventListener('beforeunload', revokeBlobUrl);
+
+    function preventDragDefault(event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    function setSelectedFile(file) {
+      selectedFile = file || null;
+      fileNameEl.textContent = selectedFile ? selectedFile.name : '未选择文件';
+      downloadButton.disabled = true;
+      metaEl.textContent = '未生成';
+      canvasWrap.replaceChildren(emptyPreview('选择图片后点击转换'));
+      revokeBlobUrl();
+      if (selectedFile) {
+        setStatus('图片已选择，点击转换生成 .epd。', true);
+      }
+    }
+
+    function isImageFile(file) {
+      if (file.type && file.type.startsWith('image/')) {
+        return true;
+      }
+      return /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(file.name);
+    }
+
+    function setStatus(message, ok) {
+      statusEl.textContent = message;
+      statusEl.className = 'status ' + (ok ? 'ok' : 'err');
+    }
+
+    function revokeBlobUrl() {
+      if (epdBlobUrl) {
+        URL.revokeObjectURL(epdBlobUrl);
+        epdBlobUrl = '';
+      }
+    }
+
+    function normalizedFilename(name) {
+      const trimmed = name.trim() || 'image.epd';
+      return trimmed.toLowerCase().endsWith('.epd') ? trimmed : `${trimmed}.epd`;
+    }
+
+    async function loadImage(file) {
+      if (window.createImageBitmap) {
+        try {
+          return await createImageBitmap(file);
+        } catch {
+        }
+      }
+
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve(img);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error('图片解码失败。'));
+        };
+        img.src = url;
+      });
+    }
+
+    function drawSource(image, width, height, fit, background) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.fillStyle = background === 'black' ? '#000' : '#fff';
+      ctx.fillRect(0, 0, width, height);
+
+      const iw = image.width;
+      const ih = image.height;
+      let dx = 0;
+      let dy = 0;
+      let dw = width;
+      let dh = height;
+
+      if (fit !== 'stretch') {
+        const scale = fit === 'cover' ? Math.max(width / iw, height / ih) : Math.min(width / iw, height / ih);
+        dw = Math.round(iw * scale);
+        dh = Math.round(ih * scale);
+        dx = Math.floor((width - dw) / 2);
+        dy = Math.floor((height - dh) / 2);
+      }
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(image, dx, dy, dw, dh);
+      return canvas;
+    }
+
+    function quantize(imageData, width, height, mode, dither) {
+      const src = imageData.data;
+      const pixels = width * height;
+      const work = new Float32Array(pixels * 3);
+      const indices = new Uint8Array(pixels);
+      const preview = new ImageData(width, height);
+
+      for (let i = 0; i < pixels; i++) {
+        work[i * 3] = src[i * 4];
+        work[i * 3 + 1] = src[i * 4 + 1];
+        work[i * 3 + 2] = src[i * 4 + 2];
+      }
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = y * width + x;
+          const base = i * 3;
+          const oldColor = {
+            r: clamp(work[base]),
+            g: clamp(work[base + 1]),
+            b: clamp(work[base + 2])
+          };
+          const next = nearestPaletteColor(oldColor, palettes[mode], mode);
+
+          indices[i] = next.idx;
+          preview.data[i * 4] = next.r;
+          preview.data[i * 4 + 1] = next.g;
+          preview.data[i * 4 + 2] = next.b;
+          preview.data[i * 4 + 3] = 255;
+
+          if (dither) {
+            const er = oldColor.r - next.r;
+            const eg = oldColor.g - next.g;
+            const eb = oldColor.b - next.b;
+            diffuse(work, width, height, x + 1, y, er, eg, eb, 7 / 16);
+            diffuse(work, width, height, x - 1, y + 1, er, eg, eb, 3 / 16);
+            diffuse(work, width, height, x, y + 1, er, eg, eb, 5 / 16);
+            diffuse(work, width, height, x + 1, y + 1, er, eg, eb, 1 / 16);
+          }
+        }
+      }
+
+      return { indices, preview };
+    }
+
+    function nearestPaletteColor(color, palette, mode) {
+      if (mode === 'gray4' || mode === 'gray16') {
+        const gray = color.r * 0.299 + color.g * 0.587 + color.b * 0.114;
+        let best = palette[0];
+        let bestDistance = Infinity;
+        for (const item of palette) {
+          const distance = Math.abs(gray - item.r);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            best = item;
+          }
+        }
+        return best;
+      }
+
+      let best = palette[0];
+      let bestDistance = Infinity;
+      for (const item of palette) {
+        const dr = color.r - item.r;
+        const dg = color.g - item.g;
+        const db = color.b - item.b;
+        const distance = dr * dr + dg * dg + db * db;
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = item;
+        }
+      }
+      return best;
+    }
+
+    function diffuse(work, width, height, x, y, er, eg, eb, factor) {
+      if (x < 0 || x >= width || y < 0 || y >= height) {
+        return;
+      }
+      const base = (y * width + x) * 3;
+      work[base] += er * factor;
+      work[base + 1] += eg * factor;
+      work[base + 2] += eb * factor;
+    }
+
+    function clamp(value) {
+      return Math.max(0, Math.min(255, value));
+    }
+
+    function packPixels(indices, width, height, bitDepth) {
+      const rowBytes = Math.ceil(width * bitDepth / 8);
+      const packed = new Uint8Array(rowBytes * height);
+
+      for (let y = 0; y < height; y++) {
+        const rowOffset = y * rowBytes;
+        for (let x = 0; x < width; x++) {
+          const value = indices[y * width + x];
+          if (bitDepth === 1) {
+            if (value) {
+              packed[rowOffset + (x >> 3)] |= 0x80 >> (x & 7);
+            }
+          } else {
+            const byteIndex = rowOffset + (x >> 1);
+            if ((x & 1) === 0) {
+              packed[byteIndex] = (packed[byteIndex] & 0x0F) | ((value & 0x0F) << 4);
+            } else {
+              packed[byteIndex] = (packed[byteIndex] & 0xF0) | (value & 0x0F);
+            }
+          }
+        }
+      }
+
+      return packed;
+    }
+
+    async function buildEpd(width, height, mode, packed) {
+      const modeInfo = modeHeader[mode];
+      const compressed = await deflatePayload(packed);
+      const out = new Uint8Array(16 + compressed.byteLength);
+      out[0] = 0x45;
+      out[1] = 0x50;
+      out[2] = 0x44;
+      out[3] = 0x30;
+      out[4] = 1;
+      out[5] = modeInfo.bitDepth;
+      out[6] = modeInfo.mode;
+      out[7] = 0;
+      writeUint32BE(out, 8, width);
+      writeUint32BE(out, 12, height);
+      out.set(compressed, 16);
+      return out;
+    }
+
+    async function deflatePayload(packed) {
+      if (window.pako) {
+        return pako.deflate(packed);
+      }
+
+      if (window.CompressionStream) {
+        const stream = new Blob([packed]).stream().pipeThrough(new CompressionStream('deflate'));
+        return new Uint8Array(await new Response(stream).arrayBuffer());
+      }
+
+      throw new Error('当前浏览器没有可用的 zlib 压缩能力。');
+    }
+
+    function writeUint32BE(buffer, offset, value) {
+      buffer[offset] = (value >>> 24) & 0xFF;
+      buffer[offset + 1] = (value >>> 16) & 0xFF;
+      buffer[offset + 2] = (value >>> 8) & 0xFF;
+      buffer[offset + 3] = value & 0xFF;
+    }
+
+    function showPreview(imageData, width, height) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').putImageData(imageData, 0, 0);
+      canvasWrap.replaceChildren(canvas);
+    }
+
+    function emptyPreview(text) {
+      const el = document.createElement('div');
+      el.className = 'empty';
+      el.textContent = text;
+      return el;
+    }
+  </script>
+</body>
+</html>

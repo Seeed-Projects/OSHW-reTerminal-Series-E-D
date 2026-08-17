@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bearer Token Fetcher + EPD Preview</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+  <style>
+    /* ===== Apple-inspired, glassy, refined ===== */
+    :root{
+      --bg: radial-gradient(1200px 800px at 70% -10%, rgba(180,220,255,.25), transparent 60%),
+            radial-gradient(900px 600px at -10% 20%, rgba(255,200,240,.18), transparent 60%),
+            linear-gradient(180deg, #0b0e13, #080a0f);
+      --panel: rgba(255,255,255,.06);
+      --panel-strong: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.22);
+      --stroke-subtle: rgba(255,255,255,.12);
+      --fg: #e7ebf0;
+      --muted: #b5bfca;
+      --accent: #5ac8fa; /* iOS sky blue */
+      --ok: #30d158;
+      --bad: #ff453a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+      --radius-xl: 20px; --radius-2xl: 24px; --radius-3xl: 28px;
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: linear-gradient(180deg, #f5f7fb, #eef1f6);
+        --panel: rgba(255,255,255,.75);
+        --panel-strong: rgba(255,255,255,.85);
+        --stroke: rgba(0,0,0,.08);
+        --stroke-subtle: rgba(0,0,0,.06);
+        --fg: #0b1220; --muted:#4f5b6c;
+        --shadow: 0 10px 30px rgba(12,22,32,.08), inset 0 1px 0 rgba(255,255,255,.9);
+      }
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; color:var(--fg); font:16px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Helvetica,Arial,"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",sans-serif; background: var(--bg);}
+    .wrap{ max-width:980px; margin: 48px auto; padding: 0 20px; }
+
+    /* Header */
+    .hero{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+    h1{ font-size:28px; letter-spacing:.2px; margin:0; font-weight:700; }
+
+    /* Card */
+    .card{ background:var(--panel); border:1px solid var(--stroke); border-radius: var(--radius-2xl); padding: 18px; box-shadow: var(--shadow); backdrop-filter: blur(22px) saturate(120%); }
+
+    /* Form grid */
+    .row{ display:grid; grid-template-columns: 160px 1fr; gap:12px; align-items:center; margin: 12px 0; }
+    label{ color:var(--muted); font-weight:600; letter-spacing:.2px; }
+    input, select, textarea{ width:100%; padding:12px 14px; background: var(--panel-strong); color:var(--fg); border:1px solid var(--stroke-subtle); border-radius: 12px; outline:none; backdrop-filter: blur(10px); transition: border-color .2s, box-shadow .2s; }
+    input::placeholder, textarea::placeholder{ color: #8d98a9; }
+    input:focus, select:focus, textarea:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent); }
+    textarea{ min-height: 68px; resize: vertical; }
+
+    /* Actions */
+    .actions{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:8px; }
+    .btn{ appearance:none; border:1px solid var(--stroke); background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 85%, white), var(--accent)); color:#031522; padding:10px 16px; border-radius: 999px; font-weight:700; cursor:pointer; box-shadow: var(--shadow); transition: transform .08s ease, filter .2s; }
+    .btn:hover{ filter: saturate(115%) brightness(1.05); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.secondary{ background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.08)); color: var(--fg); }
+
+    /* Status */
+    .status{ margin-top:12px; font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:14px; }
+    .status.ok{ color: var(--ok); }
+    .status.err{ color: var(--bad); }
+
+    /* Sections */
+    .grid{ display:grid; grid-template-columns: 1fr; gap:14px; margin-top:16px; }
+    details{ background: var(--panel-strong); border:1px solid var(--stroke-subtle); border-radius: 14px; padding: 10px 12px; backdrop-filter: blur(10px); }
+    details:not([open]) .row { display: none; }
+    details[open] summary { margin-bottom: 6px; }
+    details.inputs { margin: 16px 0 8px; }
+    summary{ cursor:pointer; color: var(--muted); font-weight:600; letter-spacing:.2px; }
+
+    /* Preview */
+    .preview{ display:grid; place-items:center; padding:16px; background: rgba(0,0,0,.25); border:1px dashed var(--stroke-subtle); border-radius: 14px; min-height:220px; }
+    img, video, iframe, canvas { max-width:100%; border-radius: 12px; background:#fff; }
+    canvas { box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+
+    /* Meta */
+    .kv{ display:grid; grid-template-columns: 220px 1fr; gap:6px 12px; padding: 8px; }
+    pre{ margin:0; white-space:pre-wrap; word-break:break-word; }
+    code{ font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13px; }
+
+    .note{ color:var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>EPD & Token Fetcher</h1>
+    </div>
+    <div class="card">
+      <div class="row">
+        <label for="url">请求 URL</label>
+        <input id="url" placeholder="https://.../render/url/..." />
+      </div>
+      <div class="row">
+        <label for="token">Authorization</label>
+        <input id="token" placeholder="eyJhbGciOi...（JWT）" />
+      </div>
+
+      <details class="inputs">
+        <summary>高级选项</summary>
+        <div class="row">
+          <label for="method">Method</label>
+          <select id="method">
+            <option>GET</option>
+            <option>HEAD</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="accept">Accept</label>
+          <select id="accept">
+            <option value="*/*">*/*（自动判断）</option>
+            <option value="application/octet-stream">application/octet-stream (Binary)</option>
+            <option value="image/*">image/*（图片优先）</option>
+            <option value="application/json">application/json</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="extra">额外 Headers（JSON）</label>
+          <textarea id="extra" placeholder='{"X-Client-Id":"demo"}'></textarea>
+        </div>
+      </details>
+
+      <div class="actions">
+        <button id="go" class="btn">获取</button>
+        <button id="clear" class="btn secondary">清空</button>
+      </div>
+
+      <div id="stat" class="status"></div>
+
+      <div class="grid">
+        <details open>
+          <summary>响应预览</summary>
+          <div id="preview" class="preview">等待请求…</div>
+        </details>
+        <details>
+          <summary>响应头 / 元信息</summary>
+          <div id="meta" class="kv"></div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const $ = (s)=>document.querySelector(s);
+    const stat = $('#stat');
+    const preview = $('#preview');
+    const meta = $('#meta');
+
+    // --- EPD Logic (移植自 reterminal_dithering_tool) ---
+
+    function getPalette(name) {
+      if (name === 'bw') {
+        return [{ r: 0, g: 0, b: 0, idx: 0x0 }, { r: 255, g: 255, b: 255, idx: 0xF }];
+      }
+      if (name === 'gray4') {
+        return [
+          { r: 0,   g: 0,   b: 0,   idx: 0x00 },
+          { r: 85,  g: 85,  b: 85,  idx: 0x01 },
+          { r: 170, g: 170, b: 170, idx: 0x02 },
+          { r: 255, g: 255, b: 255, idx: 0x03 }
+        ];
+      }
+      if (name === 'color4' || name === 'color6') {
+        return [
+          { r: 0,   g: 0,   b: 0,   idx: 0x0F }, // Black
+          { r: 255, g: 255, b: 255, idx: 0x00 }, // White
+          { r: 255, g: 0,   b: 0,   idx: 0x06 }, // Red
+          { r: 0,   g: 255, b: 0,   idx: 0x02 }, // Green
+          { r: 0,   g: 0,   b: 255, idx: 0x0D }, // Blue
+          { r: 255, g: 255, b: 0,   idx: 0x0B }  // Yellow
+        ];
+      }
+      if (name === 'gray16') {
+        let p = [];
+        for(let i=0; i<16; i++) p.push({r:i*17, g:i*17, b:i*17, idx:i});
+        return p;
+      }
+      return [];
+    }
+
+    function unpackPixels(packed, width, height, bitDepth) {
+      const numPixels = width * height;
+      const indices = new Uint8Array(numPixels);
+      
+      if (bitDepth === 1) {
+        for (let i = 0; i < packed.length; i++) {
+          const byte = packed[i];
+          for (let bit = 0; bit < 8; bit++) {
+            const pixelIdx = i * 8 + bit;
+            if (pixelIdx >= numPixels) break;
+            const val = (byte >> (7 - bit)) & 1;
+            indices[pixelIdx] = val ? 0xF : 0x0; 
+          }
+        }
+      } else if (bitDepth === 4) {
+        for (let i = 0; i < packed.length; i++) {
+          const byte = packed[i];
+          const p1 = (byte >> 4) & 0x0F;
+          const p2 = byte & 0x0F;
+          const idx1 = i * 2;
+          const idx2 = i * 2 + 1;
+          if (idx1 < numPixels) indices[idx1] = p1;
+          if (idx2 < numPixels) indices[idx2] = p2;
+        }
+      }
+      return indices;
+    }
+
+    // 尝试解析并渲染 EPD Buffer
+    function tryRenderEpd(buffer) {
+      try {
+        const dv = new DataView(buffer);
+        // 检查 Magic Header: EPD0 (0x45 0x50 0x44 0x30)
+        if (buffer.byteLength < 16 || 
+            dv.getUint8(0) !== 69 || dv.getUint8(1) !== 80 || 
+            dv.getUint8(2) !== 68 || dv.getUint8(3) !== 48) {
+          return null; // 不是 EPD 文件
+        }
+
+        const bitDepth = dv.getUint8(5);
+        const modeId = dv.getUint8(6);
+        const width = dv.getUint32(8, false); // Big Endian
+        const height = dv.getUint32(12, false);
+
+        let detectedPaletteName = 'bw';
+        let modeStr = 'BW';
+        switch(modeId) {
+          case 0: detectedPaletteName = 'bw'; modeStr = 'BW (1-bit)'; break;
+          case 1: detectedPaletteName = 'gray4'; modeStr = 'Gray4'; break;
+          case 2: detectedPaletteName = 'color6'; modeStr = 'Color6/4'; break;
+          case 3: detectedPaletteName = 'gray16'; modeStr = 'Gray16'; break;
+        }
+
+        const compressedData = new Uint8Array(buffer, 16);
+        let rawIndices;
+        try {
+          if (window.pako) {
+             rawIndices = pako.inflate(compressedData);
+          } else {
+             throw new Error("Pako library not loaded.");
+          }
+        } catch(e) {
+          throw new Error("EPD 解压失败 (zlib error)");
+        }
+
+        const unpackedIndices = unpackPixels(rawIndices, width, height, bitDepth);
+        const palette = getPalette(detectedPaletteName);
+        const visualData = new Uint8ClampedArray(width * height * 4);
+
+        for (let i = 0; i < unpackedIndices.length; i++) {
+            const idx = unpackedIndices[i];
+            let colorObj = palette.find(p => p.idx === idx);
+            if (!colorObj) {
+                const val = (idx & 0xF) * 17; 
+                colorObj = { r: val, g: val, b: val };
+            }
+            visualData[i*4] = colorObj.r;
+            visualData[i*4+1] = colorObj.g;
+            visualData[i*4+2] = colorObj.b;
+            visualData[i*4+3] = 255;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        const imgData = new ImageData(visualData, width, height);
+        ctx.putImageData(imgData, 0, 0);
+
+        const wrapper = document.createElement('div');
+        wrapper.style.textAlign = 'center';
+        wrapper.innerHTML = `<div style="margin-bottom:8px; font-size:13px; color:var(--accent)">Detected EPD: ${width}x${height} | ${modeStr}</div>`;
+        wrapper.appendChild(canvas);
+        return wrapper;
+
+      } catch (e) {
+        console.error("EPD Parse Error:", e);
+        return null; 
+      }
+    }
+
+    // --- Main Fetch Logic ---
+
+    function setStatus(msg, ok){
+      stat.textContent = msg;
+      stat.className = 'status ' + (ok ? 'ok' : 'err');
+    }
+
+    function reset(){
+      setStatus('', true);
+      preview.innerHTML = '等待请求…';
+      meta.innerHTML = '';
+    }
+
+    $('#clear').addEventListener('click', reset);
+
+    $('#go').addEventListener('click', async () => {
+      reset();
+      const url = $('#url').value.trim();
+      const token = $('#token').value.trim();
+      const method = $('#method').value;
+      const accept = $('#accept').value;
+
+      if(!url){ setStatus('请填写 URL', false); return; }
+      if(!token){ setStatus('请填写 Token（JWT）', false); return; }
+
+      let extra = {};
+      const extraRaw = $('#extra').value.trim();
+      if(extraRaw){
+        try{ extra = JSON.parse(extraRaw); }
+        catch(e){ setStatus('额外 Headers 不是合法 JSON', false); return; }
+      }
+
+      const headers = { 'Authorization': `Bearer ${token}` };
+      if(accept) headers['Accept'] = accept;
+      for (const k of Object.keys(extra)) headers[k] = String(extra[k]);
+
+      try {
+        const res = await fetch(url, { method, headers, mode: 'cors' });
+        const ct = res.headers.get('content-type') || '';
+        const len = res.headers.get('content-length') || '';
+
+        // 元信息
+        const entries = [
+          ['Status', res.status + ' ' + res.statusText],
+          ['Content-Type', ct || ''],
+          ['Content-Length', len || ''],
+          ['URL', res.url],
+          ['Date', res.headers.get('date') || ''],
+          ['Server', res.headers.get('server') || ''],
+        ];
+        meta.innerHTML = entries.map(([k,v]) => `<div>${k}</div><code>${(v||'').replace(/</g,'&lt;')}</code>`).join('');
+
+        if(!res.ok){
+          let txt = '';
+          try { txt = await res.text(); } catch(e){}
+          setStatus(`HTTP ${res.status}: 请求失败`, false);
+          preview.innerHTML = `<pre><code>${(txt||'无响应体').replace(/</g,'&lt;')}</code></pre>`;
+          return;
+        }
+
+        setStatus('请求成功', true);
+        if (method === 'HEAD') { preview.textContent = 'HEAD 响应无主体'; return; }
+
+        // 获取 ArrayBuffer 以便通用处理 (二进制或文本)
+        const buffer = await res.arrayBuffer();
+
+        // 1. 尝试检测 EPD 自定义格式 (检查 Magic Header)
+        const epdVisual = tryRenderEpd(buffer);
+        if (epdVisual) {
+            preview.innerHTML = '';
+            preview.appendChild(epdVisual);
+            
+            // 同时也提供下载
+            const blob = new Blob([buffer], {type: "application/octet-stream"});
+            const dlUrl = URL.createObjectURL(blob);
+            const dlBtn = document.createElement('div');
+            dlBtn.style.marginTop = "10px";
+            dlBtn.innerHTML = `<a href="${dlUrl}" download="image.epd"><button class="btn secondary" style="font-size:12px; padding: 6px 12px;">下载原始 .epd</button></a>`;
+            preview.appendChild(dlBtn);
+            return;
+        }
+
+        // 2. 传统 Content-Type 处理
+        const blob = new Blob([buffer], { type: ct || 'application/octet-stream' });
+        const objUrl = URL.createObjectURL(blob);
+
+        if (ct.startsWith('image/')) {
+          preview.innerHTML = `<img src="${objUrl}" alt="image" />`;
+          return;
+        }
+        if (ct.startsWith('video/')) {
+          preview.innerHTML = `<video src="${objUrl}" controls></video>`;
+          return;
+        }
+        if (ct === 'application/pdf' || ct.startsWith('application/pdf')) {
+          preview.innerHTML = `<iframe title="PDF" src="${objUrl}" style="width:100%;height:70vh;border:0;border-radius:12px"></iframe>`;
+          return;
+        }
+        if (ct.includes('json')) {
+          // 将 buffer 转回文本
+          const dec = new TextDecoder("utf-8");
+          let txt = dec.decode(buffer);
+          try { const obj = JSON.parse(txt); txt = JSON.stringify(obj, null, 2); } catch(e) {}
+          preview.innerHTML = `<pre><code>${txt.replace(/</g,'&lt;')}</code></pre>`;
+          return;
+        }
+
+        // 3. 默认下载逻辑
+        const name = (new URL(res.url)).pathname.split('/').pop() || 'download.bin';
+        const size = buffer.byteLength;
+        let maybeText = '';
+        
+        // 尝试看看是不是文本
+        if (size < 2_000_000) { 
+           try { 
+             const dec = new TextDecoder("utf-8");
+             // 简单的启发式：如果有太多控制字符，就不是文本
+             const s = dec.decode(buffer);
+             if (!/[\x00-\x08\x0E-\x1F]/.test(s)) {
+                 maybeText = s;
+             }
+           } catch(e){} 
+        }
+
+        preview.innerHTML = `
+          <div style="text-align:center;margin-bottom:8px">
+            <a href="${objUrl}" download="${name}"><button class="btn">下载文件（${(size/1024).toFixed(1)} KB）</button></a>
+          </div>
+          ${maybeText ? `<pre><code>${maybeText.replace(/</g,'&lt;')}</code></pre>` : '<div class="note">无法预览此二进制格式，已生成下载链接。</div>'}
+        `;
+
+      } catch (err) {
+        console.error(err);
+        setStatus('请求失败：可能是 CORS 或网络错误。', false);
+        preview.innerHTML = `<pre><code>${String(err).replace(/</g,'&lt;')}</code></pre>`;
+      }
+    });
+  </script>
+</body>
+</html>

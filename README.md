@@ -91,7 +91,7 @@ service and stay hidden when that service is unavailable.
 
 ### reTerminal E-Series
 
-All-in-one terminals built around the **XIAO ESP32-S3** with 8 MB flash and OPI PSRAM.
+All-in-one terminals built around the **XIAO ESP32-S3** with 32 MB flash and OPI PSRAM.
 
 | Model | Display | Size | Color | Highlights |
 |:------|:--------|:-----|:------|:-----------|
@@ -126,6 +126,7 @@ The Hub currently lists 14 panels from 1.54″ to 13.3″ (mono, flexible, quadr
 | Platform | Status | Devices | Description |
 |:---------|:-------|:--------|:------------|
 | **Base** | ✅ Ready | E1001 – E1004, EE/EN DIY Kit | Smoke-test demos (RTC, deep sleep, mic recording, touch draw) plus DIY Kit board + panel selection |
+| **SenseCraft HMI** | ✅ Ready | E1001 – E1004, EE02 – EE05 | Official production firmware for no-code dashboards, galleries, and cloud-managed ePaper content |
 | **ESPHome** | ✅ YAML templates | E1001 – E1004 | Smart home integration with Home Assistant |
 | **TRMNL** | ✅ Ready | E1001 – E1004 | Official TRMNL dashboard firmware for always-on ePaper panels |
 | **EEZ Studio** | ✅ Project template | E1001 – E1004 | Visual LVGL UI design with a downloadable PlatformIO project template |
@@ -219,6 +220,12 @@ arduino-cli lib install --git-url https://github.com/Seeed-Studio/Seeed_GFX.git
 Official PlatformIO projects can be built from their own directories:
 
 ```bash
+# SenseCraft HMI for E1001
+pio run -d examples/official/SenseCraft_HMI -e reterminal_e1001
+
+# SenseCraft HMI for EE04 with the 7.3-inch Spectra 6 panel
+pio run -d examples/official/SenseCraft_HMI -e sensecraft_hmi_ee04_p073_sp6
+
 # LVGL status panel for E1001
 pio run -d examples/official/LVGLePaperStatusPanel -e reterminal_e1001
 
@@ -232,6 +239,10 @@ pio run -d examples/official/TRMNL_E1004 -e seeed_reTerminal_E1004
 TRMNL firmware uses the PlatformIO environments defined in
 `examples/official/TRMNL/platformio.ini` for E1001–E1003 and
 `examples/official/TRMNL_E1004/platformio.ini` for E1004.
+
+SenseCraft HMI firmware uses the production environments defined in
+`examples/official/SenseCraft_HMI/platformio.ini`. The release pipeline builds
+four reTerminal targets and 17 EE board + panel targets as version `1.1.5`.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -270,6 +281,7 @@ the Firmware Hub or compiled manually.
 | [`SD_ImagePipeline_E1003`](examples/base/SD_ImagePipeline_E1003/) | E1003 | Display a JPEG/PNG from MicroSD in 16-level grayscale |
 | [`SD_ImagePipeline_E1004`](examples/base/SD_ImagePipeline_E1004/) | E1004 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
 | [`XIAO_EPaper_Hello`](examples/base/XIAO_EPaper_Hello/) | EE02 – EE05, EN04 – EN05 | Hello screen for XIAO ePaper DIY Kit boards, built per board + panel combo with Seeed_GFX |
+| [`SenseCraft_HMI`](examples/official/SenseCraft_HMI/) | E1001 – E1004, EE02 – EE05 | Build the official SenseCraft HMI production firmware for 21 registered hardware targets |
 | [`TRMNL`](examples/official/TRMNL/) | E1001 – E1003 | Build the official TRMNL dashboard firmware for existing reTerminal E-Series targets |
 | [`TRMNL_E1004`](examples/official/TRMNL_E1004/) | E1004 | Build the isolated official TRMNL dashboard firmware for reTerminal E1004 |
 | [`EEZStudio`](examples/official/EEZStudio/) | E1001 – E1004 | Build an LVGL PlatformIO template generated for EEZ Studio workflows |
@@ -332,6 +344,7 @@ Configure GitHub Pages to serve from the `gh-pages` branch. The deployed site is
 - [x] CI/CD pipeline for automated builds and deployment
 - [x] ESPHome YAML template generation for Home Assistant workflows
 - [x] EEZ Studio PlatformIO project template download
+- [x] Official SenseCraft HMI firmware entries for E1001–E1004 and EE02–EE05 registered panel combinations
 - [x] Official TRMNL firmware entries for E1001, E1002, E1003, and E1004
 - [x] Official LVGL 9.5.0 status panel firmware entries for E1001, E1002, E1003, and E1004
 - [x] Chinese text demos for E1001, E1002, E1003, and E1004

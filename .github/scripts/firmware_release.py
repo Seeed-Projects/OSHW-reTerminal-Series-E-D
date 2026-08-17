@@ -182,7 +182,83 @@ def diy_kit_targets() -> tuple[FirmwareTarget, ...]:
     return tuple(targets)
 
 
-FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = diy_kit_targets() + (
+SENSECRAFT_HMI_SOURCE = "examples/official/SenseCraft_HMI"
+SENSECRAFT_HMI_VERSION = "1.1.5"
+SENSECRAFT_HMI_RETERMINAL_ENVS: tuple[tuple[str, str], ...] = (
+    ("E1001", "reterminal_e1001"),
+    ("E1002", "reterminal_e1002"),
+    ("E1003", "reterminal_e1003"),
+    ("E1004", "reterminal_e1004"),
+)
+SENSECRAFT_HMI_XIAO_ENVS: tuple[tuple[str, str, str], ...] = (
+    ("EE02", "P133_SP6", "sensecraft_hmi_ee02_p133_sp6"),
+    ("EE03", "P103_MONO", "sensecraft_hmi_ee03_p103_mono"),
+    ("EE04", "P0154_MONO", "sensecraft_hmi_ee04_p0154_mono"),
+    ("EE04", "P0213_MONO", "sensecraft_hmi_ee04_p0213_mono"),
+    ("EE04", "P0213_QUAD", "sensecraft_hmi_ee04_p0213_quad"),
+    ("EE04", "P029_MONO", "sensecraft_hmi_ee04_p029_mono"),
+    ("EE04", "P029_QUAD", "sensecraft_hmi_ee04_p029_quad"),
+    ("EE04", "P0426_MONO", "sensecraft_hmi_ee04_p0426_mono"),
+    ("EE04", "P073_SP6", "sensecraft_hmi_ee04_p073_sp6"),
+    ("EE04", "P075_MONO", "sensecraft_hmi_ee04_p075_mono"),
+    ("EE05", "P0154_MONO", "sensecraft_hmi_ee05_p0154_mono"),
+    ("EE05", "P0213_MONO", "sensecraft_hmi_ee05_p0213_mono"),
+    ("EE05", "P0213_QUAD", "sensecraft_hmi_ee05_p0213_quad"),
+    ("EE05", "P029_MONO", "sensecraft_hmi_ee05_p029_mono"),
+    ("EE05", "P029_QUAD", "sensecraft_hmi_ee05_p029_quad"),
+    ("EE05", "P0426_MONO", "sensecraft_hmi_ee05_p0426_mono"),
+    ("EE05", "P075_MONO", "sensecraft_hmi_ee05_p075_mono"),
+)
+
+
+def sensecraft_hmi_targets() -> tuple[FirmwareTarget, ...]:
+    """Generate the production SenseCraft HMI targets supported by the Hub.
+
+    生成固件中心当前硬件范围内的 SenseCraft HMI 正式环境目标。
+    """
+
+    rebuild_triggers = (
+        ".github/scripts/firmware_release.py",
+        ".github/workflows/build-and-deploy.yml",
+    )
+    targets = [
+        FirmwareTarget(
+            id=f"SenseCraft_HMI_{device}",
+            path=SENSECRAFT_HMI_SOURCE,
+            tool="platformio",
+            devices=(device,),
+            pio_env=pio_env,
+            rebuild_triggers=rebuild_triggers,
+            include_filesystem=False,
+            app_offset=0x90000,
+            flash_size="32MB",
+            fixed_version=SENSECRAFT_HMI_VERSION,
+            title=f"SenseCraft HMI for {device}",
+            group="official",
+        )
+        for device, pio_env in SENSECRAFT_HMI_RETERMINAL_ENVS
+    ]
+    targets.extend(
+        FirmwareTarget(
+            id=f"SenseCraft_HMI_{board}_{panel}",
+            path=SENSECRAFT_HMI_SOURCE,
+            tool="platformio",
+            devices=(board,),
+            pio_env=pio_env,
+            rebuild_triggers=rebuild_triggers,
+            include_filesystem=False,
+            app_offset=0x90000,
+            flash_size="16MB",
+            fixed_version=SENSECRAFT_HMI_VERSION,
+            title=f"SenseCraft HMI for {board} + {panel}",
+            group="official",
+        )
+        for board, panel, pio_env in SENSECRAFT_HMI_XIAO_ENVS
+    )
+    return tuple(targets)
+
+
+FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = diy_kit_targets() + sensecraft_hmi_targets() + (
     FirmwareTarget("RTC_PCF8563", "examples/base/RTC_PCF8563", title="RTC PCF8563"),
     FirmwareTarget("LowPower_DeepSleep", "examples/base/LowPower_DeepSleep", title="Low Power Deep Sleep"),
     FirmwareTarget(

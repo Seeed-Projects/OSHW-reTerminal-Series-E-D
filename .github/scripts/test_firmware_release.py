@@ -341,6 +341,74 @@ class LvglStatusPanelTargetTest(unittest.TestCase):
         self.assertTrue(all(target.group == "official" for target in targets.values()))
 
 
+class SenseCraftHmiTargetTest(unittest.TestCase):
+    def test_source_change_builds_all_supported_platformio_targets(self) -> None:
+        plan = firmware_release.build_plan([
+            "examples/official/SenseCraft_HMI/src/main.cpp",
+        ])
+        targets = {
+            target.id: target
+            for target in plan.changed_targets
+            if target.id.startswith("SenseCraft_HMI_")
+        }
+
+        self.assertEqual(len(targets), 21)
+        self.assertTrue(all(target.tool == "platformio" for target in targets.values()))
+        self.assertTrue(all(target.group == "official" for target in targets.values()))
+        self.assertTrue(all(target.fixed_version == "1.1.5" for target in targets.values()))
+        self.assertTrue(all(target.app_offset == 0x90000 for target in targets.values()))
+        self.assertTrue(all(not target.include_filesystem for target in targets.values()))
+
+    def test_targets_match_existing_hardware_scope(self) -> None:
+        targets = {
+            target.id: target
+            for target in firmware_release.FIRMWARE_TARGETS
+            if target.id.startswith("SenseCraft_HMI_")
+        }
+        expected_ids = {
+            "SenseCraft_HMI_E1001",
+            "SenseCraft_HMI_E1002",
+            "SenseCraft_HMI_E1003",
+            "SenseCraft_HMI_E1004",
+            *{
+                f"SenseCraft_HMI_{board}_{panel}"
+                for board, panel, _ in firmware_release.SENSECRAFT_HMI_XIAO_ENVS
+            },
+        }
+
+        self.assertEqual(set(targets), expected_ids)
+        self.assertTrue(all(not target.id.startswith("SenseCraft_HMI_EN") for target in targets.values()))
+        self.assertEqual(targets["SenseCraft_HMI_E1001"].flash_size, "32MB")
+        self.assertEqual(targets["SenseCraft_HMI_EE04_P073_SP6"].flash_size, "16MB")
+        self.assertEqual(
+            targets["SenseCraft_HMI_EE05_P075_MONO"].pio_env,
+            "sensecraft_hmi_ee05_p075_mono",
+        )
+
+    def test_manifest_uses_sensecraft_flash_layout(self) -> None:
+        firmware_id = "SenseCraft_HMI_EE04_P073_SP6"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            firmware_dir = Path(temp_dir)
+            create_manifest_artifacts(firmware_dir, firmware_id)
+            firmware_release.write_manifest(
+                firmware_id,
+                "1.1.5",
+                firmware_dir,
+                app_offset=0x90000,
+                flash_size="16MB",
+                include_filesystem=False,
+            )
+
+            manifest = json.loads((firmware_dir / "manifest.json").read_text(encoding="utf-8"))
+            parts = manifest["builds"][0]["parts"]
+            offsets = {path_without_query(part["path"]): part["offset"] for part in parts}
+
+            self.assertEqual(manifest["flashSize"], "16MB")
+            self.assertEqual(len(parts), 4)
+            self.assertEqual(offsets["boot_app0.bin"], 0xE000)
+            self.assertEqual(offsets[f"{firmware_id}.ino.bin"], 0x90000)
+
+
 class DiyKitTargetTest(unittest.TestCase):
     def test_every_board_panel_combo_has_one_target(self) -> None:
         expected = sum(
