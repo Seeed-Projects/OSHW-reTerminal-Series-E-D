@@ -1,0 +1,29 @@
+{
+  "name": "SenseCraft_HMI_EE04_P073_SP6",
+  "version": "1.1.5",
+  "flashSize": "16MB",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "SenseCraft_HMI_EE04_P073_SP6.ino.bootloader.bin?sha256=2a71d69b471e20c2",
+          "offset": 0
+        },
+        {
+          "path": "SenseCraft_HMI_EE04_P073_SP6.ino.partitions.bin?sha256=8c89af569f12152b",
+          "offset": 32768
+        },
+        {
+          "path": "boot_app0.bin?sha256=f94c5d786a7a8fab",
+          "offset": 57344
+        },
+        {
+          "path": "SenseCraft_HMI_EE04_P073_SP6.ino.bin?sha256=1cdbe2823259e6e4",
+          "offset": 589824
+        }
+      ]
+    }
+  ]
+}

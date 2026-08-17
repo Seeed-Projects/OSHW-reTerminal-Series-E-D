@@ -401,6 +401,237 @@
       "autoDiscovered": false
     },
     {
+      "id": "SenseCraft_HMI_E1001",
+      "name": "SenseCraft HMI for E1001",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "E1001"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_E1002",
+      "name": "SenseCraft HMI for E1002",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "E1002"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_E1003",
+      "name": "SenseCraft HMI for E1003",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_E1004",
+      "name": "SenseCraft HMI for E1004",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "E1004"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE02_P133_SP6",
+      "name": "SenseCraft HMI for EE02 + P133_SP6",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE02"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE03_P103_MONO",
+      "name": "SenseCraft HMI for EE03 + P103_MONO",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE03"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE04_P0154_MONO",
+      "name": "SenseCraft HMI for EE04 + P0154_MONO",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE04_P0213_MONO",
+      "name": "SenseCraft HMI for EE04 + P0213_MONO",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE04_P0213_QUAD",
+      "name": "SenseCraft HMI for EE04 + P0213_QUAD",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE04_P029_MONO",
+      "name": "SenseCraft HMI for EE04 + P029_MONO",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE04_P029_QUAD",
+      "name": "SenseCraft HMI for EE04 + P029_QUAD",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE04_P0426_MONO",
+      "name": "SenseCraft HMI for EE04 + P0426_MONO",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE04_P073_SP6",
+      "name": "SenseCraft HMI for EE04 + P073_SP6",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE04_P075_MONO",
+      "name": "SenseCraft HMI for EE04 + P075_MONO",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE04"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE05_P0154_MONO",
+      "name": "SenseCraft HMI for EE05 + P0154_MONO",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE05_P0213_MONO",
+      "name": "SenseCraft HMI for EE05 + P0213_MONO",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE05_P0213_QUAD",
+      "name": "SenseCraft HMI for EE05 + P0213_QUAD",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE05_P029_MONO",
+      "name": "SenseCraft HMI for EE05 + P029_MONO",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE05_P029_QUAD",
+      "name": "SenseCraft HMI for EE05 + P029_QUAD",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE05_P0426_MONO",
+      "name": "SenseCraft HMI for EE05 + P0426_MONO",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
+      "id": "SenseCraft_HMI_EE05_P075_MONO",
+      "name": "SenseCraft HMI for EE05 + P075_MONO",
+      "path": "examples/official/SenseCraft_HMI",
+      "tool": "platformio",
+      "compatible": [
+        "EE05"
+      ],
+      "autoDiscovered": false,
+      "group": "official"
+    },
+    {
       "id": "RTC_PCF8563",
       "name": "RTC PCF8563",
       "path": "examples/base/RTC_PCF8563",

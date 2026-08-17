@@ -1,0 +1,29 @@
+{
+  "name": "SenseCraft_HMI_EE05_P029_QUAD",
+  "version": "1.1.5",
+  "flashSize": "16MB",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "SenseCraft_HMI_EE05_P029_QUAD.ino.bootloader.bin?sha256=2a71d69b471e20c2",
+          "offset": 0
+        },
+        {
+          "path": "SenseCraft_HMI_EE05_P029_QUAD.ino.partitions.bin?sha256=8c89af569f12152b",
+          "offset": 32768
+        },
+        {
+          "path": "boot_app0.bin?sha256=f94c5d786a7a8fab",
+          "offset": 57344
+        },
+        {
+          "path": "SenseCraft_HMI_EE05_P029_QUAD.ino.bin?sha256=18630b71ab947538",
+          "offset": 589824
+        }
+      ]
+    }
+  ]
+}

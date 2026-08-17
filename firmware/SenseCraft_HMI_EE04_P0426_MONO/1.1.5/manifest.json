@@ -1,0 +1,29 @@
+{
+  "name": "SenseCraft_HMI_EE04_P0426_MONO",
+  "version": "1.1.5",
+  "flashSize": "16MB",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "SenseCraft_HMI_EE04_P0426_MONO.ino.bootloader.bin?sha256=2a71d69b471e20c2",
+          "offset": 0
+        },
+        {
+          "path": "SenseCraft_HMI_EE04_P0426_MONO.ino.partitions.bin?sha256=8c89af569f12152b",
+          "offset": 32768
+        },
+        {
+          "path": "boot_app0.bin?sha256=f94c5d786a7a8fab",
+          "offset": 57344
+        },
+        {
+          "path": "SenseCraft_HMI_EE04_P0426_MONO.ino.bin?sha256=2dd80c4963e9c16b",
+          "offset": 589824
+        }
+      ]
+    }
+  ]
+}

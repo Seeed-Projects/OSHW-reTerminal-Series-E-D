@@ -23,6 +23,7 @@ for (const option of firmwareOptions) {
 }
 
 const officialWikiUrls = new Map([
+  ["sensecraft-hmi", "https://wiki.seeedstudio.com/EE04_with_hmi/"],
   ["esphome", "https://wiki.seeedstudio.com/epaper_work_with_esphome/"],
   ["trmnl", "https://wiki.seeedstudio.com/reterminal_e10xx_trmnl/"],
   ["eezstudio", "https://wiki.seeedstudio.com/reterminal_e10xx_with_eezstudio/"],
@@ -37,6 +38,45 @@ for (const [platformId, wikiUrl] of officialWikiUrls) {
   assert.ok(platform, `${platformId} platform is registered`);
   assert.equal(platform.wiki?.url, wikiUrl, `${platformId} wiki URL is registered`);
 }
+
+const sensecraftHmi = PLATFORM_CARDS.find((platform) => platform.id === "sensecraft-hmi");
+assert.ok(sensecraftHmi, "SenseCraft HMI platform is registered");
+assert.equal(sensecraftHmi.group, "official");
+assert.equal(sensecraftHmi.installReady, true);
+assert.equal(sensecraftHmi.source?.url, "https://sensecraft.seeed.cc/hmi/");
+assert.equal(sensecraftHmi.logo, "assets/platforms/sensecraft-hmi-logo.svg");
+assert.deepEqual(
+  sensecraftHmi.supportedDevices,
+  ["E1001", "E1002", "E1003", "E1004", "EE02", "EE03", "EE04", "EE05"]
+);
+assert.deepEqual(
+  sensecraftHmi.firmwareOptions.slice(0, 4).map((option) => option.id),
+  [
+    "SenseCraft_HMI_E1001",
+    "SenseCraft_HMI_E1002",
+    "SenseCraft_HMI_E1003",
+    "SenseCraft_HMI_E1004",
+  ]
+);
+const sensecraftDiyOption = sensecraftHmi.firmwareOptions.at(-1);
+assert.equal(sensecraftDiyOption.comboPattern, "SenseCraft_HMI_{board}_{panel}");
+assert.equal(
+  resolveComboFirmwareId(sensecraftDiyOption, "EE04", "P073_SP6"),
+  "SenseCraft_HMI_EE04_P073_SP6"
+);
+assert.deepEqual(
+  getCompatiblePanels("EE04", sensecraftDiyOption).map((panel) => panel.id).sort(),
+  [
+    "P0154_MONO",
+    "P0213_MONO",
+    "P0213_QUAD",
+    "P029_MONO",
+    "P029_QUAD",
+    "P0426_MONO",
+    "P073_SP6",
+    "P075_MONO",
+  ].sort()
+);
 
 const trmnlPlatform = PLATFORM_CARDS.find((platform) => platform.id === "trmnl");
 assert.ok(trmnlPlatform, "TRMNL platform is registered");
@@ -174,11 +214,11 @@ assert.deepEqual(
 
 assert.deepEqual(
   getCompatiblePlatforms("E1004").map((platform) => platform.id),
-  ["base", "esphome", "trmnl", "eezstudio", "lvgl-epaper-status-panel", "photoframe"]
+  ["base", "sensecraft-hmi", "esphome", "trmnl", "eezstudio", "lvgl-epaper-status-panel", "photoframe"]
 );
 assert.deepEqual(
   getCompatiblePlatforms("EE04").map((platform) => platform.id),
-  ["base"]
+  ["base", "sensecraft-hmi"]
 );
 assert.deepEqual(getCompatiblePlatforms("UNKNOWN"), []);
 

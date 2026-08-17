@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title description">
+  <title id="title">SenseCraft HMI dashboard workflow</title>
+  <desc id="description">A no-code dashboard editor with weather, calendar, chart, and device widgets.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7f7f2"/>
+      <stop offset="1" stop-color="#e7ecd8"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" rx="28" fill="url(#background)"/>
+  <rect x="42" y="38" width="876" height="464" rx="20" fill="#ffffff" stroke="#d9ddcf" stroke-width="2"/>
+  <rect x="42" y="38" width="876" height="72" rx="20" fill="#231815"/>
+  <rect x="42" y="88" width="876" height="22" fill="#231815"/>
+  <image href="sensecraft-hmi-logo.svg" x="68" y="54" width="40" height="40"/>
+  <text x="126" y="82" fill="#ffffff" font-family="Arial, sans-serif" font-size="24" font-weight="700">SenseCraft HMI</text>
+  <circle cx="867" cy="74" r="14" fill="#8fc31f"/>
+  <rect x="68" y="138" width="184" height="336" rx="14" fill="#f2f4ed"/>
+  <text x="92" y="178" fill="#231815" font-family="Arial, sans-serif" font-size="18" font-weight="700">Dashboard</text>
+  <rect x="92" y="204" width="136" height="42" rx="10" fill="#231815"/>
+  <text x="116" y="231" fill="#ffffff" font-family="Arial, sans-serif" font-size="15">Canvas</text>
+  <rect x="92" y="262" width="136" height="42" rx="10" fill="#ffffff" stroke="#d9ddcf"/>
+  <text x="116" y="289" fill="#54584e" font-family="Arial, sans-serif" font-size="15">Gallery</text>
+  <rect x="92" y="320" width="136" height="42" rx="10" fill="#ffffff" stroke="#d9ddcf"/>
+  <text x="116" y="347" fill="#54584e" font-family="Arial, sans-serif" font-size="15">Devices</text>
+  <rect x="280" y="138" width="268" height="144" rx="16" fill="#edf5d8"/>
+  <text x="306" y="178" fill="#42511d" font-family="Arial, sans-serif" font-size="17" font-weight="700">Weather</text>
+  <text x="306" y="237" fill="#231815" font-family="Arial, sans-serif" font-size="44" font-weight="700">22°C</text>
+  <circle cx="494" cy="210" r="30" fill="#f7c948"/>
+  <rect x="570" y="138" width="320" height="144" rx="16" fill="#f4eee9"/>
+  <text x="596" y="178" fill="#6d4b37" font-family="Arial, sans-serif" font-size="17" font-weight="700">Today</text>
+  <text x="596" y="226" fill="#231815" font-family="Arial, sans-serif" font-size="30" font-weight="700">Monday</text>
+  <text x="596" y="254" fill="#756b64" font-family="Arial, sans-serif" font-size="15">3 dashboard updates</text>
+  <rect x="280" y="304" width="392" height="170" rx="16" fill="#f2f4ed"/>
+  <text x="306" y="344" fill="#3f453b" font-family="Arial, sans-serif" font-size="17" font-weight="700">Weekly activity</text>
+  <polyline points="310,432 362,397 414,414 466,363 518,382 570,342 628,367" fill="none" stroke="#8fc31f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="694" y="304" width="196" height="170" rx="16" fill="#231815"/>
+  <text x="720" y="344" fill="#ffffff" font-family="Arial, sans-serif" font-size="17" font-weight="700">Device</text>
+  <text x="720" y="389" fill="#d9ddcf" font-family="Arial, sans-serif" font-size="15">reTerminal</text>
+  <text x="720" y="420" fill="#ffffff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Online</text>
+  <circle cx="854" cy="412" r="10" fill="#8fc31f"/>
+</svg>
