@@ -1,0 +1,9 @@
+# Custom Partition Table for 32MB Flash
+# Name,      Type, SubType, Offset,     Size,      Flags
+nvs,         data, nvs,      ,          500K,
+otadata,     data, ota,      ,          0x2000,
+phy_init,    data, phy,      ,          0x1000,
+app0,        app,  ota_0,    ,          12M,
+app1,        app,  ota_1,    ,          12M,
+spiffs,      data, spiffs,   ,          6144K,
+coredump,    data, coredump, ,          64K,

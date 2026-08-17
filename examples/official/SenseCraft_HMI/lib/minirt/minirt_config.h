@@ -1,0 +1,4 @@
+#pragma once
+
+#define MINIRT_MAX_HIGH_PRIORITY_TASKS 5
+#define MINIRT_MAX_LOW_PRIORITY_TASKS 10

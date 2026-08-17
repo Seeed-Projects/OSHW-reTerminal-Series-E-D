@@ -757,6 +757,113 @@ const PLATFORM_CARDS = [
     ],
   },
   {
+    id: "sensecraft-hmi",
+    group: "official",
+    name: "SenseCraft HMI",
+    tagline: "Official no-code dashboards, galleries, and cloud content for Seeed ePaper devices.",
+    source: {
+      label: "Official website",
+      url: "https://sensecraft.seeed.cc/hmi/",
+    },
+    wiki: {
+      label: "Wiki",
+      url: "https://wiki.seeedstudio.com/EE04_with_hmi/",
+    },
+    description:
+      "SenseCraft HMI is Seeed Studio's official no-code platform for designing ePaper dashboards, publishing gallery content, and managing connected displays from the web.",
+    logo: "assets/platforms/sensecraft-hmi-logo.svg",
+    preview: "assets/platforms/sensecraft-hmi-preview.svg",
+    previewAlt: "SenseCraft HMI no-code dashboard workflow preview",
+    accent: "#231815",
+    highlight: "#8FC31F",
+    supportedDevices: ["E1001", "E1002", "E1003", "E1004", "EE02", "EE03", "EE04", "EE05"],
+    installReady: true,
+    detailTags: ["Production", "v1.1.5"],
+    bullets: [
+      "Official SenseCraft HMI production firmware",
+      "No-code dashboard and gallery publishing",
+      "Web-flashable builds for supported reTerminal and EE boards",
+    ],
+    versions: [
+      {
+        version: "1.1.5",
+        label: "Stable",
+      },
+    ],
+    configFields: [],
+    firmwareOptions: [
+      {
+        id: "SenseCraft_HMI_E1001",
+        name: "SenseCraft HMI Firmware",
+        description: "Install the official SenseCraft HMI production firmware for reTerminal E1001.",
+        category: "Dashboard",
+        compatible: ["E1001"],
+        defaultVersion: "1.1.5",
+        notes: [
+          { type: "info", text: "After flashing, connect the device to Wi-Fi, pair it with SenseCraft HMI, and publish a dashboard from the official web app." },
+        ],
+      },
+      {
+        id: "SenseCraft_HMI_E1002",
+        name: "SenseCraft HMI Firmware",
+        description: "Install the official SenseCraft HMI production firmware for reTerminal E1002.",
+        category: "Dashboard",
+        compatible: ["E1002"],
+        defaultVersion: "1.1.5",
+        notes: [
+          { type: "info", text: "After flashing, connect the device to Wi-Fi, pair it with SenseCraft HMI, and publish a dashboard from the official web app." },
+        ],
+      },
+      {
+        id: "SenseCraft_HMI_E1003",
+        name: "SenseCraft HMI Firmware",
+        description: "Install the official SenseCraft HMI production firmware for reTerminal E1003.",
+        category: "Dashboard",
+        compatible: ["E1003"],
+        defaultVersion: "1.1.5",
+        notes: [
+          { type: "info", text: "After flashing, connect the device to Wi-Fi, pair it with SenseCraft HMI, and publish a dashboard from the official web app." },
+        ],
+      },
+      {
+        id: "SenseCraft_HMI_E1004",
+        name: "SenseCraft HMI Firmware",
+        description: "Install the official SenseCraft HMI production firmware for reTerminal E1004.",
+        category: "Dashboard",
+        compatible: ["E1004"],
+        defaultVersion: "1.1.5",
+        notes: [
+          { type: "info", text: "After flashing, connect the device to Wi-Fi, pair it with SenseCraft HMI, and publish a dashboard from the official web app." },
+        ],
+      },
+      {
+        id: "SenseCraft_HMI_XIAO_DIY",
+        comboPattern: "SenseCraft_HMI_{board}_{panel}",
+        name: "SenseCraft HMI Firmware",
+        description:
+          "Install the official SenseCraft HMI production firmware compiled for the selected EE driver board and ePaper panel.",
+        category: "Dashboard",
+        compatible: ["EE02", "EE03", "EE04", "EE05"],
+        compatiblePanels: [
+          "P0154_MONO",
+          "P0213_MONO",
+          "P0213_QUAD",
+          "P029_MONO",
+          "P029_QUAD",
+          "P0426_MONO",
+          "P073_SP6",
+          "P075_MONO",
+          "P103_MONO",
+          "P133_SP6",
+        ],
+        defaultVersion: "1.1.5",
+        notes: [
+          { type: "info", text: "After flashing, connect the device to Wi-Fi, pair it with SenseCraft HMI, and publish a dashboard from the official web app." },
+        ],
+      },
+    ],
+  },
+  {
     id: "esphome",
     group: "official",
     name: "ESPHome",
