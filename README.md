@@ -135,6 +135,7 @@ The Hub currently lists 14 panels from 1.54″ to 13.3″ (mono, flexible, quadr
 | **SquareLine Vision** | 🔜 Coming soon | E1002, E1003 | Visual UI designer for embedded ePaper displays |
 | **OpenDisplay** | ✅ Official toolbox | E1001 – E1003 | BLE-powered ePaper control and browser image upload through the official OpenDisplay toolbox |
 | **Voice Memo Reminder** | ✅ Community | E1001 – E1003 | AI voice memo firmware with English and Chinese reminder-list builds |
+| **Bus Arrival Display** | ✅ Community | E1001 | Configurable live Singapore ArriveLah and Hong Kong KMB/LWB bus arrivals |
 | **ESP32 PhotoFrame** | ✅ Community | E1002, E1004 | Full-color photo frame firmware with measured-palette image quality, web UI, REST API, and Home Assistant integration ([repo](https://github.com/aitjcize/esp32-photoframe)) |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

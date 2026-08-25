@@ -259,6 +259,13 @@ def sensecraft_hmi_targets() -> tuple[FirmwareTarget, ...]:
 
 
 FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = diy_kit_targets() + sensecraft_hmi_targets() + (
+    FirmwareTarget(
+        "Bus_Arrival_Display",
+        "examples/community/Bus_Arrival_Display",
+        devices=("E1001",),
+        title="Bus Arrival Display for E1001",
+        group="community",
+    ),
     FirmwareTarget("RTC_PCF8563", "examples/base/RTC_PCF8563", title="RTC PCF8563"),
     FirmwareTarget("LowPower_DeepSleep", "examples/base/LowPower_DeepSleep", title="Low Power Deep Sleep"),
     FirmwareTarget(
