@@ -51,6 +51,7 @@ class FirmwareTarget:
     chip: str = "esp32"
     devices: tuple[str, ...] = ("E1001", "E1002", "E1003", "E1004")
     needs_gfx: bool = False
+    needs_arduinojson: bool = False
     needs_gxepd2: bool = False
     needs_sht4x: bool = False
     needs_open_font_render: bool = False
@@ -79,6 +80,7 @@ class FirmwareTarget:
             "name": self.id,
             "path": self.path,
             "needs_gfx": self.needs_gfx,
+            "needs_arduinojson": self.needs_arduinojson,
             "needs_gxepd2": self.needs_gxepd2,
             "needs_sht4x": self.needs_sht4x,
             "needs_open_font_render": self.needs_open_font_render,
@@ -263,6 +265,8 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = diy_kit_targets() + sensecraft_hm
         "Bus_Arrival_Display",
         "examples/community/Bus_Arrival_Display",
         devices=("E1001",),
+        needs_gfx=True,
+        needs_arduinojson=True,
         title="Bus Arrival Display for E1001",
         group="community",
     ),

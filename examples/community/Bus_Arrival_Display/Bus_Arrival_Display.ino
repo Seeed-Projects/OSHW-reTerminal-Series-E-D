@@ -70,6 +70,7 @@ constexpr uint8_t REG_CLKOUT = 0x0D;
 
 constexpr int MIN_REFRESH_SECONDS = 30;
 constexpr int MAX_REFRESH_SECONDS = 3600;
+constexpr unsigned long WIFI_CONNECT_TIMEOUT_MS = 30000UL;
 constexpr unsigned long TIME_LOG_INTERVAL_MS = 2000UL;
 constexpr size_t MAX_BUSES = 10;
 constexpr int BUS_BADGE_WIDTH = 72;   // About four characters at text size 3.
@@ -604,14 +605,36 @@ static void initializeRtc() {
   }
 }
 
-static void connectWiFi() {
+static void showStartupError(const char *title, const char *detail) {
+#ifdef EPAPER_ENABLE
+  epaper.fillScreen(TFT_WHITE);
+  epaper.setTextColor(TFT_BLACK, TFT_WHITE);
+  epaper.setTextSize(3);
+  epaper.drawString(title, 40, 250);
+  epaper.setTextSize(2);
+  epaper.drawString(detail, 40, 310);
+  epaper.update();
+#endif
+}
+
+static bool connectWiFi() {
   WiFi.begin(userConfig.wifiSsid.c_str(), userConfig.wifiPassword.c_str());
   LOG.print("[WIFI] Connecting");
-  while (WiFi.status() != WL_CONNECTED) {
+  const unsigned long startedAt = millis();
+  while (WiFi.status() != WL_CONNECTED &&
+         millis() - startedAt < WIFI_CONNECT_TIMEOUT_MS) {
     delay(500);
     LOG.print('.');
   }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    LOG.println("\n[WIFI] ERROR: connection timed out. Check the Hub Wi-Fi settings.");
+    WiFi.disconnect();
+    return false;
+  }
+
   LOG.printf("\n[WIFI] Connected: %s\n", WiFi.localIP().toString().c_str());
+  return true;
 }
 
 static bool syncTimeFromNtp() {
@@ -679,12 +702,16 @@ void setup() {
 
   loadUserConfig();
   if (!hasRequiredUserConfig()) {
+    showStartupError("Setup required", "Configure in Firmware Hub");
+    return;
+  }
+
+  initializeRtc();
+  if (!connectWiFi()) {
+    showStartupError("Wi-Fi unavailable", "Check settings and retry");
     return;
   }
   applicationConfigured = true;
-
-  initializeRtc();
-  connectWiFi();
   syncTimeFromNtp();
   updateBusData();
   displayBusTimeOnEPaper();
