@@ -131,6 +131,10 @@ jobs:
             cp "$DRIVERS_DIR/JD79676_init.h" "$DRIVERS_DIR/JD79676_Init.h"
           fi
 
+      - name: Install ArduinoJson library
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_arduinojson
+        run: arduino-cli lib install "ArduinoJson"
+
       - name: Install Sensirion SHT4x library
         if: steps.cache.outputs.cache-hit != 'true' && matrix.sketch.needs_sht4x
         run: arduino-cli lib install "Sensirion I2C SHT4x"
