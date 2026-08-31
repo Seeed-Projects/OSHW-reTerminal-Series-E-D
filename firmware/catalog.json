@@ -632,6 +632,17 @@
       "group": "official"
     },
     {
+      "id": "Bus_Arrival_Display",
+      "name": "Bus Arrival Display for E1001",
+      "path": "examples/community/Bus_Arrival_Display",
+      "tool": "arduino",
+      "compatible": [
+        "E1001"
+      ],
+      "autoDiscovered": false,
+      "group": "community"
+    },
+    {
       "id": "RTC_PCF8563",
       "name": "RTC PCF8563",
       "path": "examples/base/RTC_PCF8563",
