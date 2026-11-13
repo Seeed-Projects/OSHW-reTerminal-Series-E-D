@@ -134,6 +134,7 @@ The Hub currently lists 14 panels from 1.54″ to 13.3″ (mono, flexible, quadr
 | **Zephyr** | ✅ Official docs | E1001 – E1003 | Official Zephyr RTOS board documentation and local west build/flash workflow |
 | **SquareLine Vision** | 🔜 Coming soon | E1002, E1003 | Visual UI designer for embedded ePaper displays |
 | **OpenDisplay** | ✅ Official toolbox | E1001 – E1003 | BLE-powered ePaper control and browser image upload through the official OpenDisplay toolbox |
+| **Tesserae** | ✅ Official flasher | E1001 – E1004, EE02, EE03 | Self-hosted dashboard server with Home Assistant built in; full Spectra 6 colour and 16-level greyscale, flashed through the official Tesserae web flasher |
 | **Voice Memo Reminder** | ✅ Community | E1001 – E1003 | AI voice memo firmware with English and Chinese reminder-list builds |
 | **Bus Arrival Display** | ✅ Community | E1001 | Configurable live Singapore ArriveLah and Hong Kong KMB/LWB bus arrivals |
 | **ESP32 PhotoFrame** | ✅ Community | E1002, E1004 | Full-color photo frame firmware with measured-palette image quality, web UI, REST API, and Home Assistant integration ([repo](https://github.com/aitjcize/esp32-photoframe)) |
@@ -165,7 +166,7 @@ The quickest way to get started is to follow the path shown for your device:
 1. Open the **[Firmware Hub](https://seeed-projects.github.io/OSHW-reTerminal-Series-E-D/)** in **Chrome** or **Edge** (desktop only)
 2. Connect your reTerminal E-Series device via USB
 3. Select your device, then choose one of its compatible platforms
-4. Pick a firmware demo and version; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**; for EEZ Studio, click **Download project template** and build locally with PlatformIO; for OpenDisplay, click **Open OpenDisplay Toolbox** and continue with the official toolbox; for Zephyr, click **Open Zephyr Board Docs** and follow the selected board's official west workflow
+4. Pick a firmware demo and version; for ESPHome, choose template options, then use **Copy to clipboard** or **Download file**; for EEZ Studio, click **Download project template** and build locally with PlatformIO; for OpenDisplay, click **Open OpenDisplay Toolbox** and continue with the official toolbox; for Tesserae, click **Open the Tesserae flasher** and flash from tesserae.ink; for Zephyr, click **Open Zephyr Board Docs** and follow the selected board's official west workflow
 5. For flashable firmware, choose **Standard flash** or **Erase flash + flash**, click **Connect & flash**, select the serial port, and wait for the flash to complete
 
 > **Note:** Web Serial requires **HTTPS** or **localhost** and is only available in Chromium-based browsers (Chrome, Edge, Opera). Safari and Firefox are not supported.
