@@ -31,6 +31,7 @@ const officialWikiUrls = new Map([
   ["zephyr", "https://wiki.seeedstudio.com/epaper_work_with_zephyr/"],
   ["squareline", "https://wiki.seeedstudio.com/reterminal_e10xx_with_squareline_vision/"],
   ["opendisplay", "https://wiki.seeedstudio.com/EN04_opendisplay/"],
+  ["tesserae", "https://wiki.seeedstudio.com/reterminal_e10xx_tesserae/"],
 ]);
 
 for (const [platformId, wikiUrl] of officialWikiUrls) {
@@ -114,6 +115,33 @@ assert.deepEqual(
 assert.deepEqual(zephyrPlatform.versions, []);
 assert.deepEqual(zephyrPlatform.configFields, []);
 assert.deepEqual(zephyrPlatform.firmwareOptions, []);
+
+const tesseraePlatform = PLATFORM_CARDS.find((platform) => platform.id === "tesserae");
+assert.ok(tesseraePlatform, "Tesserae platform is registered");
+assert.equal(tesseraePlatform.group, "official");
+assert.equal(tesseraePlatform.installReady, false);
+assert.equal(tesseraePlatform.source?.url, "https://tesserae.ink/");
+assert.equal(tesseraePlatform.logo, "assets/platforms/tesserae-logo.svg");
+assert.deepEqual(
+  tesseraePlatform.supportedDevices,
+  ["E1001", "E1002", "E1003", "E1004", "EE02", "EE03"]
+);
+assert.equal(tesseraePlatform.externalTool?.stepTitle, "Tesserae flasher");
+assert.equal(tesseraePlatform.externalTool?.label, "Open the Tesserae flasher");
+assert.deepEqual(
+  tesseraePlatform.externalTool?.urlsByDevice,
+  {
+    E1001: "https://tesserae.ink/flash?device=seeed-reterminal-e1001",
+    E1002: "https://tesserae.ink/flash?device=seeed-reterminal-e1002",
+    E1003: "https://tesserae.ink/flash?device=seeed-reterminal-e1003",
+    E1004: "https://tesserae.ink/flash?device=seeed-reterminal-e1004",
+    EE02: "https://tesserae.ink/flash?device=seeed-ee02",
+    EE03: "https://tesserae.ink/flash?device=seeed-ee03",
+  }
+);
+assert.deepEqual(tesseraePlatform.versions, []);
+assert.deepEqual(tesseraePlatform.configFields, []);
+assert.deepEqual(tesseraePlatform.firmwareOptions, []);
 
 const lvglStatusPanel = PLATFORM_CARDS.find((platform) =>
   platform.id === "lvgl-epaper-status-panel"
@@ -214,7 +242,7 @@ assert.deepEqual(
 
 assert.deepEqual(
   getCompatiblePlatforms("E1004").map((platform) => platform.id),
-  ["base", "sensecraft-hmi", "esphome", "trmnl", "eezstudio", "lvgl-epaper-status-panel", "photoframe"]
+  ["base", "sensecraft-hmi", "esphome", "trmnl", "eezstudio", "lvgl-epaper-status-panel", "tesserae", "photoframe"]
 );
 assert.deepEqual(
   getCompatiblePlatforms("EE04").map((platform) => platform.id),
