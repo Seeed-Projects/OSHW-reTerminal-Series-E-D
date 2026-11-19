@@ -450,6 +450,20 @@ FIRMWARE_TARGETS: tuple[FirmwareTarget, ...] = diy_kit_targets() + sensecraft_hm
         title="SD Image Pipeline E1004",
     ),
     FirmwareTarget(
+        "E1003_SDcard_Slideshow",
+        "examples/base/E1003_SDcard_Slideshow",
+        devices=("E1003",),
+        needs_gfx=True,
+        title="E1003 SD Card Slideshow",
+    ),
+    FirmwareTarget(
+        "E1004_SDcard_Slideshow",
+        "examples/base/E1004_SDcard_Slideshow",
+        devices=("E1004",),
+        needs_gfx=True,
+        title="E1004 SD Card Slideshow",
+    ),
+    FirmwareTarget(
         "TRMNL_reTerminal_E1001",
         "examples/official/TRMNL",
         tool="platformio",
