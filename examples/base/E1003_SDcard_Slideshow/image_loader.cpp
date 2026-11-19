@@ -37,6 +37,36 @@ namespace {
 //   DIB header   40 B    (BITMAPINFOHEADER, biSize=40)
 //   Palette      4*N B   (BGRA), only present for <=8 bpp
 //   Pixel data   row-padded to 4 bytes, bottom-up unless height is negative
+// Shared RGB888 geometry check for the BMP, JPEG, and PNG decoders.
+// Dimensions come straight from the file header, so validate them and the
+// width*height*3 multiplication in 64-bit before allocating anything.
+static constexpr int      kMaxImageDimension = 16384;
+static constexpr uint64_t kMaxRgbBytes       = 64ULL * 1024ULL * 1024ULL;
+
+static bool checked_rgb_size(int w, int h, size_t* out_bytes) {
+  if (!out_bytes) return false;
+  if (w <= 0 || h <= 0) return false;
+  if (w > kMaxImageDimension || h > kMaxImageDimension) return false;
+
+  const uint64_t bytes = (uint64_t)(uint32_t)w *
+                         (uint64_t)(uint32_t)h * 3ULL;
+  if (bytes > kMaxRgbBytes || bytes > (uint64_t)SIZE_MAX) return false;
+
+  // Leave headroom for the decoder's own working buffers and for the
+  // dither/index buffers allocated after decode. If PSRAM is present, never
+  // start an allocation that cannot possibly fit.
+  const size_t free_psram = ESP.getFreePsram();
+  if (free_psram > 0 && bytes + (1024ULL * 1024ULL) > (uint64_t)free_psram) {
+    Serial1.printf("[img] reject %dx%d: RGB needs %lu kB, free PSRAM %lu kB\n",
+                   w, h, (unsigned long)(bytes / 1024),
+                   (unsigned long)(free_psram / 1024));
+    return false;
+  }
+
+  *out_bytes = (size_t)bytes;
+  return true;
+}
+
 static bool decode_bmp(File& f, RgbImage* out) {
   uint8_t hdr[14];
   if (f.read(hdr, 14) != 14)         { Serial1.println("[bmp] short header"); return false; }
@@ -71,6 +101,7 @@ static bool decode_bmp(File& f, RgbImage* out) {
     return false;
   }
 
+  if (h_signed == INT32_MIN)          { Serial1.println("[bmp] bad height"); return false; }
   const bool top_down = (h_signed < 0);
   const int  h        = top_down ? -h_signed : h_signed;
   if (w <= 0 || h <= 0)               { Serial1.println("[bmp] zero dim"); return false; }
@@ -90,7 +121,11 @@ static bool decode_bmp(File& f, RgbImage* out) {
   }
   f.seek(pixel_off);
 
-  const size_t rgb_size = (size_t)w * h * 3;
+  size_t rgb_size = 0;
+  if (!checked_rgb_size(w, h, &rgb_size)) {
+    Serial1.printf("[bmp] unsupported dimensions %dx%d\n", (int)w, (int)h);
+    return false;
+  }
   uint8_t* rgb = (uint8_t*)ps_malloc(rgb_size);
   if (!rgb) rgb = (uint8_t*)malloc(rgb_size);
   if (!rgb) { Serial1.println("[bmp] OOM RGB"); return false; }
@@ -143,7 +178,7 @@ static const uint8_t ZZ[64] = {
 };
 
 struct Huff {
-  uint8_t nsym = 0;
+  uint16_t nsym = 0;
   uint8_t sym[256] = {0};
   int mincode[17] = {0};
   int maxcode[17] = {0};
@@ -157,7 +192,7 @@ struct Jd  {
   uint8_t  ncomp=0;
   Cmp      comp[3];
   uint16_t qt[4][64] = {{0}};
-  Huff     dcht[2], acht[2];
+  Huff     dcht[4], acht[4];
   uint16_t rst_int=0;
   uint8_t* rgb=nullptr;
 };
@@ -191,10 +226,12 @@ static void idct_2d(float block[64]) {
     for (int r = 0; r < 8; ++r) block[r * 8 + c] = col[r];
   }
 }
-static void huff_build(Huff* h, const uint8_t bits[16], const uint8_t* vals) {
-  h->nsym = 0;
-  for (int i = 0; i < 16; ++i) h->nsym += bits[i];
-  memcpy(h->sym, vals, h->nsym);
+static bool huff_build(Huff* h, const uint8_t bits[16], const uint8_t* vals) {
+  int nsym = 0;
+  for (int i = 0; i < 16; ++i) nsym += bits[i];
+  if (nsym > 256) return false;
+  h->nsym = (uint16_t)nsym;
+  memcpy(h->sym, vals, (size_t)nsym);
   int code = 0, si = 0;
   for (int l = 1; l <= 16; ++l) {
     if (bits[l - 1] == 0) {
@@ -209,6 +246,7 @@ static void huff_build(Huff* h, const uint8_t bits[16], const uint8_t* vals) {
     }
     code = (code + bits[l - 1]) << 1;
   }
+  return true;
 }
 static void bs_refill(Bs* b) {
   while (b->cnt <= 24 && b->pos < b->len) {
@@ -252,7 +290,12 @@ static int huff_sym(Bs* b, const Huff* h) {
   int code = 0;
   for (int l = 1; l <= 16; ++l) {
     code = (code << 1) | bs_bits(b, 1);
-    if (code <= h->maxcode[l] && h->maxcode[l] >= 0) return h->sym[h->valptr[l] + code - h->mincode[l]];
+    if (code <= h->maxcode[l] && h->maxcode[l] >= 0) {
+      const int idx = h->valptr[l] + code - h->mincode[l];
+      if (idx >= 0 && idx < (int)h->nsym) return h->sym[idx];
+      b->err = true;
+      return 0;
+    }
   }
   b->err = true;
   return 0;
@@ -301,12 +344,18 @@ static bool parse_sof0(Jd* j) {
   return true;
 }
 static bool parse_dqt(Jd* j, int seglen) {
+  if (seglen < 2) return false;
   int rem = seglen - 2;
+  if (j->pos + (size_t)rem > j->len) return false;
+
   while (rem > 0) {
+    if (rem < 1) return false;
     uint8_t b = jbyte(j); rem--;
     int prec = (b >> 4) & 0xF;
     int id   =  b       & 0xF;
-    if (id >= 4) return false;
+    if (id >= 4 || prec > 1) return false;
+    const int need = 64 * (prec ? 2 : 1);
+    if (rem < need) return false;
     for (int k = 0; k < 64; ++k) {
       j->qt[id][k] = prec ? ju16(j) : jbyte(j);
       rem -= prec ? 2 : 1;
@@ -315,20 +364,33 @@ static bool parse_dqt(Jd* j, int seglen) {
   return true;
 }
 static bool parse_dht(Jd* j, int seglen) {
+  if (seglen < 2) return false;
   int rem = seglen - 2;
+  if (j->pos + (size_t)rem > j->len) return false;
+
   while (rem > 0) {
+    if (rem < 17) return false;  // table class/id + 16 code-length counts
     uint8_t tc = jbyte(j); rem--;
-    int is_ac = (tc >> 4) & 0x1;
-    int id    =  tc       & 0x1;
+
+    const int table_class = tc >> 4;   // 0 = DC, 1 = AC
+    const int table_id    = tc & 0x0F;
+    if (table_class > 1 || table_id > 3) return false;
+
     uint8_t bits[16];
     int nsym = 0;
     for (int i = 0; i < 16; ++i) { bits[i] = jbyte(j); nsym += bits[i]; rem--; }
+
+    if (nsym > 256 || rem < nsym) return false;
+
     uint8_t vals[256];
     for (int i = 0; i < nsym; ++i) { vals[i] = jbyte(j); rem--; }
-    if (is_ac) huff_build(&j->acht[id], bits, vals);
-    else       huff_build(&j->dcht[id], bits, vals);
+
+    const bool ok = (table_class == 1)
+        ? huff_build(&j->acht[table_id], bits, vals)
+        : huff_build(&j->dcht[table_id], bits, vals);
+    if (!ok) return false;
   }
-  return true;
+  return rem == 0;
 }
 static void parse_sos(Jd* j) {
   uint8_t n = jbyte(j);
@@ -337,8 +399,8 @@ static void parse_sos(Jd* j) {
     uint8_t tb  = jbyte(j);
     for (int c = 0; c < j->ncomp; ++c) {
       if (j->comp[c].id == cid) {
-        j->comp[c].dcht = (tb >> 4) & 0x1;
-        j->comp[c].acht =  tb       & 0x1;
+        j->comp[c].dcht = (tb >> 4) & 0x3;
+        j->comp[c].acht =  tb       & 0x3;
         break;
       }
     }
@@ -395,6 +457,10 @@ static bool jpeg_decode_rgb(const uint8_t* data, size_t len, JpegRgb* out) {
     if (m == 0xD9) break;
     if (m == 0x00 || (m >= 0xD0 && m <= 0xD7)) continue;
     int seglen = (int)ju16(j);
+    if (seglen < 2) {
+      Serial1.printf("[jpg]   bad segment length %d for marker FF%02X\n", seglen, m);
+      free(j); return false;
+    }
 #ifdef VERBOSE_JPEG_DECODE
     Serial1.printf("[jpg]   marker FF%02X (%s) seglen=%d @0x%lX\n",
                    m, jpeg_marker_name(m), seglen,
@@ -450,7 +516,11 @@ scan:
     free(j); return false;
   }
 
-  size_t rgb_sz = (size_t)j->width * j->height * 3;
+  size_t rgb_sz = 0;
+  if (!checked_rgb_size(j->width, j->height, &rgb_sz)) {
+    Serial1.printf("[jpg]   unsupported dimensions %ux%u\n", j->width, j->height);
+    free(j); return false;
+  }
   Serial1.printf("[jpg]   allocating RGB888 buffer: %lu kB (%dx%d x3)\n",
                  (unsigned long)(rgb_sz / 1024), j->width, j->height);
   j->rgb = (uint8_t*)ps_malloc(rgb_sz);
@@ -602,9 +672,17 @@ struct PngCtx {
 
 static void pngle_on_init(pngle_t* p, uint32_t w, uint32_t h) {
   PngCtx* ctx = (PngCtx*)pngle_get_user_data(p);
-  ctx->out->width  = (int)w;
-  ctx->out->height = (int)h;
-  const size_t n = (size_t)w * h * 3;
+  if (w == 0 || h == 0 ||
+      w > (uint32_t)kMaxImageDimension || h > (uint32_t)kMaxImageDimension) {
+    ctx->oom = true;
+    Serial1.printf("[png]   bad IHDR %ux%u\n", (unsigned)w, (unsigned)h);
+    return;
+  }
+  size_t n = 0;
+  if (!checked_rgb_size((int)w, (int)h, &n)) {
+    ctx->oom = true;
+    return;
+  }
   Serial1.printf("[png]   IHDR %ux%u, allocating RGB888 buffer: %lu kB\n",
                  (unsigned)w, (unsigned)h, (unsigned long)(n / 1024));
   uint8_t* buf = (uint8_t*)ps_malloc(n);
@@ -618,6 +696,8 @@ static void pngle_on_init(pngle_t* p, uint32_t w, uint32_t h) {
   // Pre-fill with white so any out-of-bounds draw_cb or aborted decode still produces
   // a coherent image (rather than leaving the buffer uninitialized).
   memset(buf, 0xFF, n);
+  ctx->out->width  = (int)w;
+  ctx->out->height = (int)h;
   ctx->out->pixels = buf;
 }
 

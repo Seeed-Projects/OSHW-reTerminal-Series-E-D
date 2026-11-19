@@ -260,7 +260,7 @@ h2{font-size:15px;margin:26px 0 4px;opacity:.8}
 <input id="picker" type="file" accept="image/*" multiple hidden>
 <div id="queue"></div>
 <p class="sub" id="hint" style="margin-top:14px">正在读取板子的尺寸上限…</p>
-<label class="sub" style="display:block;margin-top:8px"><input type="checkbox" id="cover" checked> 填满屏幕（按屏幕比例裁剪，会裁掉多余的边）</label>
+<label class="sub" style="display:block;margin-top:8px"><input type="checkbox" id="cover" checked> 按屏幕比例裁剪（会裁掉多余的边）</label>
 <label class="sub" style="display:block;margin-top:4px"><input type="checkbox" id="raw"> 上传原图（不缩放、不裁剪，用于已经调好尺寸的图）</label>
 <h2>卡上的照片 <span id="count"></span></h2>
 <div id="list"></div>
@@ -323,7 +323,7 @@ function downscale(f){
     const cover=$('#cover').checked;
     let w,h,sx,sy,sw,sh;
     if(cover){
-      // Fill the panel: scale to cover the target box, crop the overflow.
+      // Crop to the panel aspect ratio. The firmware does not upscale to full screen.
       const s=Math.max(MAXW/ow,MAXH/oh);
       w=MAXW;h=MAXH;
       sw=w/s;sh=h/s;sx=(ow-sw)/2;sy=(oh-sh)/2;
@@ -362,7 +362,7 @@ async function refresh(){
   try{
     const r=await (await fetch('/api/list',{cache:'no-store'})).json();
     if(r.maxW&&r.maxH){MAXW=r.maxW;MAXH=r.maxH}
-    $('#hint').textContent='照片会先缩到 '+MAXW+'×'+MAXH+'；勾选“填满屏幕”时按这个比例裁剪，不勾则保留完整画面（上下或左右会有留白）。';
+    $('#hint').textContent='照片会先缩到 '+MAXW+'×'+MAXH+'；勾选“按屏幕比例裁剪”时按这个比例裁剪，不勾则保留完整画面。固件不会把图片放大到整屏，四周会有留白。';
     $('#ssid').textContent=r.ssid||'E1003-Photo';
     $('#count').textContent='（'+r.count+' 张，剩余 '+(r.free/1048576).toFixed(0)+' MB）';
     $('#list').innerHTML=r.files.map(f=>{
@@ -457,22 +457,34 @@ static void on_upload_chunk() {
 
     const String stem = sanitize_stem(up.filename);
     char prefix[8];
-    snprintf(prefix, sizeof(prefix), "%03d", g_next_index);
-    String path = dir_join(g_dir, String(prefix) + "_" + stem);
-    while (SD.exists(path.c_str()) && g_next_index < 9999) {
-      ++g_next_index;
-      snprintf(prefix, sizeof(prefix), "%03d", g_next_index);
-      path = dir_join(g_dir, String(prefix) + "_" + stem);
+    bool found = false;
+    // Only create a new file. Never open an existing path with FILE_WRITE,
+    // because that would silently truncate an older photo on the card.
+    for (int idx = g_next_index; idx <= 9999; ++idx) {
+      snprintf(prefix, sizeof(prefix), "%03d", idx);
+      const String candidate = dir_join(g_dir, String(prefix) + "_" + stem);
+      if (!SD.exists(candidate.c_str())) {
+        g_up.path    = candidate;
+        g_next_index = idx;
+        found        = true;
+        break;
+      }
     }
-    g_up.path = path;
-    g_up.file = SD.open(path.c_str(), FILE_WRITE);
+    if (!found) {
+      g_up.failed = true;
+      g_up.error  = "SD 卡上没有可用的文件名";
+      UPLOG.println("[upload] no free filename");
+      UPLOG.flush();
+      return;
+    }
+    g_up.file = SD.open(g_up.path.c_str(), FILE_WRITE);
     if (!g_up.file) {
       g_up.failed = true;
       g_up.error  = "无法在 SD 卡上创建文件";
-      UPLOG.printf("[upload] open failed: %s\n", path.c_str());
+      UPLOG.printf("[upload] open failed: %s\n", g_up.path.c_str());
       UPLOG.flush();
     } else {
-      UPLOG.printf("[upload] receiving -> %s\n", path.c_str());
+      UPLOG.printf("[upload] receiving -> %s\n", g_up.path.c_str());
       UPLOG.flush();
     }
     return;
