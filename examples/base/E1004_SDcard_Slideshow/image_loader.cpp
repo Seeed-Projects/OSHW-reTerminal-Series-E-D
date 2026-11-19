@@ -307,15 +307,23 @@ static inline int receive(Bs* b, int n) {
 }
 static void decode_block(Bs* b, const Huff* dcht, const Huff* acht, const uint16_t* qt, int* dcprev, float out[64]) {
   int coef[64] = {0};
-  int s = huff_sym(b, dcht);
+
+  // Symbols come out of the file, and the DC one is used directly as a shift
+  // count. Baseline allows 0..11 for DC and 1..10 for AC magnitudes; anything
+  // outside that is a malformed stream, not a value to shift by.
+  const int s = huff_sym(b, dcht);
+  if (b->err || s > 11) { b->err = true; return; }
   *dcprev += receive(b, s);
   coef[0] = *dcprev;
+
   for (int k = 1; k < 64;) {
-    int sym = huff_sym(b, acht);
-    if (sym == 0x00) break;
-    if (sym == 0xF0) { k += 16; continue; }
-    int run = (sym >> 4) & 0xF;
-    int sz  = sym & 0xF;
+    const int sym = huff_sym(b, acht);
+    if (b->err) return;
+    if (sym == 0x00) break;                 // EOB
+    if (sym == 0xF0) { k += 16; continue; } // ZRL
+    const int run = (sym >> 4) & 0xF;
+    const int sz  = sym & 0xF;
+    if (sz > 10) { b->err = true; return; } // baseline AC magnitude is 1..10
     k += run;
     if (k >= 64) break;
     coef[k++] = receive(b, sz);
@@ -329,18 +337,29 @@ static inline uint8_t clamp8(float v) {
   return (uint8_t)(i < 0 ? 0 : (i > 255 ? 255 : i));
 }
 static bool parse_sof0(Jd* j) {
-  jbyte(j);
+  const int prec = jbyte(j);
   j->height = ju16(j);
   j->width  = ju16(j);
   j->ncomp  = jbyte(j);
-  if (j->ncomp > 3) return false;
+
+  if (prec != 8) return false;                       // baseline is 8-bit only
+  if (j->ncomp != 1 && j->ncomp != 3) return false;  // grayscale or YCbCr
+
+  // The scan loop indexes comp[0] as luma and sizes its buffers from hs*vs,
+  // so a zero or absurd sampling factor is an out-of-bounds read later on.
+  // Baseline also limits the sum of sampling factors to 10.
+  int sampling_sum = 0;
   for (int i = 0; i < j->ncomp; ++i) {
     j->comp[i].id = jbyte(j);
-    uint8_t sf = jbyte(j);
+    const uint8_t sf = jbyte(j);
     j->comp[i].hs = (sf >> 4) & 0xF;
     j->comp[i].vs =  sf       & 0xF;
     j->comp[i].qt = jbyte(j) & 0x3;
+    if (j->comp[i].hs < 1 || j->comp[i].hs > 4) return false;
+    if (j->comp[i].vs < 1 || j->comp[i].vs > 4) return false;
+    sampling_sum += j->comp[i].hs * j->comp[i].vs;
   }
+  if (sampling_sum > 10) return false;
   return true;
 }
 static bool parse_dqt(Jd* j, int seglen) {
@@ -392,20 +411,26 @@ static bool parse_dht(Jd* j, int seglen) {
   }
   return rem == 0;
 }
-static void parse_sos(Jd* j) {
-  uint8_t n = jbyte(j);
-  for (int i = 0; i < n && i < 3; ++i) {
-    uint8_t cid = jbyte(j);
-    uint8_t tb  = jbyte(j);
+static bool parse_sos(Jd* j) {
+  const uint8_t n = jbyte(j);
+  if (n != j->ncomp) return false;   // scan must cover exactly the frame's components
+
+  for (int i = 0; i < n; ++i) {
+    const uint8_t cid = jbyte(j);
+    const uint8_t tb  = jbyte(j);
+    int found = -1;
     for (int c = 0; c < j->ncomp; ++c) {
-      if (j->comp[c].id == cid) {
-        j->comp[c].dcht = (tb >> 4) & 0x3;
-        j->comp[c].acht =  tb       & 0x3;
-        break;
-      }
+      if (j->comp[c].id == cid) { found = c; break; }
     }
+    if (found < 0) return false;     // selector naming a component that is not in SOF
+    j->comp[found].dcht = (tb >> 4) & 0x3;
+    j->comp[found].acht =  tb       & 0x3;
   }
-  j->pos += 3;
+
+  // Baseline scans are Ss=0, Se=63, AhAl=0. Anything else is progressive or
+  // lossless data this decoder cannot handle.
+  if (jbyte(j) != 0 || jbyte(j) != 63 || jbyte(j) != 0) return false;
+  return true;
 }
 
 // Decode a JPEG marker to a short human-readable name (for diagnostics).
@@ -502,7 +527,12 @@ static bool jpeg_decode_rgb(const uint8_t* data, size_t len, JpegRgb* out) {
         }
         break;
       case 0xDD: j->rst_int = ju16(j); break;
-      case 0xDA: parse_sos(j); goto scan;
+      case 0xDA:
+        if (!parse_sos(j)) {
+          Serial1.println("[jpg]   parse_sos failed (component set / baseline flags)");
+          free(j); return false;
+        }
+        goto scan;
       default:   j->pos += seglen - 2; break;
     }
   }
