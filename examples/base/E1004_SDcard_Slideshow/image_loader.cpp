@@ -320,12 +320,19 @@ static void decode_block(Bs* b, const Huff* dcht, const Huff* acht, const uint16
     const int sym = huff_sym(b, acht);
     if (b->err) return;
     if (sym == 0x00) break;                 // EOB
-    if (sym == 0xF0) { k += 16; continue; } // ZRL
+    if (sym == 0xF0) {                      // ZRL: run of sixteen zeros
+      if (k + 16 > 64) { b->err = true; return; }
+      k += 16;
+      continue;
+    }
     const int run = (sym >> 4) & 0xF;
     const int sz  = sym & 0xF;
-    if (sz > 10) { b->err = true; return; } // baseline AC magnitude is 1..10
+    // Every other symbol must carry a nonzero 1..10 bit magnitude. A zero
+    // width is only legal for EOB/ZRL, which are handled above.
+    if (sz == 0 || sz > 10) { b->err = true; return; }
     k += run;
-    if (k >= 64) break;
+    // The nonzero coefficient must land inside the 63-entry AC block.
+    if (k >= 64) { b->err = true; return; }
     coef[k++] = receive(b, sz);
   }
   for (int i = 0; i < 64; ++i) out[ZZ[i]] = (float)(coef[i] * (int)qt[i]);
@@ -415,16 +422,17 @@ static bool parse_sos(Jd* j) {
   const uint8_t n = jbyte(j);
   if (n != j->ncomp) return false;   // scan must cover exactly the frame's components
 
+  // The MCU loop reads components in frame-header order, so require the scan
+  // header to list them in exactly that order. This also rejects duplicate IDs.
   for (int i = 0; i < n; ++i) {
     const uint8_t cid = jbyte(j);
     const uint8_t tb  = jbyte(j);
-    int found = -1;
-    for (int c = 0; c < j->ncomp; ++c) {
-      if (j->comp[c].id == cid) { found = c; break; }
+    if (j->comp[i].id != cid) return false;  // scan order != frame order
+    for (int k = 0; k < i; ++k) {
+      if (j->comp[k].id == cid) return false;  // duplicate component ID
     }
-    if (found < 0) return false;     // selector naming a component that is not in SOF
-    j->comp[found].dcht = (tb >> 4) & 0x3;
-    j->comp[found].acht =  tb       & 0x3;
+    j->comp[i].dcht = (tb >> 4) & 0x3;
+    j->comp[i].acht =  tb       & 0x3;
   }
 
   // Baseline scans are Ss=0, Se=63, AhAl=0. Anything else is progressive or
