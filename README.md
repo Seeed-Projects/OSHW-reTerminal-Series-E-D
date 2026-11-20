@@ -125,7 +125,7 @@ The Hub currently lists 14 panels from 1.54″ to 13.3″ (mono, flexible, quadr
 
 | Platform | Status | Devices | Description |
 |:---------|:-------|:--------|:------------|
-| **Base** | ✅ Ready | E1001 – E1004, EE/EN DIY Kit | Smoke-test demos (RTC, deep sleep, mic recording, touch draw) plus DIY Kit board + panel selection |
+| **Base** | ✅ Ready | E1001 – E1004, EE/EN DIY Kit | Smoke-test demos (RTC, deep sleep, mic recording, touch draw, SD slideshow with Wi-Fi upload) plus DIY Kit board + panel selection |
 | **SenseCraft HMI** | ✅ Ready | E1001 – E1004, EE02 – EE05 | Official production firmware for no-code dashboards, galleries, and cloud-managed ePaper content |
 | **ESPHome** | ✅ YAML templates | E1001 – E1004 | Smart home integration with Home Assistant |
 | **TRMNL** | ✅ Ready | E1001 – E1004 | Official TRMNL dashboard firmware for always-on ePaper panels |
@@ -282,6 +282,8 @@ the Firmware Hub or compiled manually.
 | [`SD_ImagePipeline_E1002`](examples/base/SD_ImagePipeline_E1002/) | E1002 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
 | [`SD_ImagePipeline_E1003`](examples/base/SD_ImagePipeline_E1003/) | E1003 | Display a JPEG/PNG from MicroSD in 16-level grayscale |
 | [`SD_ImagePipeline_E1004`](examples/base/SD_ImagePipeline_E1004/) | E1004 | Display a JPEG/PNG from MicroSD in 6-color (Spectra 6) |
+| [`E1003_SDcard_Slideshow`](examples/base/E1003_SDcard_Slideshow/) | E1003 | Timed MicroSD photo slideshow on the 16-gray panel, with page-turn keys and Wi-Fi image upload |
+| [`E1004_SDcard_Slideshow`](examples/base/E1004_SDcard_Slideshow/) | E1004 | Timed MicroSD photo slideshow on the Spectra 6 panel, with page-turn keys and Wi-Fi image upload |
 | [`XIAO_EPaper_Hello`](examples/base/XIAO_EPaper_Hello/) | EE02 – EE05, EN04 – EN05 | Hello screen for XIAO ePaper DIY Kit boards, built per board + panel combo with Seeed_GFX |
 | [`SenseCraft_HMI`](examples/official/SenseCraft_HMI/) | E1001 – E1004, EE02 – EE05 | Build the official SenseCraft HMI production firmware for 21 registered hardware targets |
 | [`TRMNL`](examples/official/TRMNL/) | E1001 – E1003 | Build the official TRMNL dashboard firmware for existing reTerminal E-Series targets |
@@ -351,6 +353,7 @@ Configure GitHub Pages to serve from the `gh-pages` branch. The deployed site is
 - [x] Official LVGL 9.5.0 status panel firmware entries for E1001, E1002, E1003, and E1004
 - [x] Chinese text demos for E1001, E1002, E1003, and E1004
 - [x] MicroSD image pipeline demos with browser-configurable image options
+- [x] SD card photo slideshows with Wi-Fi image upload for E1003 and E1004
 - [x] Community Voice Memo Reminder firmware entries for English and Chinese builds
 - [x] Community ESP32 PhotoFrame firmware entries with erase-then-flash install flow
 - [ ] SquareLine Vision UI designer support
