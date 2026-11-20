@@ -754,6 +754,30 @@ const PLATFORM_CARDS = [
           { type: "warning", text: "Place a JPEG or PNG image at /img/demo.jpg on the MicroSD card before flashing." },
         ],
       },
+      {
+        id: "E1003_SDcard_Slideshow",
+        name: "SD Card Slideshow (16-Gray)",
+        description: "Play every JPEG/PNG/BMP in /img as a timed slideshow on the E1003 16-level grayscale panel, with page-turn keys and a built-in Wi-Fi upload page.",
+        category: "Display",
+        compatible: ["E1003"],
+        notes: [
+          { type: "warning", text: "Format the MicroSD card as FAT32 and copy photos to /img before flashing. With the default Floyd-Steinberg dithering, pre-scale photos to about 1100x825 or smaller to stay within the 8 MB PSRAM budget." },
+          { type: "info", text: "Left key = next slide, middle key = previous slide. Hold the right key for 2 seconds to enter Wi-Fi upload mode (access point E1003-Photo / e1003photo, open http://192.168.4.1), then hold it again to exit and reboot." },
+          { type: "info", text: "The upload page downsizes photos in the browser before sending, so a card reader is not required. Supported formats: baseline JPEG, PNG, and BMP." },
+        ],
+      },
+      {
+        id: "E1004_SDcard_Slideshow",
+        name: "SD Card Slideshow (6-Color)",
+        description: "Play every JPEG/PNG/BMP in /img as a timed slideshow on the E1004 Spectra 6 panel, with page-turn keys and a built-in Wi-Fi upload page.",
+        category: "Display",
+        compatible: ["E1004"],
+        notes: [
+          { type: "warning", text: "Format the MicroSD card as FAT32 and copy photos to /img before flashing. Pre-scale photos to about 1110x1482; full-panel 1200x1600 sources do not fit within the 8 MB PSRAM budget." },
+          { type: "info", text: "Right key = next slide, middle key = previous slide. Hold the left key for 2 seconds to enter Wi-Fi upload mode (access point E1004-Photo / e1004photo, open http://192.168.4.1), then hold it again to exit and reboot." },
+          { type: "info", text: "The upload page crops or contains photos in the browser before sending, then writes them to /img. Supported formats: baseline JPEG, PNG, and BMP." },
+        ],
+      },
     ],
   },
   {

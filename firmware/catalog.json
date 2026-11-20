@@ -969,6 +969,26 @@
       "autoDiscovered": false
     },
     {
+      "id": "E1003_SDcard_Slideshow",
+      "name": "E1003 SD Card Slideshow",
+      "path": "examples/base/E1003_SDcard_Slideshow",
+      "tool": "arduino",
+      "compatible": [
+        "E1003"
+      ],
+      "autoDiscovered": false
+    },
+    {
+      "id": "E1004_SDcard_Slideshow",
+      "name": "E1004 SD Card Slideshow",
+      "path": "examples/base/E1004_SDcard_Slideshow",
+      "tool": "arduino",
+      "compatible": [
+        "E1004"
+      ],
+      "autoDiscovered": false
+    },
+    {
       "id": "TRMNL_reTerminal_E1001",
       "name": "TRMNL for reTerminal E1001",
       "path": "examples/official/TRMNL",
